@@ -1,0 +1,24 @@
+name: chartify
+description: A comprehensive, high-performance Flutter chart library with clean architecture, supporting 25+ chart types, large datasets, and cross-platform compatibility.
+version: 0.1.0
+homepage: https://github.com/chartify/chartify
+repository: https://github.com/chartify/chartify
+issue_tracker: https://github.com/chartify/chartify/issues
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+  flutter: '>=3.10.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  vector_math: ^2.1.4
+  collection: ^1.18.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+
+flutter:
+  uses-material-design: true
