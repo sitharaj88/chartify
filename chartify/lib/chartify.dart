@@ -48,7 +48,7 @@ library chartify;
 export 'src/core/data/data_point.dart';
 
 // Core - Base
-export 'src/core/base/series.dart';
+export 'src/core/base/series.dart' hide PieSection, GaugeRange;
 export 'src/core/base/chart_data.dart';
 export 'src/core/base/chart_controller.dart';
 export 'src/core/base/chart_painter.dart';
@@ -65,7 +65,28 @@ export 'src/core/gestures/gesture_detector.dart';
 // Components - Tooltip
 export 'src/components/tooltip/chart_tooltip.dart';
 
-// Charts - Cartesian
+// Charts - Cartesian - Line
 export 'src/charts/cartesian/line/line_chart.dart';
 export 'src/charts/cartesian/line/line_chart_data.dart';
 export 'src/charts/cartesian/line/line_series.dart';
+
+// Charts - Cartesian - Bar
+export 'src/charts/cartesian/bar/bar_chart.dart';
+export 'src/charts/cartesian/bar/bar_chart_data.dart';
+export 'src/charts/cartesian/bar/bar_series.dart';
+
+// Charts - Cartesian - Area
+export 'src/charts/cartesian/area/area_chart.dart';
+
+// Charts - Cartesian - Scatter
+export 'src/charts/cartesian/scatter/scatter_chart.dart';
+
+// Charts - Circular - Pie/Donut
+export 'src/charts/circular/pie/pie_chart.dart';
+export 'src/charts/circular/pie/pie_chart_data.dart';
+
+// Charts - Circular - Gauge
+export 'src/charts/circular/gauge/gauge_chart.dart';
+
+// Charts - Polar - Radar
+export 'src/charts/polar/radar/radar_chart.dart';

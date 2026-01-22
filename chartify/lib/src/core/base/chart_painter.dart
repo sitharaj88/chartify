@@ -336,6 +336,7 @@ abstract class PolarChartPainter extends ChartPainter {
   PolarChartPainter({
     required super.theme,
     super.animationValue,
+    super.repaint,
     required this.axisCount,
     this.tickCount = 5,
   });

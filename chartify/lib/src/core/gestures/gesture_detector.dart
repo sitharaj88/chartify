@@ -481,6 +481,25 @@ class ChartHitTester {
     _targets.add(_PathHitTarget(path: path, info: info, strokeWidth: strokeWidth));
   }
 
+  /// Adds an arc/sector hit target (for pie charts).
+  void addArc({
+    required Offset center,
+    required double innerRadius,
+    required double outerRadius,
+    required double startAngle,
+    required double sweepAngle,
+    required DataPointInfo info,
+  }) {
+    _targets.add(_ArcHitTarget(
+      center: center,
+      innerRadius: innerRadius,
+      outerRadius: outerRadius,
+      startAngle: startAngle,
+      sweepAngle: sweepAngle,
+      info: info,
+    ));
+  }
+
   /// Clears all hit targets.
   void clear() => _targets.clear();
 
@@ -587,5 +606,80 @@ class _PathHitTarget implements _HitTarget {
     // Note: For production, use path.computeMetrics() to calculate actual distance
 
     return double.infinity;
+  }
+}
+
+class _ArcHitTarget implements _HitTarget {
+  const _ArcHitTarget({
+    required this.center,
+    required this.innerRadius,
+    required this.outerRadius,
+    required this.startAngle,
+    required this.sweepAngle,
+    required this.info,
+  });
+
+  final Offset center;
+  final double innerRadius;
+  final double outerRadius;
+  final double startAngle;
+  final double sweepAngle;
+  @override
+  final DataPointInfo info;
+
+  @override
+  double distanceTo(Offset position) {
+    // Check if point is within the arc sector
+    final delta = position - center;
+    final distance = delta.distance;
+
+    // Check radius bounds
+    if (distance < innerRadius || distance > outerRadius) {
+      return double.infinity;
+    }
+
+    // Check angle bounds
+    var angle = delta.direction; // Returns angle in radians from -pi to pi
+
+    // Normalize angles to 0 to 2*pi range
+    var normalizedStart = startAngle;
+    while (normalizedStart < 0) {
+      normalizedStart += 2 * 3.14159265359;
+    }
+    while (normalizedStart >= 2 * 3.14159265359) {
+      normalizedStart -= 2 * 3.14159265359;
+    }
+
+    var normalizedAngle = angle;
+    while (normalizedAngle < 0) {
+      normalizedAngle += 2 * 3.14159265359;
+    }
+    while (normalizedAngle >= 2 * 3.14159265359) {
+      normalizedAngle -= 2 * 3.14159265359;
+    }
+
+    // Check if angle is within sweep
+    final endAngle = normalizedStart + sweepAngle;
+
+    bool inSector;
+    if (sweepAngle >= 0) {
+      if (endAngle <= 2 * 3.14159265359) {
+        inSector = normalizedAngle >= normalizedStart && normalizedAngle <= endAngle;
+      } else {
+        // Sector crosses the 0/2pi boundary
+        inSector = normalizedAngle >= normalizedStart ||
+            normalizedAngle <= (endAngle - 2 * 3.14159265359);
+      }
+    } else {
+      // Negative sweep (clockwise)
+      if (endAngle >= 0) {
+        inSector = normalizedAngle <= normalizedStart && normalizedAngle >= endAngle;
+      } else {
+        inSector = normalizedAngle <= normalizedStart ||
+            normalizedAngle >= (endAngle + 2 * 3.14159265359);
+      }
+    }
+
+    return inSector ? 0 : double.infinity;
   }
 }
