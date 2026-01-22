@@ -98,8 +98,11 @@ class _LineChartState extends State<LineChart>
   AnimationController? _animationController;
   Animation<double>? _animation;
   final ChartHitTester _hitTester = ChartHitTester();
-  Offset? _hoverPosition;
   Rect _chartArea = Rect.zero;
+
+  // Cached bounds for consistent position calculations
+  double _xMin = 0, _xMax = 1, _yMin = 0, _yMax = 1;
+  bool _boundsValid = false;
 
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
@@ -118,7 +121,8 @@ class _LineChartState extends State<LineChart>
       _controller = ChartController();
       _ownsController = true;
     }
-    _controller.addListener(_onControllerChanged);
+    // Note: Don't add listener here - painter handles repaint via shouldRepaint
+    // and tooltip overlay has its own listener
   }
 
   void _initAnimation() {
@@ -141,17 +145,12 @@ class _LineChartState extends State<LineChart>
     }
   }
 
-  void _onControllerChanged() {
-    if (mounted) setState(() {});
-  }
-
   @override
   void didUpdateWidget(LineChart oldWidget) {
     super.didUpdateWidget(oldWidget);
 
     // Handle controller changes
     if (widget.controller != oldWidget.controller) {
-      _controller.removeListener(_onControllerChanged);
       if (_ownsController) {
         _controller.dispose();
         _ownsController = false;
@@ -159,8 +158,9 @@ class _LineChartState extends State<LineChart>
       _initController();
     }
 
-    // Handle data changes
+    // Handle data changes - invalidate cached bounds
     if (widget.data != oldWidget.data) {
+      _boundsValid = false;
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
         _animationController?.forward(from: 0.0);
       }
@@ -170,7 +170,6 @@ class _LineChartState extends State<LineChart>
   @override
   void dispose() {
     _animationController?.dispose();
-    _controller.removeListener(_onControllerChanged);
     if (_ownsController) {
       _controller.dispose();
     }
@@ -178,12 +177,8 @@ class _LineChartState extends State<LineChart>
   }
 
   void _handleHover(PointerEvent event) {
-    setState(() {
-      _hoverPosition = event.localPosition;
-    });
-
-    // Always find nearest point on X axis for smooth tracking
-    // This ensures the tooltip follows the cursor smoothly across the chart
+    // Find nearest point on X axis for smooth tracking
+    // Don't call setState - the tooltip overlay handles its own state
     final nearestInfo = _findNearestPointOnX(event.localPosition);
     if (nearestInfo != null) {
       _controller.setHoveredPoint(nearestInfo);
@@ -227,17 +222,19 @@ class _LineChartState extends State<LineChart>
     return nearest;
   }
 
-  Offset _dataToScreen(dynamic x, num y) {
-    if (_chartArea == Rect.zero) return Offset.zero;
+  void _calculateBounds() {
+    if (_boundsValid) return;
 
     double xMin = double.infinity;
     double xMax = double.negativeInfinity;
     double yMin = double.infinity;
     double yMax = double.negativeInfinity;
+    bool hasData = false;
 
     for (final series in widget.data.series) {
       if (!series.visible) continue;
       for (final point in series.data) {
+        hasData = true;
         final px = _toDouble(point.x);
         final py = point.y.toDouble();
         if (px < xMin) xMin = px;
@@ -247,19 +244,58 @@ class _LineChartState extends State<LineChart>
       }
     }
 
-    if (widget.data.yAxis?.min == null && yMin > 0) yMin = 0;
+    if (!hasData) {
+      _xMin = 0;
+      _xMax = 1;
+      _yMin = 0;
+      _yMax = 1;
+      _boundsValid = true;
+      return;
+    }
+
+    _xMin = xMin;
+    _xMax = xMax;
+    _yMin = yMin;
+    _yMax = yMax;
+
+    // Apply axis config overrides
+    if (widget.data.xAxis?.min != null) _xMin = widget.data.xAxis!.min!;
+    if (widget.data.xAxis?.max != null) _xMax = widget.data.xAxis!.max!;
+    if (widget.data.yAxis?.min != null) _yMin = widget.data.yAxis!.min!;
+    if (widget.data.yAxis?.max != null) _yMax = widget.data.yAxis!.max!;
+
+    // Add padding to y-axis (must match painter!)
+    final yRange = _yMax - _yMin;
+    if (yRange == 0) {
+      _yMin -= 1;
+      _yMax += 1;
+    } else if (widget.data.yAxis?.min == null && _yMin > 0) {
+      _yMin = 0;
+    }
+
+    // Add 5% padding to top of y-axis (must match painter!)
+    final paddedYRange = _yMax - _yMin;
+    _yMax += paddedYRange * 0.05;
+
+    _boundsValid = true;
+  }
+
+  Offset _dataToScreen(dynamic x, num y) {
+    if (_chartArea == Rect.zero) return Offset.zero;
+
+    _calculateBounds();
 
     final xValue = _toDouble(x);
-    final xRange = xMax - xMin;
-    final yRange = yMax - yMin;
+    final xRange = _xMax - _xMin;
+    final yRange = _yMax - _yMin;
 
     final screenX = xRange == 0
         ? _chartArea.center.dx
-        : _chartArea.left + (xValue - xMin) / xRange * _chartArea.width;
+        : _chartArea.left + (xValue - _xMin) / xRange * _chartArea.width;
 
     final screenY = yRange == 0
         ? _chartArea.center.dy
-        : _chartArea.bottom - (y.toDouble() - yMin) / yRange * _chartArea.height;
+        : _chartArea.bottom - (y.toDouble() - _yMin) / yRange * _chartArea.height;
 
     return Offset(screenX, screenY);
   }
@@ -271,9 +307,7 @@ class _LineChartState extends State<LineChart>
   }
 
   void _handleHoverExit(PointerExitEvent event) {
-    setState(() {
-      _hoverPosition = null;
-    });
+    // Don't call setState - the tooltip overlay handles its own state
     _controller.clearHoveredPoint();
     widget.onDataPointHover?.call(null);
   }
@@ -323,7 +357,6 @@ class _LineChartState extends State<LineChart>
                   controller: _controller,
                   hitTester: _hitTester,
                   padding: widget.padding,
-                  hoverPosition: _hoverPosition,
                   showCrosshair: widget.showCrosshair,
                   crosshairColor: widget.crosshairColor,
                 ),
@@ -395,17 +428,15 @@ class _LineChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required EdgeInsets padding,
-    this.hoverPosition,
     this.showCrosshair = true,
     this.crosshairColor,
-  }) : super(padding: padding) {
+  }) : super(padding: padding, repaint: controller) {
     _calculateBounds();
   }
 
   final LineChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
-  final Offset? hoverPosition;
   final bool showCrosshair;
   final Color? crosshairColor;
 
@@ -1328,8 +1359,7 @@ class _LineChartPainter extends CartesianChartPainter {
       data != oldDelegate.data ||
       controller.viewport != oldDelegate.controller.viewport ||
       controller.selectedIndices != oldDelegate.controller.selectedIndices ||
-      controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
-      hoverPosition != oldDelegate.hoverPosition;
+      controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
 }
 
 enum StepType { before, after, middle }

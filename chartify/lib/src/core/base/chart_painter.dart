@@ -1,5 +1,6 @@
 import 'dart:ui' as ui;
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../theme/chart_theme_data.dart';
@@ -22,7 +23,8 @@ abstract class ChartPainter extends CustomPainter {
   ChartPainter({
     required this.theme,
     this.animationValue = 1.0,
-  });
+    Listenable? repaint,
+  }) : super(repaint: repaint);
 
   /// The theme data for styling.
   final ChartThemeData theme;
@@ -213,6 +215,7 @@ abstract class CartesianChartPainter extends ChartPainter {
   CartesianChartPainter({
     required super.theme,
     super.animationValue,
+    super.repaint,
     this.padding = const EdgeInsets.fromLTRB(50, 20, 20, 40),
     this.showGrid = true,
     this.gridDashPattern,

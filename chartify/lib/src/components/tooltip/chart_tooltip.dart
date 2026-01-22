@@ -12,15 +12,15 @@ class TooltipConfig {
     this.showOnTap = true,
     this.position = TooltipPosition.auto,
     this.offset = const Offset(0, -12),
-    this.animationDuration = const Duration(milliseconds: 150),
+    this.animationDuration = const Duration(milliseconds: 200),
     this.animationCurve = Curves.easeOutCubic,
-    this.hideDelay = const Duration(milliseconds: 200),
+    this.hideDelay = const Duration(milliseconds: 100),
     this.builder,
     this.decoration,
     this.textStyle,
     this.padding = const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-    this.showIndicatorLine = true,
-    this.showIndicatorDot = true,
+    this.showIndicatorLine = false,
+    this.showIndicatorDot = false,
     this.indicatorLineWidth = 1.0,
     this.indicatorDotSize = 10.0,
   });
@@ -126,7 +126,7 @@ class TooltipEntry {
   }
 }
 
-/// Smooth tooltip overlay using ListenableBuilder to avoid rebuilds.
+/// Smooth tooltip overlay with proper animation handling.
 class ChartTooltipOverlay extends StatefulWidget {
   const ChartTooltipOverlay({
     super.key,
@@ -149,42 +149,120 @@ class ChartTooltipOverlay extends StatefulWidget {
   State<ChartTooltipOverlay> createState() => _ChartTooltipOverlayState();
 }
 
-class _ChartTooltipOverlayState extends State<ChartTooltipOverlay> {
+class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
+    with TickerProviderStateMixin {
+  // Animation controllers
+  late AnimationController _fadeController;
+  late AnimationController _positionController;
+
+  // Current animated values
+  late Animation<double> _fadeAnimation;
+  Offset _startPosition = Offset.zero;
+  Offset _currentPosition = Offset.zero;
+  Offset _targetPosition = Offset.zero;
+
+  // State tracking
+  TooltipData? _currentData;
+  bool _isVisible = false;
+
   @override
-  Widget build(BuildContext context) {
-    if (!widget.config.enabled) {
-      return widget.child;
-    }
+  void initState() {
+    super.initState();
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        widget.child,
-        // Use ListenableBuilder to only rebuild the tooltip, not the chart
-        ListenableBuilder(
-          listenable: widget.controller,
-          builder: (context, _) {
-            final hoveredPoint = widget.controller.hoveredPoint;
-            if (hoveredPoint == null) {
-              return const SizedBox.shrink();
-            }
-
-            final tooltipData = _buildTooltipData(hoveredPoint);
-            if (tooltipData == null) {
-              return const SizedBox.shrink();
-            }
-
-            return _SmoothTooltip(
-              key: const ValueKey('tooltip'),
-              data: tooltipData,
-              config: widget.config,
-              theme: widget.theme,
-              chartArea: widget.chartArea,
-            );
-          },
-        ),
-      ],
+    _fadeController = AnimationController(
+      vsync: this,
+      duration: widget.config.animationDuration,
     );
+
+    _fadeAnimation = CurvedAnimation(
+      parent: _fadeController,
+      curve: widget.config.animationCurve,
+    );
+
+    _positionController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 50),
+    );
+
+    _positionController.addListener(_onPositionAnimationTick);
+
+    // Listen to controller changes
+    widget.controller.addListener(_onControllerChanged);
+  }
+
+  @override
+  void didUpdateWidget(ChartTooltipOverlay oldWidget) {
+    super.didUpdateWidget(oldWidget);
+
+    if (widget.controller != oldWidget.controller) {
+      oldWidget.controller.removeListener(_onControllerChanged);
+      widget.controller.addListener(_onControllerChanged);
+    }
+  }
+
+  @override
+  void dispose() {
+    widget.controller.removeListener(_onControllerChanged);
+    _fadeController.dispose();
+    _positionController.dispose();
+    super.dispose();
+  }
+
+  void _onControllerChanged() {
+    final hoveredPoint = widget.controller.hoveredPoint;
+
+    if (hoveredPoint != null) {
+      final tooltipData = _buildTooltipData(hoveredPoint);
+      if (tooltipData != null) {
+        _showTooltip(tooltipData);
+      }
+    } else {
+      _hideTooltip();
+    }
+  }
+
+  void _showTooltip(TooltipData data) {
+    final newPosition = data.position;
+
+    setState(() {
+      _currentData = data;
+
+      if (!_isVisible) {
+        // First show - jump to position immediately
+        _startPosition = newPosition;
+        _currentPosition = newPosition;
+        _targetPosition = newPosition;
+        _isVisible = true;
+        _fadeController.forward();
+      } else {
+        // Already visible - animate to new position
+        _startPosition = _currentPosition;
+        _targetPosition = newPosition;
+        _positionController.forward(from: 0);
+      }
+    });
+  }
+
+  void _hideTooltip() {
+    if (_isVisible) {
+      _fadeController.reverse().then((_) {
+        if (mounted) {
+          setState(() {
+            _isVisible = false;
+            _currentData = null;
+          });
+        }
+      });
+    }
+  }
+
+  void _onPositionAnimationTick() {
+    if (!mounted) return;
+
+    final t = Curves.easeOut.transform(_positionController.value);
+    setState(() {
+      _currentPosition = Offset.lerp(_startPosition, _targetPosition, t)!;
+    });
   }
 
   TooltipData? _buildTooltipData(DataPointInfo info) {
@@ -217,120 +295,68 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay> {
     }
     return value.toString();
   }
-}
-
-/// The actual tooltip widget with smooth animations.
-class _SmoothTooltip extends StatefulWidget {
-  const _SmoothTooltip({
-    super.key,
-    required this.data,
-    required this.config,
-    required this.theme,
-    required this.chartArea,
-  });
-
-  final TooltipData data;
-  final TooltipConfig config;
-  final ChartThemeData theme;
-  final Rect chartArea;
-
-  @override
-  State<_SmoothTooltip> createState() => _SmoothTooltipState();
-}
-
-class _SmoothTooltipState extends State<_SmoothTooltip>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _fadeController;
-  late Animation<double> _fadeAnimation;
-
-  @override
-  void initState() {
-    super.initState();
-    _fadeController = AnimationController(
-      vsync: this,
-      duration: widget.config.animationDuration,
-    );
-    _fadeAnimation = CurvedAnimation(
-      parent: _fadeController,
-      curve: widget.config.animationCurve,
-    );
-    _fadeController.forward();
-  }
-
-  @override
-  void dispose() {
-    _fadeController.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
+    if (!widget.config.enabled) {
+      return widget.child;
+    }
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        widget.child,
+        if (_isVisible && _currentData != null)
+          _buildTooltipWidget(),
+      ],
+    );
+  }
+
+  Widget _buildTooltipWidget() {
     final isDark = widget.theme.brightness == Brightness.dark;
-    final position = widget.data.position;
-    final entries = widget.data.entries;
+    final entries = _currentData!.entries;
+
+    // Calculate tooltip position
+    final tooltipY = _calculateTooltipY(_currentPosition);
+    final tooltipX = _currentPosition.dx - 70 + widget.config.offset.dx;
 
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // Indicator line - use TweenAnimationBuilder for smooth movement
+          // Indicator line
           if (widget.config.showIndicatorLine)
-            TweenAnimationBuilder<double>(
-              tween: Tween(begin: position.dx, end: position.dx),
-              duration: const Duration(milliseconds: 60),
-              curve: Curves.easeOut,
-              builder: (context, x, _) {
-                return Positioned(
-                  left: x,
-                  top: widget.chartArea.top,
-                  bottom: MediaQuery.of(context).size.height - widget.chartArea.bottom,
-                  child: Container(
-                    width: widget.config.indicatorLineWidth,
-                    color: isDark
-                        ? Colors.white.withValues(alpha: 0.2)
-                        : Colors.black.withValues(alpha: 0.08),
-                  ),
-                );
-              },
+            Positioned(
+              left: _currentPosition.dx - widget.config.indicatorLineWidth / 2,
+              top: widget.chartArea.top,
+              width: widget.config.indicatorLineWidth,
+              height: widget.chartArea.height,
+              child: Container(
+                color: isDark
+                    ? Colors.white.withValues(alpha: 0.2)
+                    : Colors.black.withValues(alpha: 0.08),
+              ),
             ),
 
           // Indicator dot with glow
           if (widget.config.showIndicatorDot && entries.isNotEmpty)
-            TweenAnimationBuilder<Offset>(
-              tween: Tween(begin: position, end: position),
-              duration: const Duration(milliseconds: 60),
-              curve: Curves.easeOut,
-              builder: (context, pos, _) {
-                return Positioned(
-                  left: pos.dx - 16,
-                  top: pos.dy - 16,
-                  child: _IndicatorDot(
-                    color: entries.first.color,
-                    size: widget.config.indicatorDotSize,
-                    isDark: isDark,
-                  ),
-                );
-              },
+            Positioned(
+              left: _currentPosition.dx - 16,
+              top: _currentPosition.dy - 16,
+              child: _IndicatorDot(
+                color: entries.first.color,
+                size: widget.config.indicatorDotSize,
+                isDark: isDark,
+              ),
             ),
 
-          // Tooltip card - smoothly animated position
-          TweenAnimationBuilder<Offset>(
-            tween: Tween(begin: position, end: position),
-            duration: const Duration(milliseconds: 60),
-            curve: Curves.easeOut,
-            builder: (context, pos, child) {
-              final tooltipY = _calculateTooltipY(pos);
-              final tooltipX = pos.dx - 70 + widget.config.offset.dx;
-
-              return Positioned(
-                left: tooltipX,
-                top: tooltipY,
-                child: child!,
-              );
-            },
+          // Tooltip card
+          Positioned(
+            left: tooltipX,
+            top: tooltipY,
             child: _TooltipCard(
-              data: widget.data,
+              data: _currentData!,
               config: widget.config,
               theme: widget.theme,
             ),
@@ -442,21 +468,21 @@ class _TooltipCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(10),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.1),
-              blurRadius: 20,
-              offset: const Offset(0, 8),
+              color: Colors.black.withValues(alpha: isDark ? 0.35 : 0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 6),
               spreadRadius: 0,
             ),
             BoxShadow(
-              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.03),
-              blurRadius: 6,
+              color: Colors.black.withValues(alpha: isDark ? 0.15 : 0.04),
+              blurRadius: 4,
               offset: const Offset(0, 2),
             ),
           ],
           border: Border.all(
             color: isDark
-                ? Colors.white.withValues(alpha: 0.06)
-                : Colors.black.withValues(alpha: 0.03),
+                ? Colors.white.withValues(alpha: 0.08)
+                : Colors.black.withValues(alpha: 0.04),
             width: 1,
           ),
         );
