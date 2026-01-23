@@ -336,6 +336,7 @@ abstract class CircularChartPainter extends ChartPainter {
   CircularChartPainter({
     required super.theme,
     super.animationValue,
+    super.repaint,
     this.innerRadiusRatio = 0.0,
     this.startAngle = -90.0,
   });
@@ -345,6 +346,31 @@ abstract class CircularChartPainter extends ChartPainter {
 
   /// Starting angle in degrees (-90 = top).
   final double startAngle;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+
+    paintBackground(canvas, size);
+
+    final chartArea = getChartArea(size);
+
+    // For circular charts, use minimal clipping to allow:
+    // 1. Hover explode effects (slices extending outward)
+    // 2. External labels positioned outside the chart
+    // 3. Shadows and decorations around the chart
+    canvas.save();
+    // Clip to full canvas to allow labels and hover effects
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    paintSeries(canvas, size, chartArea);
+    canvas.restore();
+
+    paintAnnotations(canvas, size, chartArea);
+    paintMarkers(canvas, size, chartArea);
+    paintOverlay(canvas, size);
+
+    canvas.restore();
+  }
 
   /// Converts degrees to radians.
   double degreesToRadians(double degrees) => degrees * (3.14159265359 / 180);
@@ -378,6 +404,32 @@ abstract class PolarChartPainter extends ChartPainter {
 
   /// Converts degrees to radians.
   double degreesToRadians(double degrees) => degrees * (3.14159265359 / 180);
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.save();
+
+    paintBackground(canvas, size);
+
+    final chartArea = getChartArea(size);
+
+    // For polar charts, use full canvas clipping to allow:
+    // 1. Axis labels positioned outside the radar area
+    // 2. Data points at the edges
+    // 3. Hover effects
+    canvas.save();
+    canvas.clipRect(Rect.fromLTWH(0, 0, size.width, size.height));
+    paintGrid(canvas, size);
+    paintAxes(canvas, size);
+    paintSeries(canvas, size, chartArea);
+    canvas.restore();
+
+    paintAnnotations(canvas, size, chartArea);
+    paintMarkers(canvas, size, chartArea);
+    paintOverlay(canvas, size);
+
+    canvas.restore();
+  }
 
   @override
   Rect getChartArea(Size size) {
