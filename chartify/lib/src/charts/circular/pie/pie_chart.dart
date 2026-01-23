@@ -52,13 +52,19 @@ class PieChart extends StatefulWidget {
 }
 
 class _PieChartState extends State<PieChart>
-    with SingleTickerProviderStateMixin {
+    with TickerProviderStateMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
   Animation<double>? _animation;
   final ChartHitTester _hitTester = ChartHitTester();
   Rect _chartArea = Rect.zero;
+
+  // Hover animation
+  AnimationController? _hoverController;
+  Animation<double>? _hoverAnimation;
+  int? _hoveredIndex;
+  double _hoverScale = 0.0;
 
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
@@ -68,6 +74,7 @@ class _PieChartState extends State<PieChart>
     super.initState();
     _initController();
     _initAnimation();
+    _initHoverAnimation();
   }
 
   void _initController() {
@@ -99,6 +106,26 @@ class _PieChartState extends State<PieChart>
     }
   }
 
+  void _initHoverAnimation() {
+    _hoverController = AnimationController(
+      vsync: this,
+      duration: widget.data.hoverDuration,
+    );
+
+    _hoverAnimation = CurvedAnimation(
+      parent: _hoverController!,
+      curve: Curves.easeOutCubic,
+    );
+
+    _hoverController!.addListener(() {
+      if (mounted) {
+        setState(() {
+          _hoverScale = _hoverAnimation!.value;
+        });
+      }
+    });
+  }
+
   @override
   void didUpdateWidget(PieChart oldWidget) {
     super.didUpdateWidget(oldWidget);
@@ -116,11 +143,16 @@ class _PieChartState extends State<PieChart>
         _animationController?.forward(from: 0.0);
       }
     }
+
+    if (widget.data.hoverDuration != oldWidget.data.hoverDuration) {
+      _hoverController?.duration = widget.data.hoverDuration;
+    }
   }
 
   @override
   void dispose() {
     _animationController?.dispose();
+    _hoverController?.dispose();
     if (_ownsController) {
       _controller.dispose();
     }
@@ -137,9 +169,17 @@ class _PieChartState extends State<PieChart>
   void _handleHover(PointerEvent event) {
     final hitInfo = _hitTester.hitTest(event.localPosition, radius: 0);
     if (hitInfo != null) {
+      if (_hoveredIndex != hitInfo.pointIndex) {
+        _hoveredIndex = hitInfo.pointIndex;
+        _hoverController?.forward(from: 0);
+      }
       _controller.setHoveredPoint(hitInfo);
       widget.onSectionHover?.call(hitInfo.pointIndex, widget.data.sections[hitInfo.pointIndex]);
     } else {
+      if (_hoveredIndex != null) {
+        _hoveredIndex = null;
+        _hoverController?.reverse();
+      }
       _controller.clearHoveredPoint();
       widget.onSectionHover?.call(null, null);
     }
@@ -182,6 +222,7 @@ class _PieChartState extends State<PieChart>
                         animationValue: _animation?.value ?? 1.0,
                         controller: _controller,
                         hitTester: _hitTester,
+                        hoverScale: _hoverScale,
                       ),
                       size: Size.infinite,
                     ),
@@ -224,11 +265,13 @@ class _PieChartPainter extends CircularChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-  }) : super(innerRadiusRatio: data.holeRadius, startAngle: data.startAngle);
+    required this.hoverScale,
+  }) : super(innerRadiusRatio: 0, startAngle: data.startAngle);
 
   final PieChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double hoverScale;
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -238,22 +281,59 @@ class _PieChartPainter extends CircularChartPainter {
 
     final center = chartArea.center;
     final outerRadius = chartArea.width / 2;
-    final innerRadius = outerRadius * innerRadiusRatio;
+    // holeRadius: if <= 1, treat as ratio; if > 1, treat as pixels
+    final double innerRadius = data.holeRadius <= 1
+        ? outerRadius * data.holeRadius
+        : data.holeRadius.clamp(0.0, outerRadius - 10);
 
     final total = data.total;
     if (total <= 0) return;
 
+    // Calculate gap in radians
+    final gapRadians = data.segmentGap / outerRadius;
+
     var currentAngle = degreesToRadians(startAngle);
 
+    // First pass: draw shadows
+    if (data.enableShadows) {
+      var shadowAngle = currentAngle;
+      for (var i = 0; i < data.sections.length; i++) {
+        final section = data.sections[i];
+        final baseSweepAngle = (section.value / total) * 2 * math.pi * animationValue;
+        final sweepAngle = baseSweepAngle - gapRadians;
+        final adjustedStart = shadowAngle + (gapRadians / 2);
+
+        final isHovered = controller.hoveredPoint?.pointIndex == i;
+        // Smooth hover animation for explode offset
+        final targetOffset = isHovered ? 10.0 : section.explodeOffset;
+        final explodeOffset = isHovered ? targetOffset * hoverScale : targetOffset;
+
+        final midAngle = shadowAngle + baseSweepAngle / 2;
+        final explodeX = explodeOffset * math.cos(midAngle);
+        final explodeY = explodeOffset * math.sin(midAngle);
+        final sectionCenter = Offset(center.dx + explodeX, center.dy + explodeY);
+
+        final path = _buildSectionPath(sectionCenter, innerRadius, outerRadius, adjustedStart, sweepAngle);
+        _drawSectionShadow(canvas, path, section.shadowElevation);
+
+        shadowAngle += baseSweepAngle;
+      }
+    }
+
+    // Second pass: draw sections
     for (var i = 0; i < data.sections.length; i++) {
       final section = data.sections[i];
-      final sweepAngle = (section.value / total) * 2 * math.pi * animationValue;
+      final baseSweepAngle = (section.value / total) * 2 * math.pi * animationValue;
+      final sweepAngle = baseSweepAngle - gapRadians;
+      final adjustedStart = currentAngle + (gapRadians / 2);
 
       final isHovered = controller.hoveredPoint?.pointIndex == i;
-      final explodeOffset = isHovered ? 10.0 : section.explodeOffset;
+      // Smooth hover animation for explode offset
+      final targetOffset = isHovered ? 10.0 : section.explodeOffset;
+      final explodeOffset = isHovered ? targetOffset * hoverScale : targetOffset;
 
       // Calculate explode offset
-      final midAngle = currentAngle + sweepAngle / 2;
+      final midAngle = currentAngle + baseSweepAngle / 2;
       final explodeX = explodeOffset * math.cos(midAngle);
       final explodeY = explodeOffset * math.sin(midAngle);
       final sectionCenter = Offset(center.dx + explodeX, center.dy + explodeY);
@@ -265,29 +345,29 @@ class _PieChartPainter extends CircularChartPainter {
         sectionCenter,
         innerRadius,
         outerRadius,
-        currentAngle,
+        adjustedStart,
         sweepAngle,
         color,
         section,
         isHovered,
       );
 
-      // Register hit target
+      // Register hit target (use full sweep for hit testing)
       _registerHitTarget(
         center,
         innerRadius,
         outerRadius,
         currentAngle,
-        sweepAngle,
+        baseSweepAngle,
         i,
         section,
       );
 
-      currentAngle += sweepAngle;
+      currentAngle += baseSweepAngle;
     }
 
-    // Draw stroke between sections
-    if (data.strokeWidth > 0) {
+    // Draw stroke between sections (only if no segment gaps)
+    if (data.strokeWidth > 0 && data.segmentGap <= 0) {
       _drawStrokes(canvas, center, innerRadius, outerRadius);
     }
 
@@ -297,21 +377,26 @@ class _PieChartPainter extends CircularChartPainter {
     }
   }
 
-  void _drawSection(
-    Canvas canvas,
+  void _drawSectionShadow(Canvas canvas, Path path, double elevation) {
+    if (elevation <= 0) return;
+
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.15)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, elevation * 1.5);
+
+    canvas.save();
+    canvas.translate(elevation * 0.3, elevation * 0.5);
+    canvas.drawPath(path, shadowPaint);
+    canvas.restore();
+  }
+
+  Path _buildSectionPath(
     Offset center,
     double innerRadius,
     double outerRadius,
     double startAngle,
     double sweepAngle,
-    Color color,
-    PieSection section,
-    bool isHovered,
   ) {
-    final paint = Paint()
-      ..color = isHovered ? color.withValues(alpha: 0.9) : color
-      ..style = PaintingStyle.fill;
-
     final path = Path();
 
     if (innerRadius > 0) {
@@ -352,6 +437,32 @@ class _PieChartPainter extends CircularChartPainter {
       );
       path.close();
     }
+
+    return path;
+  }
+
+  void _drawSection(
+    Canvas canvas,
+    Offset center,
+    double innerRadius,
+    double outerRadius,
+    double startAngle,
+    double sweepAngle,
+    Color color,
+    PieSection section,
+    bool isHovered,
+  ) {
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    // Apply gradient if available, otherwise use solid color
+    if (section.gradient != null) {
+      final rect = Rect.fromCircle(center: center, radius: outerRadius);
+      paint.shader = section.gradient!.createShader(rect);
+    } else {
+      paint.color = isHovered ? color.withValues(alpha: 0.85) : color;
+    }
+
+    final path = _buildSectionPath(center, innerRadius, outerRadius, startAngle, sweepAngle);
 
     canvas.drawPath(path, paint);
 
@@ -444,6 +555,7 @@ class _PieChartPainter extends CircularChartPainter {
 
       final sweepAngle = (section.value / total) * 2 * math.pi * animationValue;
       final midAngle = currentAngle + sweepAngle / 2;
+      final percentage = (section.value / total * 100).toStringAsFixed(1);
 
       final textStyle = data.labelStyle ?? theme.labelStyle.copyWith(fontSize: 12);
 
@@ -453,29 +565,96 @@ class _PieChartPainter extends CircularChartPainter {
           center.dx + labelRadius * math.cos(midAngle),
           center.dy + labelRadius * math.sin(midAngle),
         );
-        _drawText(canvas, section.label!, labelPos, textStyle);
+        _drawText(canvas, '${section.label!}\n$percentage%', labelPos, textStyle);
       } else {
-        final labelRadius = outerRadius + 20;
-        final labelPos = Offset(
-          center.dx + labelRadius * math.cos(midAngle),
-          center.dy + labelRadius * math.sin(midAngle),
-        );
+        if (data.labelConnector == PieLabelConnector.elbow) {
+          _drawElbowConnectorLabel(
+            canvas,
+            center,
+            outerRadius,
+            midAngle,
+            section.label!,
+            percentage,
+            textStyle,
+          );
+        } else {
+          // Straight connector
+          final labelRadius = outerRadius + 20;
+          final labelPos = Offset(
+            center.dx + labelRadius * math.cos(midAngle),
+            center.dy + labelRadius * math.sin(midAngle),
+          );
 
-        // Draw connector line
-        final lineStart = Offset(
-          center.dx + outerRadius * math.cos(midAngle),
-          center.dy + outerRadius * math.sin(midAngle),
-        );
-        final linePaint = Paint()
-          ..color = theme.labelStyle.color ?? Colors.grey
-          ..strokeWidth = 1;
-        canvas.drawLine(lineStart, labelPos, linePaint);
+          // Draw connector line
+          final lineStart = Offset(
+            center.dx + outerRadius * math.cos(midAngle),
+            center.dy + outerRadius * math.sin(midAngle),
+          );
+          final linePaint = Paint()
+            ..color = theme.labelStyle.color ?? Colors.grey
+            ..strokeWidth = 1;
+          canvas.drawLine(lineStart, labelPos, linePaint);
 
-        _drawText(canvas, section.label!, labelPos, textStyle);
+          _drawText(canvas, '${section.label!}\n$percentage%', labelPos, textStyle);
+        }
       }
 
       currentAngle += sweepAngle;
     }
+  }
+
+  void _drawElbowConnectorLabel(
+    Canvas canvas,
+    Offset center,
+    double outerRadius,
+    double midAngle,
+    String label,
+    String percentage,
+    TextStyle style,
+  ) {
+    // 1. Start point on pie edge
+    final startPoint = Offset(
+      center.dx + outerRadius * math.cos(midAngle),
+      center.dy + outerRadius * math.sin(midAngle),
+    );
+
+    // 2. Elbow point (extends outward)
+    const elbowLength = 20.0;
+    final elbowPoint = Offset(
+      center.dx + (outerRadius + elbowLength) * math.cos(midAngle),
+      center.dy + (outerRadius + elbowLength) * math.sin(midAngle),
+    );
+
+    // 3. Horizontal line to label
+    final isRightSide = midAngle > -math.pi / 2 && midAngle < math.pi / 2;
+    const horizontalLength = 15.0;
+    final labelPoint = Offset(
+      elbowPoint.dx + (isRightSide ? horizontalLength : -horizontalLength),
+      elbowPoint.dy,
+    );
+
+    // Draw connector lines
+    final linePaint = Paint()
+      ..color = style.color ?? Colors.grey
+      ..strokeWidth = 1
+      ..strokeCap = StrokeCap.round;
+    canvas.drawLine(startPoint, elbowPoint, linePaint);
+    canvas.drawLine(elbowPoint, labelPoint, linePaint);
+
+    // Draw label text
+    final labelText = '$label\n$percentage%';
+    final textSpan = TextSpan(text: labelText, style: style);
+    final textPainter = TextPainter(
+      text: textSpan,
+      textAlign: isRightSide ? TextAlign.left : TextAlign.right,
+      textDirection: TextDirection.ltr,
+    )..layout();
+
+    final textOffset = Offset(
+      isRightSide ? labelPoint.dx + 4 : labelPoint.dx - textPainter.width - 4,
+      labelPoint.dy - textPainter.height / 2,
+    );
+    textPainter.paint(canvas, textOffset);
   }
 
   void _drawText(Canvas canvas, String text, Offset position, TextStyle style) {
@@ -497,7 +676,8 @@ class _PieChartPainter extends CircularChartPainter {
   bool shouldRepaint(covariant _PieChartPainter oldDelegate) =>
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
-      controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
+      controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
+      hoverScale != oldDelegate.hoverScale;
 }
 
 /// A donut chart widget (pie chart with a hole in the center).

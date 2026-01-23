@@ -14,6 +14,8 @@ class PieSection {
     this.borderColor,
     this.borderWidth = 0,
     this.explodeOffset = 0,
+    this.gradient,
+    this.shadowElevation = 4,
   });
 
   /// The value of this section.
@@ -34,6 +36,12 @@ class PieSection {
   /// Offset when exploded (in pixels).
   final double explodeOffset;
 
+  /// Optional gradient fill for this section.
+  final Gradient? gradient;
+
+  /// Shadow elevation for this section (0 = no shadow).
+  final double shadowElevation;
+
   PieSection copyWith({
     double? value,
     String? label,
@@ -41,6 +49,8 @@ class PieSection {
     Color? borderColor,
     double? borderWidth,
     double? explodeOffset,
+    Gradient? gradient,
+    double? shadowElevation,
   }) {
     return PieSection(
       value: value ?? this.value,
@@ -49,6 +59,8 @@ class PieSection {
       borderColor: borderColor ?? this.borderColor,
       borderWidth: borderWidth ?? this.borderWidth,
       explodeOffset: explodeOffset ?? this.explodeOffset,
+      gradient: gradient ?? this.gradient,
+      shadowElevation: shadowElevation ?? this.shadowElevation,
     );
   }
 }
@@ -65,6 +77,11 @@ class PieChartData extends ChartData {
     this.labelPosition = PieLabelPosition.outside,
     this.labelStyle,
     this.animation,
+    this.segmentGap = 2,
+    this.cornerRadius = 0,
+    this.enableShadows = true,
+    this.hoverDuration = const Duration(milliseconds: 200),
+    this.labelConnector = PieLabelConnector.straight,
   });
 
   /// The sections to display.
@@ -95,6 +112,21 @@ class PieChartData extends ChartData {
   @override
   final ChartAnimation? animation;
 
+  /// Gap between segments in pixels.
+  final double segmentGap;
+
+  /// Corner radius for rounded segment edges.
+  final double cornerRadius;
+
+  /// Whether to enable drop shadows on segments.
+  final bool enableShadows;
+
+  /// Duration for hover animations.
+  final Duration hoverDuration;
+
+  /// Style of label connector lines.
+  final PieLabelConnector labelConnector;
+
   @override
   List<ChartSeries<dynamic>> get allSeries => const [];
 
@@ -114,6 +146,11 @@ class PieChartData extends ChartData {
     ChartAnimation? animation,
     String? title,
     String? subtitle,
+    double? segmentGap,
+    double? cornerRadius,
+    bool? enableShadows,
+    Duration? hoverDuration,
+    PieLabelConnector? labelConnector,
   }) {
     return PieChartData(
       sections: sections ?? this.sections,
@@ -125,6 +162,11 @@ class PieChartData extends ChartData {
       labelPosition: labelPosition ?? this.labelPosition,
       labelStyle: labelStyle ?? this.labelStyle,
       animation: animation ?? this.animation,
+      segmentGap: segmentGap ?? this.segmentGap,
+      cornerRadius: cornerRadius ?? this.cornerRadius,
+      enableShadows: enableShadows ?? this.enableShadows,
+      hoverDuration: hoverDuration ?? this.hoverDuration,
+      labelConnector: labelConnector ?? this.labelConnector,
     );
   }
 }
@@ -139,4 +181,13 @@ enum PieLabelPosition {
 
   /// No labels (for legend only).
   none,
+}
+
+/// Style of label connector lines.
+enum PieLabelConnector {
+  /// Straight line from pie to label.
+  straight,
+
+  /// Modern L-shaped elbow connector.
+  elbow,
 }

@@ -1,0 +1,164 @@
+<svg width="1584" height="396" viewBox="0 0 1584 396" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background Gradient -->
+  <defs>
+    <linearGradient id="bgGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#6366F1"/>
+      <stop offset="50%" style="stop-color:#8B5CF6"/>
+      <stop offset="100%" style="stop-color:#EC4899"/>
+    </linearGradient>
+    <linearGradient id="chartGradient1" x1="0%" y1="100%" x2="0%" y2="0%">
+      <stop offset="0%" style="stop-color:#10B981;stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:#10B981;stop-opacity:0.8"/>
+    </linearGradient>
+    <linearGradient id="pieGradient1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#F59E0B"/>
+      <stop offset="100%" style="stop-color:#EF4444"/>
+    </linearGradient>
+    <linearGradient id="pieGradient2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3B82F6"/>
+      <stop offset="100%" style="stop-color:#6366F1"/>
+    </linearGradient>
+    <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#000000" flood-opacity="0.25"/>
+    </filter>
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    <!-- Grid Pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+    </pattern>
+  </defs>
+
+  <!-- Main Background -->
+  <rect width="1584" height="396" fill="url(#bgGradient)"/>
+
+  <!-- Grid Overlay -->
+  <rect width="1584" height="396" fill="url(#grid)"/>
+
+  <!-- Decorative Circles -->
+  <circle cx="100" cy="350" r="200" fill="rgba(255,255,255,0.03)"/>
+  <circle cx="1500" cy="50" r="250" fill="rgba(255,255,255,0.03)"/>
+  <circle cx="800" cy="400" r="150" fill="rgba(255,255,255,0.02)"/>
+
+  <!-- Chart Card 1: Line Chart -->
+  <g transform="translate(80, 80)" filter="url(#shadow)">
+    <rect width="280" height="180" rx="16" fill="rgba(255,255,255,0.95)"/>
+    <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#374151">Revenue Trend</text>
+
+    <!-- Line Chart Area Fill -->
+    <path d="M 30 140 L 60 120 L 100 130 L 140 90 L 180 100 L 220 60 L 250 70 L 250 150 L 30 150 Z" fill="url(#chartGradient1)"/>
+
+    <!-- Line Chart Line -->
+    <path d="M 30 140 L 60 120 L 100 130 L 140 90 L 180 100 L 220 60 L 250 70" stroke="#10B981" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+
+    <!-- Data Points -->
+    <circle cx="30" cy="140" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    <circle cx="60" cy="120" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    <circle cx="100" cy="130" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    <circle cx="140" cy="90" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    <circle cx="180" cy="100" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    <circle cx="220" cy="60" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+    <circle cx="250" cy="70" r="5" fill="#10B981" stroke="white" stroke-width="2"/>
+
+    <!-- X Axis -->
+    <line x1="20" y1="155" x2="260" y2="155" stroke="#E5E7EB" stroke-width="1"/>
+  </g>
+
+  <!-- Chart Card 2: Donut Chart -->
+  <g transform="translate(400, 80)" filter="url(#shadow)">
+    <rect width="280" height="180" rx="16" fill="rgba(255,255,255,0.95)"/>
+    <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#374151">Market Share</text>
+
+    <!-- Donut Chart Segments -->
+    <g transform="translate(140, 105)">
+      <!-- Segment 1 - 40% -->
+      <path d="M 0 -50 A 50 50 0 0 1 47.55 15.45 L 28.53 9.27 A 30 30 0 0 0 0 -30 Z" fill="url(#pieGradient2)"/>
+      <!-- Segment 2 - 30% -->
+      <path d="M 47.55 15.45 A 50 50 0 0 1 -40.45 29.39 L -24.27 17.63 A 30 30 0 0 0 28.53 9.27 Z" fill="url(#pieGradient1)"/>
+      <!-- Segment 3 - 20% -->
+      <path d="M -40.45 29.39 A 50 50 0 0 1 -47.55 -15.45 L -28.53 -9.27 A 30 30 0 0 0 -24.27 17.63 Z" fill="#10B981"/>
+      <!-- Segment 4 - 10% -->
+      <path d="M -47.55 -15.45 A 50 50 0 0 1 0 -50 L 0 -30 A 30 30 0 0 0 -28.53 -9.27 Z" fill="#8B5CF6"/>
+
+      <!-- Center Circle (for donut effect) -->
+      <circle cx="0" cy="0" r="25" fill="white"/>
+
+      <!-- Center Text -->
+      <text x="0" y="-5" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#6B7280" text-anchor="middle">Total</text>
+      <text x="0" y="10" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="700" fill="#1F2937" text-anchor="middle">100%</text>
+    </g>
+  </g>
+
+  <!-- Chart Card 3: Bar Chart -->
+  <g transform="translate(720, 80)" filter="url(#shadow)">
+    <rect width="280" height="180" rx="16" fill="rgba(255,255,255,0.95)"/>
+    <text x="20" y="35" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#374151">Monthly Sales</text>
+
+    <!-- Bar Chart Bars -->
+    <rect x="35" y="100" width="30" height="50" rx="4" fill="#3B82F6"/>
+    <rect x="75" y="70" width="30" height="80" rx="4" fill="#6366F1"/>
+    <rect x="115" y="85" width="30" height="65" rx="4" fill="#8B5CF6"/>
+    <rect x="155" y="55" width="30" height="95" rx="4" fill="url(#pieGradient1)"/>
+    <rect x="195" y="75" width="30" height="75" rx="4" fill="#10B981"/>
+    <rect x="235" y="60" width="30" height="90" rx="4" fill="#EC4899"/>
+
+    <!-- X Axis -->
+    <line x1="20" y1="155" x2="260" y2="155" stroke="#E5E7EB" stroke-width="1"/>
+
+    <!-- X Axis Labels -->
+    <text x="50" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9CA3AF" text-anchor="middle">Jan</text>
+    <text x="90" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9CA3AF" text-anchor="middle">Feb</text>
+    <text x="130" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9CA3AF" text-anchor="middle">Mar</text>
+    <text x="170" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9CA3AF" text-anchor="middle">Apr</text>
+    <text x="210" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9CA3AF" text-anchor="middle">May</text>
+    <text x="250" y="170" font-family="system-ui, -apple-system, sans-serif" font-size="10" fill="#9CA3AF" text-anchor="middle">Jun</text>
+  </g>
+
+  <!-- Branding Section -->
+  <g transform="translate(1080, 100)">
+    <!-- Logo Icon -->
+    <g filter="url(#glow)">
+      <rect x="0" y="0" width="56" height="56" rx="12" fill="white"/>
+      <path d="M 15 38 L 22 28 L 30 32 L 41 18" stroke="#6366F1" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="15" cy="38" r="3" fill="#6366F1"/>
+      <circle cx="22" cy="28" r="3" fill="#8B5CF6"/>
+      <circle cx="30" cy="32" r="3" fill="#EC4899"/>
+      <circle cx="41" cy="18" r="3" fill="#F59E0B"/>
+    </g>
+
+    <!-- Brand Name -->
+    <text x="70" y="25" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="800" fill="white" letter-spacing="-1">Chartify</text>
+
+    <!-- Tagline -->
+    <text x="70" y="52" font-family="system-ui, -apple-system, sans-serif" font-size="18" font-weight="400" fill="rgba(255,255,255,0.9)">Modern Flutter Charts</text>
+
+    <!-- Feature Pills -->
+    <g transform="translate(0, 90)">
+      <rect x="0" y="0" width="100" height="28" rx="14" fill="rgba(255,255,255,0.15)"/>
+      <text x="50" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">25+ Charts</text>
+
+      <rect x="110" y="0" width="110" height="28" rx="14" fill="rgba(255,255,255,0.15)"/>
+      <text x="165" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">100K+ Points</text>
+
+      <rect x="230" y="0" width="120" height="28" rx="14" fill="rgba(255,255,255,0.15)"/>
+      <text x="290" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">Cross-Platform</text>
+    </g>
+
+    <!-- Coming Soon Badge -->
+    <g transform="translate(0, 140)">
+      <rect x="0" y="0" width="160" height="40" rx="20" fill="white"/>
+      <text x="25" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#6366F1">Coming Soon</text>
+      <text x="135" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="16">🚀</text>
+    </g>
+  </g>
+
+  <!-- Flutter Logo Hint -->
+  <g transform="translate(1480, 320)">
+    <text font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="rgba(255,255,255,0.6)">Built for Flutter</text>
+  </g>
+</svg>

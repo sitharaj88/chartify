@@ -388,6 +388,20 @@ class ColorPalette {
         Color(0xFFFF5722), // Deep Orange
       ]);
 
+  /// Creates a modern color palette with vibrant contemporary colors.
+  factory ColorPalette.modern() => const ColorPalette([
+        Color(0xFF6366F1), // Indigo
+        Color(0xFF8B5CF6), // Purple
+        Color(0xFFEC4899), // Pink
+        Color(0xFFF59E0B), // Amber
+        Color(0xFF10B981), // Emerald
+        Color(0xFF3B82F6), // Blue
+        Color(0xFFEF4444), // Red
+        Color(0xFF14B8A6), // Teal
+        Color(0xFFF97316), // Orange
+        Color(0xFF84CC16), // Lime
+      ]);
+
   /// Creates a Material Design dark color palette.
   factory ColorPalette.materialDark() => const ColorPalette([
         Color(0xFF64B5F6), // Blue 300
@@ -400,6 +414,20 @@ class ColorPalette {
         Color(0xFFAED581), // Light Green 300
         Color(0xFF7986CB), // Indigo 300
         Color(0xFFFF8A65), // Deep Orange 300
+      ]);
+
+  /// Creates a modern dark color palette with vibrant colors optimized for dark backgrounds.
+  factory ColorPalette.modernDark() => const ColorPalette([
+        Color(0xFF818CF8), // Indigo 400
+        Color(0xFFA78BFA), // Purple 400
+        Color(0xFFF472B6), // Pink 400
+        Color(0xFFFBBF24), // Amber 400
+        Color(0xFF34D399), // Emerald 400
+        Color(0xFF60A5FA), // Blue 400
+        Color(0xFFF87171), // Red 400
+        Color(0xFF2DD4BF), // Teal 400
+        Color(0xFFFB923C), // Orange 400
+        Color(0xFFA3E635), // Lime 400
       ]);
 
   /// Creates a color palette from a Material 3 color scheme.
