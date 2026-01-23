@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../core/base/chart_controller.dart';
@@ -23,6 +25,9 @@ class TooltipConfig {
     this.showIndicatorDot = false,
     this.indicatorLineWidth = 1.0,
     this.indicatorDotSize = 10.0,
+    this.screenMargin = const EdgeInsets.all(8),
+    this.showArrow = true,
+    this.arrowSize = 8.0,
   });
 
   final bool enabled;
@@ -41,6 +46,12 @@ class TooltipConfig {
   final bool showIndicatorDot;
   final double indicatorLineWidth;
   final double indicatorDotSize;
+  /// Minimum margin from screen edges
+  final EdgeInsets screenMargin;
+  /// Whether to show arrow pointing to data point
+  final bool showArrow;
+  /// Size of the arrow
+  final double arrowSize;
 
   TooltipConfig copyWith({
     bool? enabled,
@@ -59,6 +70,9 @@ class TooltipConfig {
     bool? showIndicatorDot,
     double? indicatorLineWidth,
     double? indicatorDotSize,
+    EdgeInsets? screenMargin,
+    bool? showArrow,
+    double? arrowSize,
   }) {
     return TooltipConfig(
       enabled: enabled ?? this.enabled,
@@ -77,11 +91,250 @@ class TooltipConfig {
       showIndicatorDot: showIndicatorDot ?? this.showIndicatorDot,
       indicatorLineWidth: indicatorLineWidth ?? this.indicatorLineWidth,
       indicatorDotSize: indicatorDotSize ?? this.indicatorDotSize,
+      screenMargin: screenMargin ?? this.screenMargin,
+      showArrow: showArrow ?? this.showArrow,
+      arrowSize: arrowSize ?? this.arrowSize,
     );
   }
 }
 
 enum TooltipPosition { auto, top, bottom, left, right }
+
+/// Result of tooltip positioning calculation
+@immutable
+class TooltipPositionResult {
+  const TooltipPositionResult({
+    required this.position,
+    required this.resolvedPosition,
+    required this.arrowPosition,
+    required this.arrowAlignment,
+  });
+
+  /// The calculated position for the tooltip
+  final Offset position;
+  /// The resolved position direction (top, bottom, left, right)
+  final TooltipPosition resolvedPosition;
+  /// Position for the arrow relative to tooltip
+  final double arrowPosition;
+  /// Alignment of arrow (0.0 = start, 0.5 = center, 1.0 = end)
+  final double arrowAlignment;
+}
+
+/// Smart tooltip positioner with edge detection and auto-flip.
+class TooltipPositioner {
+  /// Default tooltip dimensions for calculation
+  static const double defaultTooltipWidth = 140.0;
+  static const double defaultTooltipHeight = 70.0;
+  static const double tooltipOffset = 12.0;
+  static const double arrowSize = 8.0;
+
+  /// Calculate optimal tooltip position with smart edge detection.
+  ///
+  /// Priority order:
+  /// 1. Above data point (preferred)
+  /// 2. Below data point (if above overflows)
+  /// 3. Right of data point (if vertical overflows)
+  /// 4. Left of data point (if right overflows)
+  /// 5. Clamped to nearest valid position (last resort)
+  static TooltipPositionResult calculatePosition({
+    required Offset dataPoint,
+    required Size tooltipSize,
+    required Size screenSize,
+    required Rect chartArea,
+    EdgeInsets margin = const EdgeInsets.all(8),
+    TooltipPosition preferredPosition = TooltipPosition.auto,
+    Offset offset = Offset.zero,
+  }) {
+    final safeArea = Rect.fromLTRB(
+      margin.left,
+      margin.top,
+      screenSize.width - margin.right,
+      screenSize.height - margin.bottom,
+    );
+
+    // Calculate available space in each direction
+    final spaceAbove = dataPoint.dy - chartArea.top;
+    final spaceBelow = chartArea.bottom - dataPoint.dy;
+    final spaceLeft = dataPoint.dx - chartArea.left;
+    final spaceRight = chartArea.right - dataPoint.dx;
+
+    // Determine best position based on available space
+    TooltipPosition resolvedPosition;
+    if (preferredPosition != TooltipPosition.auto) {
+      resolvedPosition = preferredPosition;
+    } else {
+      // Auto-detect best position
+      if (_fitsAbove(dataPoint, tooltipSize, safeArea, offset)) {
+        resolvedPosition = TooltipPosition.top;
+      } else if (_fitsBelow(dataPoint, tooltipSize, safeArea, offset)) {
+        resolvedPosition = TooltipPosition.bottom;
+      } else if (spaceRight >= spaceLeft &&
+                 _fitsRight(dataPoint, tooltipSize, safeArea, offset)) {
+        resolvedPosition = TooltipPosition.right;
+      } else if (_fitsLeft(dataPoint, tooltipSize, safeArea, offset)) {
+        resolvedPosition = TooltipPosition.left;
+      } else {
+        // Default to top if nothing fits well, will be clamped
+        resolvedPosition = spaceAbove >= spaceBelow
+            ? TooltipPosition.top
+            : TooltipPosition.bottom;
+      }
+    }
+
+    // Calculate position based on resolved direction
+    Offset tooltipPosition;
+    double arrowAlignment = 0.5; // Center by default
+
+    switch (resolvedPosition) {
+      case TooltipPosition.top:
+        tooltipPosition = Offset(
+          dataPoint.dx - tooltipSize.width / 2,
+          dataPoint.dy - tooltipSize.height - tooltipOffset - arrowSize + offset.dy,
+        );
+        break;
+      case TooltipPosition.bottom:
+        tooltipPosition = Offset(
+          dataPoint.dx - tooltipSize.width / 2,
+          dataPoint.dy + tooltipOffset + arrowSize - offset.dy,
+        );
+        break;
+      case TooltipPosition.left:
+        tooltipPosition = Offset(
+          dataPoint.dx - tooltipSize.width - tooltipOffset - arrowSize + offset.dx,
+          dataPoint.dy - tooltipSize.height / 2,
+        );
+        break;
+      case TooltipPosition.right:
+        tooltipPosition = Offset(
+          dataPoint.dx + tooltipOffset + arrowSize - offset.dx,
+          dataPoint.dy - tooltipSize.height / 2,
+        );
+        break;
+      case TooltipPosition.auto:
+        // Should not reach here, but fallback to top
+        tooltipPosition = Offset(
+          dataPoint.dx - tooltipSize.width / 2,
+          dataPoint.dy - tooltipSize.height - tooltipOffset - arrowSize,
+        );
+        resolvedPosition = TooltipPosition.top;
+    }
+
+    // Clamp to safe area and calculate arrow offset
+    final clampedPosition = _clampToSafeArea(
+      tooltipPosition,
+      tooltipSize,
+      safeArea,
+    );
+
+    // Calculate arrow alignment based on how much tooltip was shifted
+    if (resolvedPosition == TooltipPosition.top ||
+        resolvedPosition == TooltipPosition.bottom) {
+      final shift = clampedPosition.dx - tooltipPosition.dx;
+      final tooltipCenter = tooltipSize.width / 2;
+      arrowAlignment = ((tooltipCenter - shift) / tooltipSize.width)
+          .clamp(0.15, 0.85);
+    } else {
+      final shift = clampedPosition.dy - tooltipPosition.dy;
+      final tooltipCenter = tooltipSize.height / 2;
+      arrowAlignment = ((tooltipCenter - shift) / tooltipSize.height)
+          .clamp(0.15, 0.85);
+    }
+
+    // Calculate arrow position relative to data point
+    final arrowPos = _calculateArrowPosition(
+      dataPoint,
+      clampedPosition,
+      tooltipSize,
+      resolvedPosition,
+    );
+
+    return TooltipPositionResult(
+      position: clampedPosition,
+      resolvedPosition: resolvedPosition,
+      arrowPosition: arrowPos,
+      arrowAlignment: arrowAlignment,
+    );
+  }
+
+  static bool _fitsAbove(
+    Offset dataPoint,
+    Size tooltipSize,
+    Rect safeArea,
+    Offset offset,
+  ) {
+    final neededHeight = tooltipSize.height + tooltipOffset + arrowSize;
+    return dataPoint.dy - neededHeight + offset.dy >= safeArea.top;
+  }
+
+  static bool _fitsBelow(
+    Offset dataPoint,
+    Size tooltipSize,
+    Rect safeArea,
+    Offset offset,
+  ) {
+    final neededHeight = tooltipSize.height + tooltipOffset + arrowSize;
+    return dataPoint.dy + neededHeight - offset.dy <= safeArea.bottom;
+  }
+
+  static bool _fitsLeft(
+    Offset dataPoint,
+    Size tooltipSize,
+    Rect safeArea,
+    Offset offset,
+  ) {
+    final neededWidth = tooltipSize.width + tooltipOffset + arrowSize;
+    return dataPoint.dx - neededWidth + offset.dx >= safeArea.left;
+  }
+
+  static bool _fitsRight(
+    Offset dataPoint,
+    Size tooltipSize,
+    Rect safeArea,
+    Offset offset,
+  ) {
+    final neededWidth = tooltipSize.width + tooltipOffset + arrowSize;
+    return dataPoint.dx + neededWidth - offset.dx <= safeArea.right;
+  }
+
+  static Offset _clampToSafeArea(
+    Offset position,
+    Size tooltipSize,
+    Rect safeArea,
+  ) {
+    return Offset(
+      position.dx.clamp(
+        safeArea.left,
+        safeArea.right - tooltipSize.width,
+      ),
+      position.dy.clamp(
+        safeArea.top,
+        safeArea.bottom - tooltipSize.height,
+      ),
+    );
+  }
+
+  static double _calculateArrowPosition(
+    Offset dataPoint,
+    Offset tooltipPosition,
+    Size tooltipSize,
+    TooltipPosition direction,
+  ) {
+    switch (direction) {
+      case TooltipPosition.top:
+      case TooltipPosition.bottom:
+        // Horizontal arrow position
+        final relativeX = dataPoint.dx - tooltipPosition.dx;
+        return relativeX.clamp(12.0, tooltipSize.width - 12.0);
+      case TooltipPosition.left:
+      case TooltipPosition.right:
+        // Vertical arrow position
+        final relativeY = dataPoint.dy - tooltipPosition.dy;
+        return relativeY.clamp(12.0, tooltipSize.height - 12.0);
+      case TooltipPosition.auto:
+        return tooltipSize.width / 2;
+    }
+  }
+}
 
 @immutable
 class TooltipData {
@@ -126,7 +379,7 @@ class TooltipEntry {
   }
 }
 
-/// Smooth tooltip overlay with proper animation handling.
+/// Smooth tooltip overlay with smart positioning and proper animation handling.
 class ChartTooltipOverlay extends StatefulWidget {
   const ChartTooltipOverlay({
     super.key,
@@ -164,6 +417,9 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   // State tracking
   TooltipData? _currentData;
   bool _isVisible = false;
+  TooltipPositionResult? _positionResult;
+  Size _tooltipSize = const Size(140, 70);
+  final GlobalKey _tooltipKey = GlobalKey();
 
   @override
   void initState() {
@@ -241,6 +497,23 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
         _positionController.forward(from: 0);
       }
     });
+
+    // Measure tooltip after first frame to get actual size
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _measureTooltipSize();
+    });
+  }
+
+  void _measureTooltipSize() {
+    final renderBox = _tooltipKey.currentContext?.findRenderObject() as RenderBox?;
+    if (renderBox != null && renderBox.hasSize) {
+      final size = renderBox.size;
+      if (size != _tooltipSize) {
+        setState(() {
+          _tooltipSize = size;
+        });
+      }
+    }
   }
 
   void _hideTooltip() {
@@ -250,6 +523,7 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
           setState(() {
             _isVisible = false;
             _currentData = null;
+            _positionResult = null;
           });
         }
       });
@@ -302,23 +576,40 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
       return widget.child;
     }
 
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        widget.child,
-        if (_isVisible && _currentData != null)
-          _buildTooltipWidget(),
-      ],
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final screenSize = Size(constraints.maxWidth, constraints.maxHeight);
+
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            widget.child,
+            if (_isVisible && _currentData != null)
+              _buildTooltipWidget(screenSize),
+          ],
+        );
+      },
     );
   }
 
-  Widget _buildTooltipWidget() {
+  Widget _buildTooltipWidget(Size screenSize) {
     final isDark = widget.theme.brightness == Brightness.dark;
     final entries = _currentData!.entries;
 
-    // Calculate tooltip position
-    final tooltipY = _calculateTooltipY(_currentPosition);
-    final tooltipX = _currentPosition.dx - 70 + widget.config.offset.dx;
+    // Calculate smart position
+    _positionResult = TooltipPositioner.calculatePosition(
+      dataPoint: _currentPosition,
+      tooltipSize: _tooltipSize,
+      screenSize: screenSize,
+      chartArea: widget.chartArea,
+      margin: widget.config.screenMargin,
+      preferredPosition: widget.config.position,
+      offset: widget.config.offset,
+    );
+
+    final tooltipPosition = _positionResult!.position;
+    final resolvedPosition = _positionResult!.resolvedPosition;
+    final arrowAlignment = _positionResult!.arrowAlignment;
 
     return FadeTransition(
       opacity: _fadeAnimation,
@@ -351,36 +642,22 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
               ),
             ),
 
-          // Tooltip card
+          // Tooltip card with arrow
           Positioned(
-            left: tooltipX,
-            top: tooltipY,
-            child: _TooltipCard(
+            left: tooltipPosition.dx,
+            top: tooltipPosition.dy,
+            child: _TooltipCardWithArrow(
+              key: _tooltipKey,
               data: _currentData!,
               config: widget.config,
               theme: widget.theme,
+              resolvedPosition: resolvedPosition,
+              arrowAlignment: arrowAlignment,
             ),
           ),
         ],
       ),
     );
-  }
-
-  double _calculateTooltipY(Offset position) {
-    final preferredPosition = widget.config.position == TooltipPosition.auto
-        ? (position.dy > widget.chartArea.center.dy
-            ? TooltipPosition.top
-            : TooltipPosition.bottom)
-        : widget.config.position;
-
-    switch (preferredPosition) {
-      case TooltipPosition.top:
-        return position.dy - 85 + widget.config.offset.dy;
-      case TooltipPosition.bottom:
-        return position.dy + 25 - widget.config.offset.dy;
-      default:
-        return position.dy - 45 + widget.config.offset.dy;
-    }
   }
 }
 
@@ -446,6 +723,154 @@ class _IndicatorDot extends StatelessWidget {
   }
 }
 
+/// Tooltip card widget with arrow pointer.
+class _TooltipCardWithArrow extends StatelessWidget {
+  const _TooltipCardWithArrow({
+    super.key,
+    required this.data,
+    required this.config,
+    required this.theme,
+    required this.resolvedPosition,
+    required this.arrowAlignment,
+  });
+
+  final TooltipData data;
+  final TooltipConfig config;
+  final ChartThemeData theme;
+  final TooltipPosition resolvedPosition;
+  final double arrowAlignment;
+
+  @override
+  Widget build(BuildContext context) {
+    final isDark = theme.brightness == Brightness.dark;
+    final bgColor = isDark ? const Color(0xFF1E1E1E) : Colors.white;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Arrow on top
+        if (config.showArrow && resolvedPosition == TooltipPosition.bottom)
+          _buildArrow(bgColor, isTop: true),
+
+        // Main tooltip content
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Arrow on left
+            if (config.showArrow && resolvedPosition == TooltipPosition.right)
+              _buildArrow(bgColor, isLeft: true),
+
+            // Tooltip card
+            _TooltipCard(
+              data: data,
+              config: config,
+              theme: theme,
+            ),
+
+            // Arrow on right
+            if (config.showArrow && resolvedPosition == TooltipPosition.left)
+              _buildArrow(bgColor, isRight: true),
+          ],
+        ),
+
+        // Arrow on bottom
+        if (config.showArrow && resolvedPosition == TooltipPosition.top)
+          _buildArrow(bgColor, isBottom: true),
+      ],
+    );
+  }
+
+  Widget _buildArrow(
+    Color color, {
+    bool isTop = false,
+    bool isBottom = false,
+    bool isLeft = false,
+    bool isRight = false,
+  }) {
+    final size = config.arrowSize;
+
+    if (isTop || isBottom) {
+      return Padding(
+        padding: EdgeInsets.only(
+          left: math.max(0, arrowAlignment * 100 - size),
+        ),
+        child: CustomPaint(
+          size: Size(size * 2, size),
+          painter: _ArrowPainter(
+            color: color,
+            direction: isTop ? AxisDirection.up : AxisDirection.down,
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: EdgeInsets.only(
+        top: math.max(0, arrowAlignment * 50 - size),
+      ),
+      child: CustomPaint(
+        size: Size(size, size * 2),
+        painter: _ArrowPainter(
+          color: color,
+          direction: isLeft ? AxisDirection.left : AxisDirection.right,
+        ),
+      ),
+    );
+  }
+}
+
+/// Arrow painter for tooltip
+class _ArrowPainter extends CustomPainter {
+  _ArrowPainter({
+    required this.color,
+    required this.direction,
+  });
+
+  final Color color;
+  final AxisDirection direction;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+
+    switch (direction) {
+      case AxisDirection.up:
+        path.moveTo(0, size.height);
+        path.lineTo(size.width / 2, 0);
+        path.lineTo(size.width, size.height);
+        break;
+      case AxisDirection.down:
+        path.moveTo(0, 0);
+        path.lineTo(size.width / 2, size.height);
+        path.lineTo(size.width, 0);
+        break;
+      case AxisDirection.left:
+        path.moveTo(size.width, 0);
+        path.lineTo(0, size.height / 2);
+        path.lineTo(size.width, size.height);
+        break;
+      case AxisDirection.right:
+        path.moveTo(0, 0);
+        path.lineTo(size.width, size.height / 2);
+        path.lineTo(0, size.height);
+        break;
+    }
+
+    path.close();
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ArrowPainter oldDelegate) =>
+      color != oldDelegate.color || direction != oldDelegate.direction;
+}
+
 /// Tooltip card widget.
 class _TooltipCard extends StatelessWidget {
   const _TooltipCard({
@@ -493,7 +918,7 @@ class _TooltipCard extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: Container(
-        constraints: const BoxConstraints(minWidth: 120, maxWidth: 200),
+        constraints: const BoxConstraints(minWidth: 120, maxWidth: 220),
         decoration: decoration,
         padding: config.padding,
         child: Column(

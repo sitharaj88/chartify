@@ -56,20 +56,49 @@ abstract class ChartPainter extends CustomPainter {
     // Save the canvas state
     canvas.save();
 
-    // Paint each layer in order
+    // Paint background (no clipping)
     paintBackground(canvas, size);
-    paintGrid(canvas, size);
-    paintAxes(canvas, size);
 
-    // Clip to chart area for series
     final chartArea = getChartArea(size);
+
+    // Paint grid with slight overflow allowance for clean lines
+    canvas.save();
+    canvas.clipRect(chartArea.inflate(2));
+    paintGrid(canvas, size);
+    canvas.restore();
+
+    // Paint axes with label overflow allowance
+    // Labels can extend beyond chart area but should stay within canvas
+    canvas.save();
+    final axisClipRect = Rect.fromLTRB(
+      0, // Allow left labels
+      0, // Allow top labels
+      size.width, // Allow right labels
+      size.height, // Allow bottom labels
+    );
+    canvas.clipRect(axisClipRect);
+    paintAxes(canvas, size);
+    canvas.restore();
+
+    // Clip series strictly to chart area
     canvas.save();
     canvas.clipRect(chartArea);
     paintSeries(canvas, size, chartArea);
     canvas.restore();
 
+    // Annotations can extend slightly beyond chart area
+    canvas.save();
+    canvas.clipRect(chartArea.inflate(10));
     paintAnnotations(canvas, size, chartArea);
+    canvas.restore();
+
+    // Markers can extend beyond chart area for visibility
+    canvas.save();
+    canvas.clipRect(chartArea.inflate(20));
     paintMarkers(canvas, size, chartArea);
+    canvas.restore();
+
+    // Overlay (tooltips, crosshairs) - no clipping for full screen positioning
     paintOverlay(canvas, size);
 
     // Restore the canvas state

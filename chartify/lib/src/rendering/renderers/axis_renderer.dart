@@ -136,10 +136,30 @@ class AxisConfig extends RendererConfig {
   }
 }
 
+/// Result of label layout calculation with collision detection.
+class _LabelLayoutResult {
+  _LabelLayoutResult({
+    required this.tick,
+    required this.position,
+    required this.layout,
+    required this.labelOffset,
+    this.visible = true,
+    this.truncated = false,
+  });
+
+  final dynamic tick;
+  final double position;
+  final CachedTextLayout layout;
+  final Offset labelOffset;
+  final bool visible;
+  final bool truncated;
+}
+
 /// Renderer for chart axes.
 ///
 /// Supports horizontal and vertical axes with customizable
-/// ticks, labels, and titles.
+/// ticks, labels, and titles. Includes smart label collision detection
+/// and truncation for clean, readable axis labels.
 class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<AxisConfig> {
   AxisRenderer({
     required AxisConfig config,
@@ -156,6 +176,9 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
   List<T>? _cachedTicks;
   List<CachedTextLayout>? _cachedLabels;
   double? _cachedMaxLabelSize;
+  List<_LabelLayoutResult>? _cachedLabelLayouts;
+  Size? _cachedCanvasSize;
+  Rect? _cachedChartArea;
 
   @override
   AxisConfig get config => _config;
@@ -180,6 +203,9 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
     _cachedTicks = null;
     _cachedLabels = null;
     _cachedMaxLabelSize = null;
+    _cachedLabelLayouts = null;
+    _cachedCanvasSize = null;
+    _cachedChartArea = null;
   }
 
   @override
@@ -188,6 +214,10 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
 
     final ticks = _getTicks();
     if (ticks.isEmpty) return;
+
+    // Cache size and chartArea for label layout
+    _cachedCanvasSize = size;
+    _cachedChartArea = chartArea;
 
     final paint = Paint()
       ..color = _config.lineColor ?? const Color(0xFF666666)
@@ -204,16 +234,17 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
       _drawAxisLine(canvas, chartArea, paint);
     }
 
-    // Draw ticks and labels
-    for (final tick in ticks) {
-      final position = _getTickPosition(tick, chartArea);
+    // Calculate label layouts with collision detection
+    final labelLayouts = _calculateLabelLayouts(ticks, chartArea, size);
 
+    // Draw ticks and labels
+    for (final layout in labelLayouts) {
       if (_config.showTicks) {
-        _drawTick(canvas, position, tickPaint);
+        _drawTick(canvas, layout.position, tickPaint);
       }
 
-      if (_config.showLabels) {
-        _drawLabel(canvas, tick, position);
+      if (_config.showLabels && layout.visible) {
+        _drawLabelFromLayout(canvas, layout);
       }
     }
 
@@ -223,6 +254,205 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
     }
 
     markPainted();
+  }
+
+  /// Calculates label layouts with collision detection and bounds clamping.
+  List<_LabelLayoutResult> _calculateLabelLayouts(
+    List<T> ticks,
+    Rect chartArea,
+    Size canvasSize,
+  ) {
+    if (_cachedLabelLayouts != null &&
+        _cachedCanvasSize == canvasSize &&
+        _cachedChartArea == chartArea) {
+      return _cachedLabelLayouts!;
+    }
+
+    final labelStyle = _config.labelStyle ??
+        const TextStyle(
+          fontSize: 12,
+          color: Color(0xFF666666),
+        );
+
+    final results = <_LabelLayoutResult>[];
+    double lastLabelEnd = double.negativeInfinity;
+
+    for (final tick in ticks) {
+      final position = _getTickPosition(tick, chartArea);
+      final label = _config.labelFormatter?.call(tick) ??
+          scale.tickFormatter()(tick);
+
+      // Get or truncate label to fit
+      final maxLabelWidth = _getMaxLabelWidth(chartArea, canvasSize);
+      final truncatedLabel = _truncateLabelToFit(label, maxLabelWidth, labelStyle);
+      final layout = _textCache.layoutText(truncatedLabel, labelStyle);
+
+      // Calculate label offset
+      Offset labelOffset = _calculateLabelOffset(position, layout, chartArea);
+
+      // Clamp label position to canvas bounds
+      labelOffset = _clampLabelToCanvas(labelOffset, layout, canvasSize, chartArea);
+
+      // Check for collision with previous label
+      final labelStart = _config.isHorizontal
+          ? labelOffset.dx
+          : labelOffset.dy;
+      final labelEnd = _config.isHorizontal
+          ? labelOffset.dx + layout.width
+          : labelOffset.dy + layout.height;
+
+      final hasCollision = labelStart < lastLabelEnd + _config.minLabelSpacing;
+
+      results.add(_LabelLayoutResult(
+        tick: tick,
+        position: position,
+        layout: layout,
+        labelOffset: labelOffset,
+        visible: !hasCollision,
+        truncated: truncatedLabel != label,
+      ));
+
+      // Only update lastLabelEnd if this label is visible
+      if (!hasCollision) {
+        lastLabelEnd = labelEnd;
+      }
+    }
+
+    _cachedLabelLayouts = results;
+    return results;
+  }
+
+  /// Gets maximum label width based on axis position and available space.
+  double _getMaxLabelWidth(Rect chartArea, Size canvasSize) {
+    switch (_config.position) {
+      case ChartPosition.left:
+        return chartArea.left - _config.tickLength - _config.labelPadding - 8;
+      case ChartPosition.right:
+        return canvasSize.width - chartArea.right - _config.tickLength - _config.labelPadding - 8;
+      case ChartPosition.top:
+      case ChartPosition.bottom:
+        // For horizontal axes, allow labels up to minLabelSpacing width
+        return _config.minLabelSpacing * 2;
+      case ChartPosition.center:
+        return double.infinity;
+    }
+  }
+
+  /// Truncates a label to fit within maxWidth using ellipsis.
+  String _truncateLabelToFit(String label, double maxWidth, TextStyle style) {
+    if (maxWidth == double.infinity || maxWidth <= 0) return label;
+
+    final painter = TextPainter(
+      text: TextSpan(text: label, style: style),
+      textDirection: TextDirection.ltr,
+      maxLines: 1,
+    )..layout();
+
+    if (painter.width <= maxWidth) return label;
+
+    // Binary search for the right truncation point
+    var low = 0;
+    var high = label.length;
+    var result = label;
+
+    while (low < high) {
+      final mid = (low + high + 1) ~/ 2;
+      final truncated = '${label.substring(0, mid)}…';
+      final testPainter = TextPainter(
+        text: TextSpan(text: truncated, style: style),
+        textDirection: TextDirection.ltr,
+        maxLines: 1,
+      )..layout();
+
+      if (testPainter.width <= maxWidth) {
+        low = mid;
+        result = truncated;
+      } else {
+        high = mid - 1;
+      }
+    }
+
+    return result;
+  }
+
+  /// Calculates the base label offset before clamping.
+  Offset _calculateLabelOffset(double position, CachedTextLayout layout, Rect chartArea) {
+    switch (_config.position) {
+      case ChartPosition.bottom:
+        return Offset(
+          position - layout.width / 2,
+          chartArea.bottom + _config.tickLength + _config.labelPadding,
+        );
+      case ChartPosition.top:
+        return Offset(
+          position - layout.width / 2,
+          chartArea.top - _config.tickLength - _config.labelPadding - layout.height,
+        );
+      case ChartPosition.left:
+        return Offset(
+          chartArea.left - _config.tickLength - _config.labelPadding - layout.width,
+          position - layout.height / 2,
+        );
+      case ChartPosition.right:
+        return Offset(
+          chartArea.right + _config.tickLength + _config.labelPadding,
+          position - layout.height / 2,
+        );
+      case ChartPosition.center:
+        return Offset(position - layout.width / 2, -layout.height / 2);
+    }
+  }
+
+  /// Clamps label position to stay within canvas bounds.
+  Offset _clampLabelToCanvas(
+    Offset offset,
+    CachedTextLayout layout,
+    Size canvasSize,
+    Rect chartArea,
+  ) {
+    const edgePadding = 4.0;
+
+    var x = offset.dx;
+    var y = offset.dy;
+
+    // Clamp horizontally
+    if (_config.isHorizontal) {
+      // For horizontal axes, clamp labels to not overflow left/right edges
+      x = x.clamp(edgePadding, canvasSize.width - layout.width - edgePadding);
+    } else {
+      // For vertical axes, ensure label doesn't go off left edge
+      x = math.max(x, edgePadding);
+    }
+
+    // Clamp vertically
+    if (_config.isVertical) {
+      // For vertical axes, clamp labels to not overflow top/bottom edges
+      y = y.clamp(edgePadding, canvasSize.height - layout.height - edgePadding);
+    } else {
+      // For horizontal axes, ensure label doesn't go off bottom edge
+      y = math.min(y, canvasSize.height - layout.height - edgePadding);
+    }
+
+    return Offset(x, y);
+  }
+
+  /// Draws a label from a pre-calculated layout result.
+  void _drawLabelFromLayout(Canvas canvas, _LabelLayoutResult result) {
+    if (_config.labelRotation != 0) {
+      canvas.save();
+      canvas.translate(
+        result.labelOffset.dx + result.layout.width / 2,
+        result.labelOffset.dy + result.layout.height / 2,
+      );
+      canvas.rotate(_config.labelRotation * math.pi / 180);
+      result.layout.painter.paint(
+        canvas,
+        Offset(-result.layout.width / 2, -result.layout.height / 2),
+      );
+      canvas.restore();
+    } else {
+      result.layout.painter.paint(canvas, result.labelOffset);
+    }
   }
 
   List<T> _getTicks() {
@@ -300,61 +530,6 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
         );
       case ChartPosition.center:
         break;
-    }
-  }
-
-  void _drawLabel(Canvas canvas, T tick, double position) {
-    final labelStyle = _config.labelStyle ??
-        const TextStyle(
-          fontSize: 12,
-          color: Color(0xFF666666),
-        );
-
-    final label = _config.labelFormatter?.call(tick) ??
-        scale.tickFormatter()(tick);
-
-    final layout = _textCache.layoutText(label, labelStyle);
-
-    Offset labelOffset;
-    switch (_config.position) {
-      case ChartPosition.bottom:
-        labelOffset = Offset(
-          position - layout.width / 2,
-          _config.tickLength + _config.labelPadding,
-        );
-      case ChartPosition.top:
-        labelOffset = Offset(
-          position - layout.width / 2,
-          -_config.tickLength - _config.labelPadding - layout.height,
-        );
-      case ChartPosition.left:
-        labelOffset = Offset(
-          -_config.tickLength - _config.labelPadding - layout.width,
-          position - layout.height / 2,
-        );
-      case ChartPosition.right:
-        labelOffset = Offset(
-          _config.tickLength + _config.labelPadding,
-          position - layout.height / 2,
-        );
-      case ChartPosition.center:
-        labelOffset = Offset(position - layout.width / 2, -layout.height / 2);
-    }
-
-    if (_config.labelRotation != 0) {
-      canvas.save();
-      canvas.translate(
-        labelOffset.dx + layout.width / 2,
-        labelOffset.dy + layout.height / 2,
-      );
-      canvas.rotate(_config.labelRotation * math.pi / 180);
-      layout.painter.paint(
-        canvas,
-        Offset(-layout.width / 2, -layout.height / 2),
-      );
-      canvas.restore();
-    } else {
-      layout.painter.paint(canvas, labelOffset);
     }
   }
 

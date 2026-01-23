@@ -1,5 +1,85 @@
+import 'dart:math' as math;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
+
+/// Modern easing curves inspired by Material Design 3.
+///
+/// These curves provide smooth, natural-feeling animations that are
+/// more engaging than standard Flutter curves.
+///
+/// Example:
+/// ```dart
+/// ChartAnimation(
+///   duration: Duration(milliseconds: 600),
+///   curve: ChartCurves.emphasized,
+/// )
+/// ```
+class ChartCurves {
+  ChartCurves._();
+
+  /// Emphasized curve - slow start, fast middle, slow end.
+  /// Best for: Primary animations, transitions, data series entry.
+  static const Curve emphasized = Cubic(0.2, 0.0, 0.0, 1.0);
+
+  /// Emphasized decelerate - for entering elements.
+  /// Best for: Elements appearing on screen, tooltips appearing.
+  static const Curve emphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1.0);
+
+  /// Emphasized accelerate - for exiting elements.
+  /// Best for: Elements leaving screen, tooltips disappearing.
+  static const Curve emphasizedAccelerate = Cubic(0.3, 0.0, 0.8, 0.15);
+
+  /// Standard curve - balanced movement.
+  /// Best for: General purpose animations.
+  static const Curve standard = Cubic(0.2, 0.0, 0.0, 1.0);
+
+  /// Standard decelerate - natural slow down.
+  /// Best for: Data point highlights, hover effects.
+  static const Curve standardDecelerate = Cubic(0.0, 0.0, 0.0, 1.0);
+
+  /// Standard accelerate - natural speed up.
+  /// Best for: Hiding elements, exiting animations.
+  static const Curve standardAccelerate = Cubic(0.3, 0.0, 1.0, 1.0);
+
+  /// Spring effect for responsive, bouncy feedback.
+  /// Best for: Interactive elements, selection feedback.
+  static const Curve spring = _SpringCurve(0.4);
+
+  /// Overshoot effect - goes past target then returns.
+  /// Best for: Playful interactions, emphasis animations.
+  static const Curve overshoot = Cubic(0.175, 0.885, 0.32, 1.275);
+
+  /// Snappy curve - quick and responsive.
+  /// Best for: Hover effects, micro-interactions.
+  static const Curve snappy = Cubic(0.4, 0.0, 0.2, 1.0);
+
+  /// Smooth curve - gentle and flowing.
+  /// Best for: Background animations, ambient effects.
+  static const Curve smooth = Cubic(0.4, 0.0, 0.6, 1.0);
+
+  /// Elastic curve - bouncy spring effect.
+  /// Best for: Celebratory animations, achievement indicators.
+  static const Curve elastic = ElasticOutCurve(0.4);
+
+  /// Bounce curve - multiple bounces at end.
+  /// Best for: Playful data reveals, fun interactions.
+  static const Curve bounce = Curves.bounceOut;
+}
+
+/// Custom spring curve for natural, physics-based animation.
+class _SpringCurve extends Curve {
+  const _SpringCurve(this.damping);
+
+  final double damping;
+
+  @override
+  double transformInternal(double t) {
+    // Spring physics simulation
+    final omega = 2 * math.pi / damping;
+    return 1 - math.exp(-t * 5) * math.cos(omega * t);
+  }
+}
 
 /// Configuration for chart animations.
 ///
@@ -324,4 +404,250 @@ class StaggeredAnimationController {
       controller.dispose();
     }
   }
+}
+
+/// Mixin for hover micro-interactions on chart elements.
+///
+/// Provides smooth scale, glow, and lift effects when hovering
+/// over data points, bars, or other interactive elements.
+///
+/// Example:
+/// ```dart
+/// class _MyChartState extends State<MyChart>
+///     with SingleTickerProviderStateMixin, ChartHoverAnimationMixin {
+///
+///   @override
+///   void initState() {
+///     super.initState();
+///     initHoverAnimation();
+///   }
+///
+///   void _onHover(bool isHovered) {
+///     if (isHovered) {
+///       animateHoverIn();
+///     } else {
+///       animateHoverOut();
+///     }
+///   }
+/// }
+/// ```
+mixin ChartHoverAnimationMixin<T extends StatefulWidget> on State<T> {
+  AnimationController? _hoverController;
+  Animation<double>? _hoverScaleAnimation;
+  Animation<double>? _hoverGlowAnimation;
+  Animation<double>? _hoverLiftAnimation;
+
+  /// The current scale value for hover effect (1.0 to 1.15).
+  double get hoverScale => _hoverScaleAnimation?.value ?? 1.0;
+
+  /// The current glow opacity for hover effect (0.0 to 0.3).
+  double get hoverGlow => _hoverGlowAnimation?.value ?? 0.0;
+
+  /// The current lift offset for hover effect (0.0 to 4.0).
+  double get hoverLift => _hoverLiftAnimation?.value ?? 0.0;
+
+  /// Whether the hover animation is currently active.
+  bool get isHovered =>
+      _hoverController != null && _hoverController!.value > 0;
+
+  /// Initializes the hover animation controller.
+  ///
+  /// Must be called in [initState] and requires [TickerProvider].
+  /// The [vsync] parameter should typically be `this` when mixed with
+  /// [SingleTickerProviderStateMixin] or [TickerProviderStateMixin].
+  void initHoverAnimation(TickerProvider vsync, {
+    Duration duration = const Duration(milliseconds: 150),
+    double maxScale = 1.15,
+    double maxGlow = 0.3,
+    double maxLift = 4.0,
+  }) {
+    _hoverController = AnimationController(
+      vsync: vsync,
+      duration: duration,
+    );
+
+    _hoverScaleAnimation = Tween<double>(
+      begin: 1.0,
+      end: maxScale,
+    ).animate(CurvedAnimation(
+      parent: _hoverController!,
+      curve: ChartCurves.snappy,
+    ));
+
+    _hoverGlowAnimation = Tween<double>(
+      begin: 0.0,
+      end: maxGlow,
+    ).animate(CurvedAnimation(
+      parent: _hoverController!,
+      curve: ChartCurves.standardDecelerate,
+    ));
+
+    _hoverLiftAnimation = Tween<double>(
+      begin: 0.0,
+      end: maxLift,
+    ).animate(CurvedAnimation(
+      parent: _hoverController!,
+      curve: ChartCurves.emphasized,
+    ));
+
+    _hoverController!.addListener(_onHoverAnimationTick);
+  }
+
+  /// Animate hover in with scale, glow, and lift effects.
+  void animateHoverIn() {
+    _hoverController?.forward();
+  }
+
+  /// Animate hover out - reverses all effects smoothly.
+  void animateHoverOut() {
+    _hoverController?.reverse();
+  }
+
+  /// Immediately sets hover state without animation.
+  void setHoverState(bool hovered) {
+    if (hovered) {
+      _hoverController?.value = 1.0;
+    } else {
+      _hoverController?.value = 0.0;
+    }
+  }
+
+  void _onHoverAnimationTick() {
+    if (mounted) {
+      // Trigger rebuild for animation
+      (this as dynamic).setState(() {});
+    }
+  }
+
+  /// Disposes the hover animation controller.
+  /// Call this in your [dispose] method.
+  void disposeHoverAnimation() {
+    _hoverController?.removeListener(_onHoverAnimationTick);
+    _hoverController?.dispose();
+    _hoverController = null;
+    _hoverScaleAnimation = null;
+    _hoverGlowAnimation = null;
+    _hoverLiftAnimation = null;
+  }
+}
+
+/// Helper class for creating hover effect painters.
+///
+/// Use this to apply consistent hover effects across different chart types.
+class HoverEffectPainter {
+  HoverEffectPainter._();
+
+  /// Calculates shadow blur radius based on hover animation value.
+  static double getGlowRadius(double hoverValue, {double maxRadius = 12.0}) {
+    return hoverValue * maxRadius;
+  }
+
+  /// Calculates shadow color with animated opacity.
+  static Color getGlowColor(Color baseColor, double hoverValue) {
+    return baseColor.withValues(alpha: 0.3 * hoverValue);
+  }
+
+  /// Creates a shadow list for hover glow effect.
+  static List<BoxShadow> createGlowShadows(
+    Color color,
+    double hoverValue, {
+    double maxBlur = 12.0,
+    double maxSpread = 2.0,
+  }) {
+    if (hoverValue <= 0) return [];
+
+    return [
+      BoxShadow(
+        color: color.withValues(alpha: 0.3 * hoverValue),
+        blurRadius: maxBlur * hoverValue,
+        spreadRadius: maxSpread * hoverValue,
+      ),
+    ];
+  }
+
+  /// Applies scale transform for hover effect.
+  static Matrix4 createScaleTransform(
+    double scale,
+    Offset center,
+  ) {
+    // ignore: deprecated_member_use
+    return Matrix4.identity()
+      // ignore: deprecated_member_use
+      ..translate(center.dx, center.dy)
+      // ignore: deprecated_member_use
+      ..scale(scale)
+      // ignore: deprecated_member_use
+      ..translate(-center.dx, -center.dy);
+  }
+
+  /// Applies lift transform (Y offset) for hover effect.
+  // ignore: deprecated_member_use
+  static Matrix4 createLiftTransform(double lift) =>
+      // ignore: deprecated_member_use
+      Matrix4.identity()..translate(0.0, -lift);
+
+  /// Combines scale and lift transforms for full hover effect.
+  static Matrix4 createHoverTransform(
+    double scale,
+    double lift,
+    Offset center,
+  ) {
+    return Matrix4.identity()
+      // ignore: deprecated_member_use
+      ..translate(center.dx, center.dy - lift)
+      // ignore: deprecated_member_use
+      ..scale(scale)
+      // ignore: deprecated_member_use
+      ..translate(-center.dx, -center.dy);
+  }
+}
+
+/// Preset animation configurations for common use cases.
+class ChartAnimationPresets {
+  ChartAnimationPresets._();
+
+  /// Modern emphasized animation - best for primary data series.
+  static const ChartAnimation emphasized = ChartAnimation(
+    duration: Duration(milliseconds: 600),
+    curve: ChartCurves.emphasized,
+    type: AnimationType.draw,
+  );
+
+  /// Quick responsive animation - best for hover effects and tooltips.
+  static const ChartAnimation responsive = ChartAnimation(
+    duration: Duration(milliseconds: 200),
+    curve: ChartCurves.snappy,
+    type: AnimationType.scale,
+  );
+
+  /// Smooth flowing animation - best for ambient effects.
+  static const ChartAnimation smooth = ChartAnimation(
+    duration: Duration(milliseconds: 800),
+    curve: ChartCurves.smooth,
+    type: AnimationType.fade,
+  );
+
+  /// Playful bouncy animation - best for celebratory moments.
+  static const ChartAnimation playful = ChartAnimation(
+    duration: Duration(milliseconds: 700),
+    curve: ChartCurves.elastic,
+    type: AnimationType.scale,
+  );
+
+  /// Staggered entry animation - best for multiple data series.
+  static const ChartAnimation staggeredEntry = ChartAnimation(
+    duration: Duration(milliseconds: 400),
+    curve: ChartCurves.emphasizedDecelerate,
+    type: AnimationType.stagger,
+    staggerDelay: Duration(milliseconds: 80),
+  );
+
+  /// Data change morphing animation - best for updating values.
+  static const ChartAnimation morph = ChartAnimation(
+    duration: Duration(milliseconds: 350),
+    curve: ChartCurves.standard,
+    type: AnimationType.draw,
+    animateOnLoad: false,
+    animateOnDataChange: true,
+  );
 }
