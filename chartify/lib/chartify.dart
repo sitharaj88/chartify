@@ -61,9 +61,60 @@ export 'src/theme/chart_theme_data.dart';
 
 // Gestures
 export 'src/core/gestures/gesture_detector.dart';
+export 'src/core/gestures/spatial_index.dart';
+
+// Core - Math
+export 'src/core/math/scales/scale.dart';
+export 'src/core/math/interpolation/interpolator.dart';
+export 'src/core/math/geometry/bounds_calculator.dart';
+export 'src/core/math/geometry/coordinate_transform.dart';
+
+// Core - Utilities
+export 'src/core/utils/object_pool.dart';
+export 'src/core/utils/cache_manager.dart';
+
+// Rendering - Renderers (hide duplicates from core)
+export 'src/rendering/renderers/renderer.dart';
+export 'src/rendering/renderers/axis_renderer.dart' hide AxisConfig;
+export 'src/rendering/renderers/grid_renderer.dart';
+export 'src/rendering/renderers/marker_renderer.dart' hide MarkerShape;
+export 'src/rendering/renderers/legend_renderer.dart';
+
+// Rendering - Painters (hide duplicates from core)
+export 'src/rendering/painters/series_painter.dart' hide DataPointInfo;
+export 'src/rendering/painters/line_painter.dart';
+export 'src/rendering/painters/bar_painter.dart';
+export 'src/rendering/painters/arc_painter.dart';
+
+// Rendering - Cache (hide duplicates from core)
+export 'src/rendering/cache/path_cache.dart' hide PathCache;
+export 'src/rendering/cache/text_cache.dart';
 
 // Components - Tooltip
 export 'src/components/tooltip/chart_tooltip.dart';
+
+// Components - Axis
+export 'src/components/axis/axis_widget.dart';
+
+// Components - Legend
+export 'src/components/legend/legend_widget.dart';
+
+// Components - Markers
+export 'src/components/markers/marker_registry.dart';
+
+// Charts - Base (hide duplicates from core)
+export 'src/charts/_base/chart_widget_mixin.dart';
+export 'src/charts/_base/cartesian_chart_base.dart' hide CartesianChartPainter;
+export 'src/charts/_base/circular_chart_base.dart' hide CircularChartPainter;
+
+// Accessibility
+export 'src/accessibility/chart_semantics.dart' hide ChartType;
+export 'src/accessibility/high_contrast.dart';
+
+// Plugins
+export 'src/plugins/plugin.dart';
+export 'src/plugins/built_in/export_plugin.dart';
+export 'src/plugins/built_in/zoom_plugin.dart';
 
 // Charts - Cartesian - Line
 export 'src/charts/cartesian/line/line_chart.dart';
