@@ -6,8 +6,11 @@ import 'package:flutter/material.dart';
 import '../../../animation/chart_animation.dart';
 import '../../../components/tooltip/chart_tooltip.dart';
 import '../../../core/base/chart_controller.dart';
-import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
+import '../../../core/gestures/spatial_index.dart';
+import '../../../core/math/geometry/bounds_calculator.dart';
+import '../../../core/math/scales/scale.dart';
+import '../../../rendering/renderers/grid_renderer.dart';
 import '../../../theme/chart_theme_data.dart';
 import 'bar_chart_data.dart';
 import 'bar_series.dart';
@@ -71,6 +74,12 @@ class _BarChartState extends State<BarChart>
   final ChartHitTester _hitTester = ChartHitTester();
   Rect _chartArea = Rect.zero;
 
+  // Spatial index for O(log n) hit testing
+  QuadTree<DataPointInfo>? _spatialIndex;
+
+  // Cached bounds
+  Bounds? _yBounds;
+
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
 
@@ -123,6 +132,8 @@ class _BarChartState extends State<BarChart>
     }
 
     if (widget.data != oldWidget.data) {
+      _yBounds = null;
+      _spatialIndex = null;
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
         _animationController?.forward(from: 0.0);
       }
@@ -139,16 +150,27 @@ class _BarChartState extends State<BarChart>
   }
 
   void _handleHover(PointerEvent event) {
-    final hitInfo = _hitTester.hitTest(
+    final nearestInfo = _spatialIndex?.findNearest(
       event.localPosition,
-      radius: widget.interactions.hitTestRadius,
+      maxDistance: widget.interactions.hitTestRadius * 2,
     );
-    if (hitInfo != null) {
-      _controller.setHoveredPoint(hitInfo);
-      widget.onDataPointHover?.call(hitInfo);
+
+    if (nearestInfo != null) {
+      _controller.setHoveredPoint(nearestInfo);
+      widget.onDataPointHover?.call(nearestInfo);
     } else {
-      _controller.clearHoveredPoint();
-      widget.onDataPointHover?.call(null);
+      // Fallback to rect-based hit testing
+      final hitInfo = _hitTester.hitTest(
+        event.localPosition,
+        radius: widget.interactions.hitTestRadius,
+      );
+      if (hitInfo != null) {
+        _controller.setHoveredPoint(hitInfo);
+        widget.onDataPointHover?.call(hitInfo);
+      } else {
+        _controller.clearHoveredPoint();
+        widget.onDataPointHover?.call(null);
+      }
     }
   }
 
@@ -169,6 +191,9 @@ class _BarChartState extends State<BarChart>
           constraints.maxWidth - widget.padding.right,
           constraints.maxHeight - widget.padding.bottom,
         );
+
+        // Reset spatial index when layout changes
+        _spatialIndex = null;
 
         return ChartTooltipOverlay(
           controller: _controller,
@@ -200,6 +225,9 @@ class _BarChartState extends State<BarChart>
                   controller: _controller,
                   hitTester: _hitTester,
                   padding: widget.padding,
+                  yBounds: _yBounds,
+                  onBoundsCalculated: (y) => _yBounds = y,
+                  onSpatialIndexBuilt: (index) => _spatialIndex = index,
                 ),
                 size: Size.infinite,
               ),
@@ -231,27 +259,74 @@ class _BarChartState extends State<BarChart>
   }
 }
 
-class _BarChartPainter extends CartesianChartPainter {
+/// Painter for bar charts using the new rendering infrastructure.
+class _BarChartPainter extends CustomPainter {
   _BarChartPainter({
     required this.data,
-    required super.theme,
-    required super.animationValue,
+    required this.theme,
+    required this.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller) {
-    _calculateBounds();
-  }
+    required this.padding,
+    this.yBounds,
+    this.onBoundsCalculated,
+    this.onSpatialIndexBuilt,
+  }) : super(repaint: controller);
 
   final BarChartData data;
+  final ChartThemeData theme;
+  final double animationValue;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final EdgeInsets padding;
+  Bounds? yBounds;
+  final void Function(Bounds y)? onBoundsCalculated;
+  final void Function(QuadTree<DataPointInfo> index)? onSpatialIndexBuilt;
 
-  double _yMin = 0;
-  double _yMax = 1;
+  // Renderers
+  GridRenderer<double, double>? _gridRenderer;
+
+  late Rect _chartArea;
+  late LinearScale _yScale;
   int _categoryCount = 0;
 
+  @override
+  void paint(Canvas canvas, Size size) {
+    hitTester.clear();
+
+    _chartArea = Rect.fromLTRB(
+      padding.left,
+      padding.top,
+      size.width - padding.right,
+      size.height - padding.bottom,
+    );
+
+    if (data.series.isEmpty) {
+      _drawEmptyState(canvas, size);
+      return;
+    }
+
+    // Calculate bounds
+    _calculateBounds();
+
+    // Create scales
+    _yScale = LinearScale(
+      domain: (yBounds!.min, yBounds!.max),
+      range: (_chartArea.bottom, _chartArea.top),
+    );
+
+    // Draw layers
+    _drawGrid(canvas, size);
+    _drawBars(canvas);
+    _drawAxes(canvas, size);
+  }
+
   void _calculateBounds() {
+    if (yBounds != null) {
+      _categoryCount = _calculateCategoryCount();
+      return;
+    }
+
     double yMin = 0;
     double yMax = 0;
     int maxLength = 0;
@@ -262,7 +337,6 @@ class _BarChartPainter extends CartesianChartPainter {
 
       if (data.grouping == BarGrouping.stacked ||
           data.grouping == BarGrouping.percentStacked) {
-        // For stacked, we need cumulative values
         for (var i = 0; i < series.data.length; i++) {
           double stackSum = 0;
           for (final s in data.series) {
@@ -299,15 +373,55 @@ class _BarChartPainter extends CartesianChartPainter {
       yMax += range * 0.1;
     }
 
-    _yMin = yMin;
-    _yMax = yMax;
+    yBounds = Bounds(min: yMin, max: yMax);
+    onBoundsCalculated?.call(yBounds!);
   }
 
-  @override
-  void paintSeries(Canvas canvas, Size size, Rect chartArea) {
-    hitTester.clear();
+  int _calculateCategoryCount() {
+    int maxLength = 0;
+    for (final series in data.series) {
+      if (!series.visible) continue;
+      maxLength = math.max(maxLength, series.data.length);
+    }
+    return maxLength;
+  }
 
-    if (data.series.isEmpty || _categoryCount == 0) return;
+  void _drawEmptyState(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = theme.gridLineColor
+      ..strokeWidth = 1;
+    canvas.drawLine(
+      Offset(padding.left, size.height - padding.bottom),
+      Offset(size.width - padding.right, size.height - padding.bottom),
+      paint,
+    );
+    canvas.drawLine(
+      Offset(padding.left, padding.top),
+      Offset(padding.left, size.height - padding.bottom),
+      paint,
+    );
+  }
+
+  void _drawGrid(Canvas canvas, Size size) {
+    final xScale = LinearScale(
+      domain: (0, _categoryCount.toDouble()),
+      range: (_chartArea.left, _chartArea.right),
+    );
+
+    _gridRenderer ??= GridRenderer<double, double>(
+      config: GridConfig(
+        lineColor: theme.gridLineColor,
+        lineWidth: theme.gridLineWidth,
+      ),
+      xScale: xScale,
+      yScale: _yScale,
+    );
+
+    _gridRenderer!.render(canvas, size, _chartArea);
+  }
+
+  void _drawBars(Canvas canvas) {
+    if (_categoryCount == 0) return;
 
     final isVertical = data.direction == BarDirection.vertical;
     final visibleSeries = data.series.where((s) => s.visible).toList();
@@ -315,18 +429,20 @@ class _BarChartPainter extends CartesianChartPainter {
 
     if (seriesCount == 0) return;
 
+    // Build spatial index for hit testing
+    final spatialIndex = QuadTree<DataPointInfo>(bounds: _chartArea);
+
     // Calculate bar dimensions
-    final totalCategories = _categoryCount;
     final categorySize = isVertical
-        ? chartArea.width / totalCategories
-        : chartArea.height / totalCategories;
+        ? _chartArea.width / _categoryCount
+        : _chartArea.height / _categoryCount;
 
     final groupWidth = categorySize * (1 - data.groupSpacing);
     final barWidth = data.grouping == BarGrouping.grouped
         ? (groupWidth / seriesCount) * (1 - data.barSpacing)
         : groupWidth;
 
-    for (var categoryIndex = 0; categoryIndex < totalCategories; categoryIndex++) {
+    for (var categoryIndex = 0; categoryIndex < _categoryCount; categoryIndex++) {
       double stackOffset = 0;
       double negativeStackOffset = 0;
 
@@ -340,9 +456,9 @@ class _BarChartPainter extends CartesianChartPainter {
 
         // Calculate bar position
         double barStart, barEnd;
-        final yRange = _yMax - _yMin;
-        final normalizedValue = (value - _yMin) / yRange;
-        final zeroPosition = -_yMin / yRange;
+        final yRange = yBounds!.max - yBounds!.min;
+        final normalizedValue = (value - yBounds!.min) / yRange;
+        final zeroPosition = -yBounds!.min / yRange;
 
         if (data.grouping == BarGrouping.stacked ||
             data.grouping == BarGrouping.percentStacked) {
@@ -363,7 +479,7 @@ class _BarChartPainter extends CartesianChartPainter {
         // Calculate rectangle
         Rect barRect;
         if (isVertical) {
-          final categoryStart = chartArea.left + categoryIndex * categorySize;
+          final categoryStart = _chartArea.left + categoryIndex * categorySize;
           final groupStart = categoryStart + (categorySize - groupWidth) / 2;
 
           double barLeft;
@@ -374,8 +490,8 @@ class _BarChartPainter extends CartesianChartPainter {
             barLeft = groupStart;
           }
 
-          final top = chartArea.bottom - barEnd * chartArea.height;
-          final bottom = chartArea.bottom - barStart * chartArea.height;
+          final top = _chartArea.bottom - barEnd * _chartArea.height;
+          final bottom = _chartArea.bottom - barStart * _chartArea.height;
 
           barRect = Rect.fromLTRB(
             barLeft,
@@ -384,7 +500,7 @@ class _BarChartPainter extends CartesianChartPainter {
             math.max(top, bottom),
           );
         } else {
-          final categoryStart = chartArea.top + categoryIndex * categorySize;
+          final categoryStart = _chartArea.top + categoryIndex * categorySize;
           final groupStart = categoryStart + (categorySize - groupWidth) / 2;
 
           double barTop;
@@ -395,8 +511,8 @@ class _BarChartPainter extends CartesianChartPainter {
             barTop = groupStart;
           }
 
-          final left = chartArea.left + barStart * chartArea.width;
-          final right = chartArea.left + barEnd * chartArea.width;
+          final left = _chartArea.left + barStart * _chartArea.width;
+          final right = _chartArea.left + barEnd * _chartArea.width;
 
           barRect = Rect.fromLTRB(
             math.min(left, right),
@@ -410,20 +526,25 @@ class _BarChartPainter extends CartesianChartPainter {
         final color = series.color ?? theme.getSeriesColor(originalSeriesIndex);
         _drawBar(canvas, barRect, series, color, originalSeriesIndex, categoryIndex);
 
-        // Register hit target
-        hitTester.addRect(
-          rect: barRect,
-          info: DataPointInfo(
-            seriesIndex: originalSeriesIndex,
-            pointIndex: categoryIndex,
-            position: barRect.center,
-            xValue: point.x,
-            yValue: point.y,
-            seriesName: series.name,
-          ),
+        // Create hit info
+        final info = DataPointInfo(
+          seriesIndex: originalSeriesIndex,
+          pointIndex: categoryIndex,
+          position: barRect.center,
+          xValue: point.x,
+          yValue: point.y,
+          seriesName: series.name,
         );
+
+        // Register hit target
+        hitTester.addRect(rect: barRect, info: info);
+
+        // Add to spatial index
+        spatialIndex.insert(info, barRect);
       }
     }
+
+    onSpatialIndexBuilt?.call(spatialIndex);
   }
 
   void _drawBar(
@@ -441,10 +562,10 @@ class _BarChartPainter extends CartesianChartPainter {
     // Adjust color for hover/selection
     var fillColor = color;
     if (isHovered) {
-      fillColor = color.withValues(alpha: 0.8);
+      fillColor = color.withAlpha(204);
     }
     if (isSelected) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withAlpha(255);
     }
 
     // Create rounded rectangle
@@ -457,8 +578,7 @@ class _BarChartPainter extends CartesianChartPainter {
     );
 
     // Draw fill
-    final fillPaint = Paint()
-      ..style = PaintingStyle.fill;
+    final fillPaint = Paint()..style = PaintingStyle.fill;
 
     if (series.gradient != null) {
       fillPaint.shader = series.gradient!.createShader(rect);
@@ -480,38 +600,52 @@ class _BarChartPainter extends CartesianChartPainter {
     // Draw hover effect
     if (isHovered) {
       final hoverPaint = Paint()
-        ..color = Colors.white.withValues(alpha: 0.2)
+        ..color = Colors.white.withAlpha(51)
         ..style = PaintingStyle.fill;
       canvas.drawRRect(rrect, hoverPaint);
     }
   }
 
-  @override
-  void paintAxes(Canvas canvas, Size size) {
-    super.paintAxes(canvas, size);
+  void _drawAxes(Canvas canvas, Size size) {
+    // Y-axis labels
+    if (data.yAxis.showLabels) {
+      _drawYAxisLabels(canvas);
+    }
 
-    final chartArea = getChartArea(size);
-    _drawYAxisLabels(canvas, chartArea);
-    _drawXAxisLabels(canvas, chartArea);
+    // X-axis labels
+    if (data.xAxis.showLabels && _categoryCount > 0) {
+      _drawXAxisLabels(canvas);
+    }
+
+    // Axis lines
+    final axisPaint = Paint()
+      ..color = theme.axisLineColor
+      ..strokeWidth = theme.axisLineWidth;
+
+    canvas.drawLine(
+      Offset(_chartArea.left, _chartArea.bottom),
+      Offset(_chartArea.right, _chartArea.bottom),
+      axisPaint,
+    );
+    canvas.drawLine(
+      Offset(_chartArea.left, _chartArea.top),
+      Offset(_chartArea.left, _chartArea.bottom),
+      axisPaint,
+    );
   }
 
-  void _drawYAxisLabels(Canvas canvas, Rect chartArea) {
-    if (!data.yAxis.showLabels) return;
-
+  void _drawYAxisLabels(Canvas canvas) {
     final tickCount = data.yAxis.tickCount;
-    final range = _yMax - _yMin;
+    final yTicks = _yScale.ticks(count: tickCount);
 
     final textStyle = theme.labelStyle.copyWith(
       fontSize: 11,
-      color: theme.labelStyle.color?.withValues(alpha: 0.7),
+      color: theme.labelStyle.color?.withAlpha(180),
     );
 
-    for (var i = 0; i <= tickCount; i++) {
-      final value = _yMin + (range * i / tickCount);
-      final y = chartArea.bottom - (chartArea.height * i / tickCount);
-
-      final label = data.yAxis.labelFormatter?.call(value) ??
-          _formatNumber(value);
+    for (final tick in yTicks) {
+      final y = _yScale.scale(tick);
+      final label = data.yAxis.labelFormatter?.call(tick) ?? _formatNumber(tick);
 
       final textSpan = TextSpan(text: label, style: textStyle);
       final textPainter = TextPainter(
@@ -521,22 +655,30 @@ class _BarChartPainter extends CartesianChartPainter {
       )..layout();
 
       final offset = Offset(
-        chartArea.left - textPainter.width - 12,
+        _chartArea.left - textPainter.width - 12,
         y - textPainter.height / 2,
       );
       textPainter.paint(canvas, offset);
+
+      // Tick mark
+      final tickPaint = Paint()
+        ..color = theme.axisLineColor.withAlpha(128)
+        ..strokeWidth = 1;
+      canvas.drawLine(
+        Offset(_chartArea.left - 4, y),
+        Offset(_chartArea.left, y),
+        tickPaint,
+      );
     }
   }
 
-  void _drawXAxisLabels(Canvas canvas, Rect chartArea) {
-    if (!data.xAxis.showLabels || _categoryCount == 0) return;
-
+  void _drawXAxisLabels(Canvas canvas) {
     final textStyle = theme.labelStyle.copyWith(
       fontSize: 11,
-      color: theme.labelStyle.color?.withValues(alpha: 0.7),
+      color: theme.labelStyle.color?.withAlpha(180),
     );
 
-    final categoryWidth = chartArea.width / _categoryCount;
+    final categoryWidth = _chartArea.width / _categoryCount;
 
     for (var i = 0; i < _categoryCount; i++) {
       final label = data.xAxis.categories != null && i < data.xAxis.categories!.length
@@ -550,12 +692,22 @@ class _BarChartPainter extends CartesianChartPainter {
         textDirection: TextDirection.ltr,
       )..layout();
 
-      final x = chartArea.left + categoryWidth * i + categoryWidth / 2;
+      final x = _chartArea.left + categoryWidth * i + categoryWidth / 2;
       final offset = Offset(
         x - textPainter.width / 2,
-        chartArea.bottom + 12,
+        _chartArea.bottom + 12,
       );
       textPainter.paint(canvas, offset);
+
+      // Tick mark
+      final tickPaint = Paint()
+        ..color = theme.axisLineColor.withAlpha(128)
+        ..strokeWidth = 1;
+      canvas.drawLine(
+        Offset(x, _chartArea.bottom),
+        Offset(x, _chartArea.bottom + 4),
+        tickPaint,
+      );
     }
   }
 
@@ -574,8 +726,8 @@ class _BarChartPainter extends CartesianChartPainter {
 
   @override
   bool shouldRepaint(covariant _BarChartPainter oldDelegate) =>
-      super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
+      animationValue != oldDelegate.animationValue ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
       controller.selectedIndices != oldDelegate.controller.selectedIndices;
 }

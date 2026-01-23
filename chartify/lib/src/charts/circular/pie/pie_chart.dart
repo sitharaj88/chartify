@@ -352,7 +352,7 @@ class _PieChartPainter extends CircularChartPainter {
         isHovered,
       );
 
-      // Register hit target (use full sweep for hit testing)
+      // Register hit target using arc-based hit testing (optimal for circular charts)
       _registerHitTarget(
         center,
         innerRadius,
@@ -493,6 +493,8 @@ class _PieChartPainter extends CircularChartPainter {
       center.dy + midRadius * math.sin(midAngle),
     );
 
+    // Use arc-based hit testing (ChartHitTester.addArc) which is optimal
+    // for circular charts - tests angle ranges rather than bounding boxes
     hitTester.addArc(
       center: center,
       innerRadius: innerRadius,
