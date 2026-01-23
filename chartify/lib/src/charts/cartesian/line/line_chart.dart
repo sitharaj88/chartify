@@ -1057,16 +1057,51 @@ class _LineChartPainter extends CustomPainter {
   void _drawOverlay(Canvas canvas) {
     final hoveredPoint = controller.hoveredPoint;
 
-    if (showCrosshair && hoveredPoint != null) {
-      _drawCrosshair(canvas, hoveredPoint);
-    }
-
     if (hoveredPoint != null) {
-      _drawHoverIndicator(canvas, hoveredPoint);
+      // Find all points at the same x-coordinate across all series
+      final allPointsAtX = _findAllPointsAtX(hoveredPoint.xValue);
+
+      if (showCrosshair) {
+        _drawCrosshair(canvas, hoveredPoint, allPointsAtX);
+      }
+
+      // Draw hover indicators for ALL series at this x-position
+      for (final pointInfo in allPointsAtX) {
+        _drawHoverIndicator(canvas, pointInfo);
+      }
     }
   }
 
-  void _drawCrosshair(Canvas canvas, DataPointInfo info) {
+  /// Find all data points across all series at the given x-value.
+  List<DataPointInfo> _findAllPointsAtX(dynamic xValue) {
+    final result = <DataPointInfo>[];
+    final targetX = _toDouble(xValue);
+
+    for (var seriesIndex = 0; seriesIndex < data.series.length; seriesIndex++) {
+      final series = data.series[seriesIndex];
+      if (!series.visible || series.isEmpty) continue;
+
+      for (var pointIndex = 0; pointIndex < series.data.length; pointIndex++) {
+        final point = series.data[pointIndex];
+        if (_toDouble(point.x) == targetX) {
+          final screenPos = _transform.dataToScreen(targetX, point.y.toDouble());
+          result.add(DataPointInfo(
+            seriesIndex: seriesIndex,
+            pointIndex: pointIndex,
+            position: screenPos,
+            xValue: point.x,
+            yValue: point.y,
+            seriesName: series.name,
+          ));
+          break;
+        }
+      }
+    }
+
+    return result;
+  }
+
+  void _drawCrosshair(Canvas canvas, DataPointInfo info, List<DataPointInfo> allPoints) {
     final isDark = theme.brightness == Brightness.dark;
     final color = crosshairColor ??
         (isDark
@@ -1078,7 +1113,7 @@ class _LineChartPainter extends CustomPainter {
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
-    // Vertical line
+    // Vertical line through all points at this x-position
     _drawDashedLine(
       canvas,
       Offset(info.position.dx, _chartArea.top),
@@ -1087,14 +1122,24 @@ class _LineChartPainter extends CustomPainter {
       [4, 4],
     );
 
-    // Horizontal line
-    _drawDashedLine(
-      canvas,
-      Offset(_chartArea.left, info.position.dy),
-      Offset(_chartArea.right, info.position.dy),
-      paint,
-      [4, 4],
-    );
+    // Draw connecting line between points if multiple series
+    if (allPoints.length > 1) {
+      // Sort points by Y position
+      final sortedPoints = List<DataPointInfo>.from(allPoints)
+        ..sort((a, b) => a.position.dy.compareTo(b.position.dy));
+
+      // Draw solid vertical line connecting all the points
+      final connectPaint = Paint()
+        ..color = color.withAlpha(isDark ? 100 : 60)
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke;
+
+      canvas.drawLine(
+        Offset(info.position.dx, sortedPoints.first.position.dy),
+        Offset(info.position.dx, sortedPoints.last.position.dy),
+        connectPaint,
+      );
+    }
   }
 
   void _drawDashedLine(Canvas canvas, Offset start, Offset end, Paint paint, List<double> pattern) {

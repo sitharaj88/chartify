@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
+import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -31,6 +32,7 @@ class TooltipConfig {
     this.screenMargin = const EdgeInsets.all(8),
     this.showArrow = true,
     this.arrowSize = 8.0,
+    this.touchFriendly = true,
   });
 
   final bool enabled;
@@ -53,6 +55,11 @@ class TooltipConfig {
   final bool showArrow;
   final double arrowSize;
 
+  /// When true, tooltip prefers horizontal positioning (left/right) on touch
+  /// devices to stay out of the way of the user's finger. The tooltip will
+  /// appear on the opposite side of where the user touches.
+  final bool touchFriendly;
+
   TooltipConfig copyWith({
     bool? enabled,
     bool? showOnHover,
@@ -73,6 +80,7 @@ class TooltipConfig {
     EdgeInsets? screenMargin,
     bool? showArrow,
     double? arrowSize,
+    bool? touchFriendly,
   }) {
     return TooltipConfig(
       enabled: enabled ?? this.enabled,
@@ -94,6 +102,7 @@ class TooltipConfig {
       screenMargin: screenMargin ?? this.screenMargin,
       showArrow: showArrow ?? this.showArrow,
       arrowSize: arrowSize ?? this.arrowSize,
+      touchFriendly: touchFriendly ?? this.touchFriendly,
     );
   }
 }
@@ -130,7 +139,9 @@ class TooltipPositioner {
   /// Returns position that:
   /// 1. Keeps tooltip fully within screen bounds
   /// 2. Points arrow exactly at data point
-  /// 3. Prefers position above data point, then below, then sides
+  /// 3. For touch devices: prefers horizontal positioning (left/right) to keep
+  ///    tooltip away from the user's finger
+  /// 4. For desktop: prefers vertical positioning (top/bottom)
   static TooltipPositionResult calculate({
     required Offset dataPoint,
     required Size tooltipSize,
@@ -139,6 +150,7 @@ class TooltipPositioner {
     EdgeInsets margin = const EdgeInsets.all(8),
     TooltipPosition preferredPosition = TooltipPosition.auto,
     double arrowSize = 8.0,
+    bool preferHorizontal = false,
   }) {
     final safeArea = Rect.fromLTRB(
       margin.left,
@@ -168,19 +180,47 @@ class TooltipPositioner {
       final fitsLeft = spaceLeft >= tooltipWidth + gap;
       final fitsRight = spaceRight >= tooltipWidth + gap;
 
-      if (fitsAbove) {
-        resolved = TooltipPosition.top;
-      } else if (fitsBelow) {
-        resolved = TooltipPosition.bottom;
-      } else if (fitsRight && spaceRight >= spaceLeft) {
-        resolved = TooltipPosition.right;
-      } else if (fitsLeft) {
-        resolved = TooltipPosition.left;
+      if (preferHorizontal) {
+        // Mobile-friendly: prefer horizontal positioning to stay away from finger
+        // Show on opposite side of where the user is touching
+        final isOnRightHalf = dataPoint.dx > screenSize.width / 2;
+
+        if (isOnRightHalf && fitsLeft) {
+          // Point is on right, show tooltip on left
+          resolved = TooltipPosition.left;
+        } else if (!isOnRightHalf && fitsRight) {
+          // Point is on left, show tooltip on right
+          resolved = TooltipPosition.right;
+        } else if (fitsLeft) {
+          resolved = TooltipPosition.left;
+        } else if (fitsRight) {
+          resolved = TooltipPosition.right;
+        } else if (fitsAbove) {
+          resolved = TooltipPosition.top;
+        } else if (fitsBelow) {
+          resolved = TooltipPosition.bottom;
+        } else {
+          // Fallback: use side with most space
+          resolved = spaceLeft >= spaceRight
+              ? TooltipPosition.left
+              : TooltipPosition.right;
+        }
       } else {
-        // Nothing fits perfectly, use direction with most space
-        resolved = spaceAbove >= spaceBelow
-            ? TooltipPosition.top
-            : TooltipPosition.bottom;
+        // Desktop-friendly: prefer vertical positioning (top/bottom)
+        if (fitsAbove) {
+          resolved = TooltipPosition.top;
+        } else if (fitsBelow) {
+          resolved = TooltipPosition.bottom;
+        } else if (fitsRight && spaceRight >= spaceLeft) {
+          resolved = TooltipPosition.right;
+        } else if (fitsLeft) {
+          resolved = TooltipPosition.left;
+        } else {
+          // Nothing fits perfectly, use direction with most space
+          resolved = spaceAbove >= spaceBelow
+              ? TooltipPosition.top
+              : TooltipPosition.bottom;
+        }
       }
     }
 
@@ -358,6 +398,10 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   Size _tooltipSize = const Size(140, 60);
   TooltipPositionResult? _positionResult;
 
+  // Scrubbing mode for smooth touch drag
+  bool _isScrubbing = false;
+  Ticker? _scrubbingTicker;
+
   // Debounce
   int _updateCounter = 0;
   Timer? _hideDebounceTimer;
@@ -393,10 +437,10 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
       ),
     );
 
-    // Movement animation (for smooth position updates)
+    // Movement animation (for smooth position updates when scrubbing)
     _moveController = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 100),
+      duration: const Duration(milliseconds: 150), // Smooth but responsive
     );
 
     _moveController.addListener(_onMoveAnimation);
@@ -414,6 +458,7 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   @override
   void dispose() {
     _hideDebounceTimer?.cancel();
+    _stopScrubbingTicker();
     widget.controller.removeListener(_onControllerChanged);
     _visibilityController.dispose();
     _moveController.dispose();
@@ -421,11 +466,12 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   }
 
   void _onControllerChanged() {
-    final hoveredPoint = widget.controller.hoveredPoint;
+    // Check both hoveredPoint (for hover/desktop) and tooltipPoint (for tap/mobile)
+    final point = widget.controller.hoveredPoint ?? widget.controller.tooltipPoint;
     final counter = ++_updateCounter;
 
-    if (hoveredPoint != null) {
-      final data = _buildTooltipData(hoveredPoint);
+    if (point != null) {
+      final data = _buildTooltipData(point);
       if (data != null) {
         _showTooltip(data, counter);
       }
@@ -448,15 +494,18 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
       _targetDataPoint = newPoint;
 
       if (!_isShowing) {
-        // First show - jump immediately
+        // First show - jump immediately to position
         _currentDataPoint = newPoint;
         _displayDataPoint = newPoint;
         _isShowing = true;
+        _isScrubbing = false;
         _visibilityController.forward();
       } else {
-        // Already showing - animate to new position
-        _currentDataPoint = _displayDataPoint;
-        _moveController.forward(from: 0);
+        // Already showing - enable smooth scrubbing mode
+        if (!_isScrubbing) {
+          _isScrubbing = true;
+          _startScrubbingTicker();
+        }
 
         // CRITICAL: If visibility controller was reversing (fading out),
         // re-forward it to keep tooltip visible
@@ -474,8 +523,57 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
     });
   }
 
+  /// Start a ticker that smoothly interpolates position during touch drag.
+  void _startScrubbingTicker() {
+    _scrubbingTicker?.stop();
+    _scrubbingTicker = createTicker(_onScrubbingTick);
+    _scrubbingTicker!.start();
+  }
+
+  /// Called every frame during scrubbing to smoothly move tooltip.
+  void _onScrubbingTick(Duration elapsed) {
+    if (!mounted || !_isScrubbing) {
+      _scrubbingTicker?.stop();
+      return;
+    }
+
+    // Smooth lerp factor - higher = faster response (0.3-0.5 feels smooth but responsive)
+    const lerpFactor = 0.35;
+
+    final dx = _targetDataPoint.dx - _displayDataPoint.dx;
+    final dy = _targetDataPoint.dy - _displayDataPoint.dy;
+
+    // If we're close enough, snap to target
+    if (dx.abs() < 0.5 && dy.abs() < 0.5) {
+      if (_displayDataPoint != _targetDataPoint) {
+        setState(() {
+          _displayDataPoint = _targetDataPoint;
+        });
+      }
+      return;
+    }
+
+    // Smoothly interpolate towards target
+    setState(() {
+      _displayDataPoint = Offset(
+        _displayDataPoint.dx + dx * lerpFactor,
+        _displayDataPoint.dy + dy * lerpFactor,
+      );
+    });
+  }
+
+  void _stopScrubbingTicker() {
+    _scrubbingTicker?.stop();
+    _scrubbingTicker?.dispose();
+    _scrubbingTicker = null;
+    _isScrubbing = false;
+  }
+
   void _hideTooltip(int counter) {
     if (!mounted || !_isShowing) return;
+
+    // Stop scrubbing animation
+    _stopScrubbingTicker();
 
     // Use debounce delay to prevent flicker when moving between data points
     // This gives time for a new point to be hovered before hiding
@@ -566,6 +664,10 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   }
 
   List<Widget> _buildTooltipElements(Size screenSize) {
+    // Detect if we're on a touch-friendly platform (mobile)
+    final isTouchPlatform = defaultTargetPlatform == TargetPlatform.iOS ||
+        defaultTargetPlatform == TargetPlatform.android;
+
     // Calculate position with current display point
     _positionResult = TooltipPositioner.calculate(
       dataPoint: _displayDataPoint,
@@ -575,6 +677,7 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
       margin: widget.config.screenMargin,
       preferredPosition: widget.config.position,
       arrowSize: widget.config.arrowSize,
+      preferHorizontal: widget.config.touchFriendly && isTouchPlatform,
     );
 
     final pos = _positionResult!;

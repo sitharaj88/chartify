@@ -287,6 +287,7 @@ class ChartGestureDetector extends StatefulWidget {
 class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   Offset? _lastFocalPoint;
   double _lastScale = 1.0;
+  bool _isTouching = false;
 
   @override
   Widget build(BuildContext context) {
@@ -299,6 +300,18 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
       child = MouseRegion(
         onHover: _handleHover,
         onExit: _handleExit,
+        child: child,
+      );
+    }
+
+    // Wrap with Listener for instant touch response (tooltip scrubbing)
+    // This doesn't interfere with other gestures
+    if (widget.interactions.enableTooltip) {
+      child = Listener(
+        onPointerDown: _handlePointerDown,
+        onPointerMove: _handlePointerMove,
+        onPointerUp: _handlePointerUp,
+        onPointerCancel: _handlePointerCancel,
         child: child,
       );
     }
@@ -325,6 +338,59 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
     );
   }
 
+  // ============== Instant Touch Tooltip (no long press needed) ==============
+
+  void _handlePointerDown(PointerDownEvent event) {
+    // Only handle touch events, not mouse (mouse uses hover)
+    if (event.kind == PointerDeviceKind.touch) {
+      _isTouching = true;
+      _updateTooltipForPosition(event.localPosition);
+    }
+  }
+
+  void _handlePointerMove(PointerMoveEvent event) {
+    if (_isTouching && event.kind == PointerDeviceKind.touch) {
+      _updateTooltipForPosition(event.localPosition);
+    }
+  }
+
+  void _handlePointerUp(PointerUpEvent event) {
+    if (_isTouching) {
+      _isTouching = false;
+      // Keep tooltip visible briefly after lifting finger
+      Future.delayed(const Duration(milliseconds: 800), () {
+        if (!_isTouching) {
+          widget.controller.clearHoveredPoint();
+          widget.controller.hideTooltip();
+        }
+      });
+    }
+  }
+
+  void _handlePointerCancel(PointerCancelEvent event) {
+    if (_isTouching) {
+      _isTouching = false;
+      widget.controller.clearHoveredPoint();
+      widget.controller.hideTooltip();
+    }
+  }
+
+  void _updateTooltipForPosition(Offset position) {
+    if (widget.hitTester == null) return;
+
+    final hitInfo = widget.hitTester!.hitTest(
+      position,
+      radius: widget.interactions.hitTestRadius * 2.0, // Generous touch radius
+    );
+
+    if (hitInfo != null) {
+      widget.controller.setHoveredPoint(hitInfo);
+      widget.controller.showTooltip(hitInfo);
+    }
+  }
+
+  // ============== Standard Gesture Handlers ==============
+
   void _handleTap(TapDownDetails details) {
     widget.onTap?.call(details);
 
@@ -344,6 +410,8 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
 
         if (widget.interactions.enableTooltip &&
             widget.interactions.tooltipBehavior == TooltipBehavior.onTap) {
+          // Set both hoveredPoint and tooltipPoint for smooth animation
+          widget.controller.setHoveredPoint(hitInfo);
           widget.controller.showTooltip(hitInfo);
         }
       } else {

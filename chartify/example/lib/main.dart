@@ -248,8 +248,13 @@ class _ChartGalleryState extends State<ChartGallery> {
 
   @override
   Widget build(BuildContext context) {
-    final isWideScreen = MediaQuery.of(context).size.width > 900;
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWideScreen = screenWidth > 900;
     final theme = Theme.of(context);
+
+    // Responsive padding based on screen size
+    final chartPadding = isWideScreen ? 24.0 : 12.0;
+    final chartInnerPadding = isWideScreen ? 20.0 : 12.0;
 
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,
@@ -392,7 +397,7 @@ class _ChartGalleryState extends State<ChartGallery> {
                 ),
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(24),
+                    padding: EdgeInsets.all(chartPadding),
                     child: Container(
                       decoration: BoxDecoration(
                         color: theme.colorScheme.surfaceContainerLowest,
@@ -408,7 +413,7 @@ class _ChartGalleryState extends State<ChartGallery> {
                           ),
                         ],
                       ),
-                      padding: const EdgeInsets.all(20),
+                      padding: EdgeInsets.all(chartInnerPadding),
                       child: _examples[_selectedIndex].builder(context),
                     ),
                   ),
