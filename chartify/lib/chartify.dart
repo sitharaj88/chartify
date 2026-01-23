@@ -126,3 +126,36 @@ export 'src/charts/specialty/sparkline/sparkline_chart.dart';
 
 // Charts - Specialty - Heatmap
 export 'src/charts/specialty/heatmap/heatmap_chart.dart';
+
+// Charts - Cartesian - Bullet
+export 'src/charts/cartesian/bullet/bullet_chart.dart';
+
+// Charts - Cartesian - Step
+export 'src/charts/cartesian/step/step_chart.dart' hide StepType;
+
+// Charts - Cartesian - Range
+export 'src/charts/cartesian/range/range_chart.dart';
+
+// Charts - Cartesian - Lollipop
+export 'src/charts/cartesian/lollipop/lollipop_chart.dart';
+
+// Charts - Cartesian - Dumbbell
+export 'src/charts/cartesian/dumbbell/dumbbell_chart.dart';
+
+// Charts - Cartesian - Slope
+export 'src/charts/cartesian/slope/slope_chart.dart';
+
+// Charts - Cartesian - Bump
+export 'src/charts/cartesian/bump/bump_chart.dart';
+
+// Charts - Cartesian - Gantt
+export 'src/charts/cartesian/gantt/gantt_chart.dart';
+
+// Charts - Polar - Rose
+export 'src/charts/polar/rose/rose_chart.dart';
+
+// Charts - Specialty - Calendar Heatmap
+export 'src/charts/specialty/calendar_heatmap/calendar_heatmap_chart.dart';
+
+// Charts - Specialty - Sankey
+export 'src/charts/specialty/sankey/sankey_chart.dart';

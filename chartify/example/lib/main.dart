@@ -178,6 +178,72 @@ class _ChartGalleryState extends State<ChartGallery> {
       icon: Icons.wb_sunny,
       builder: (context) => const SunburstChartExample(),
     ),
+    ChartExample(
+      name: 'Bullet Chart',
+      description: 'KPI performance indicators',
+      icon: Icons.linear_scale,
+      builder: (context) => const BulletChartExample(),
+    ),
+    ChartExample(
+      name: 'Step Chart',
+      description: 'Step-wise line visualization',
+      icon: Icons.stairs,
+      builder: (context) => const StepChartExample(),
+    ),
+    ChartExample(
+      name: 'Range Chart',
+      description: 'Min/max range bars',
+      icon: Icons.swap_vert,
+      builder: (context) => const RangeChartExample(),
+    ),
+    ChartExample(
+      name: 'Lollipop Chart',
+      description: 'Bars with circle markers',
+      icon: Icons.radio_button_checked,
+      builder: (context) => const LollipopChartExample(),
+    ),
+    ChartExample(
+      name: 'Dumbbell Chart',
+      description: 'Before/after comparisons',
+      icon: Icons.compare_arrows,
+      builder: (context) => const DumbbellChartExample(),
+    ),
+    ChartExample(
+      name: 'Slope Chart',
+      description: 'Value changes over time',
+      icon: Icons.trending_up,
+      builder: (context) => const SlopeChartExample(),
+    ),
+    ChartExample(
+      name: 'Rose Chart',
+      description: 'Circular bar chart',
+      icon: Icons.donut_small,
+      builder: (context) => const RoseChartExample(),
+    ),
+    ChartExample(
+      name: 'Bump Chart',
+      description: 'Ranking over time',
+      icon: Icons.leaderboard,
+      builder: (context) => const BumpChartExample(),
+    ),
+    ChartExample(
+      name: 'Calendar Heatmap',
+      description: 'GitHub-style contributions',
+      icon: Icons.calendar_month,
+      builder: (context) => const CalendarHeatmapExample(),
+    ),
+    ChartExample(
+      name: 'Gantt Chart',
+      description: 'Project timeline',
+      icon: Icons.view_timeline,
+      builder: (context) => const GanttChartExample(),
+    ),
+    ChartExample(
+      name: 'Sankey Chart',
+      description: 'Flow diagram',
+      icon: Icons.account_tree,
+      builder: (context) => const SankeyChartExample(),
+    ),
   ];
 
   @override
@@ -1462,6 +1528,443 @@ class SunburstChartExample extends StatelessWidget {
         gap: 1,
         showLabels: true,
         showCenterLabel: true,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 1000),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+}
+
+// ============== Phase 6 Chart Examples ==============
+
+class BulletChartExample extends StatelessWidget {
+  const BulletChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BulletChart(
+      data: const BulletChartData(
+        items: [
+          BulletItem(
+            label: 'Revenue',
+            value: 275,
+            target: 250,
+            ranges: [150, 225, 300],
+            max: 300,
+          ),
+          BulletItem(
+            label: 'Profit',
+            value: 22,
+            target: 25,
+            ranges: [10, 18, 30],
+            max: 30,
+          ),
+          BulletItem(
+            label: 'Orders',
+            value: 1500,
+            target: 1200,
+            ranges: [800, 1100, 1600],
+            max: 1600,
+          ),
+          BulletItem(
+            label: 'Satisfaction',
+            value: 4.5,
+            target: 4.2,
+            ranges: [3.0, 3.8, 5.0],
+            max: 5.0,
+          ),
+        ],
+        orientation: BulletOrientation.horizontal,
+        rangeColors: [
+          Color(0xFFE5E7EB),
+          Color(0xFFD1D5DB),
+          Color(0xFF9CA3AF),
+        ],
+        valueColor: Color(0xFF1F2937),
+        targetColor: Color(0xFFEF4444),
+        showLabels: true,
+        showValues: true,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 800),
+      ),
+    );
+  }
+}
+
+class StepChartExample extends StatelessWidget {
+  const StepChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return StepChart(
+      data: StepChartData(
+        series: [
+          StepSeries<int, double>(
+            name: 'Temperature',
+            data: const [
+              DataPoint(x: 0, y: 20),
+              DataPoint(x: 1, y: 22),
+              DataPoint(x: 2, y: 22),
+              DataPoint(x: 3, y: 25),
+              DataPoint(x: 4, y: 23),
+              DataPoint(x: 5, y: 28),
+              DataPoint(x: 6, y: 26),
+            ],
+            color: const Color(0xFF6366F1),
+            lineWidth: 2.5,
+            showMarkers: true,
+            fillArea: true,
+            fillOpacity: 0.2,
+          ),
+        ],
+        xAxisLabel: 'Hour',
+        yAxisLabel: 'Temperature (°C)',
+        minY: 15,
+        maxY: 35,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 800),
+      ),
+    );
+  }
+}
+
+class RangeChartExample extends StatelessWidget {
+  const RangeChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RangeChart(
+      data: const RangeChartData(
+        items: [
+          RangeItem(label: 'Jan', min: 5, max: 15, mid: 10, color: Color(0xFF6366F1)),
+          RangeItem(label: 'Feb', min: 8, max: 18, mid: 12, color: Color(0xFF8B5CF6)),
+          RangeItem(label: 'Mar', min: 12, max: 22, mid: 16, color: Color(0xFFA855F7)),
+          RangeItem(label: 'Apr', min: 15, max: 25, mid: 20, color: Color(0xFFC084FC)),
+          RangeItem(label: 'May', min: 18, max: 28, mid: 23, color: Color(0xFFD8B4FE)),
+          RangeItem(label: 'Jun', min: 22, max: 32, mid: 27, color: Color(0xFFE9D5FF)),
+        ],
+        orientation: RangeOrientation.vertical,
+        barWidth: 0.6,
+        showMidMarker: true,
+        showValues: true,
+        cornerRadius: 4,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 800),
+      ),
+    );
+  }
+}
+
+class LollipopChartExample extends StatelessWidget {
+  const LollipopChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return LollipopChart(
+      data: const LollipopChartData(
+        items: [
+          LollipopItem(label: 'Product A', value: 85, color: Color(0xFF6366F1)),
+          LollipopItem(label: 'Product B', value: 65, color: Color(0xFF8B5CF6)),
+          LollipopItem(label: 'Product C', value: 92, color: Color(0xFFA855F7)),
+          LollipopItem(label: 'Product D', value: 48, color: Color(0xFFC084FC)),
+          LollipopItem(label: 'Product E', value: 73, color: Color(0xFFD8B4FE)),
+        ],
+        orientation: LollipopOrientation.horizontal,
+        markerShape: LollipopMarkerShape.circle,
+        markerSize: 14,
+        stemWidth: 2,
+        showLabels: true,
+        showValues: true,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 800),
+      ),
+    );
+  }
+}
+
+class DumbbellChartExample extends StatelessWidget {
+  const DumbbellChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return DumbbellChart(
+      data: const DumbbellChartData(
+        items: [
+          DumbbellItem(label: '2020', startValue: 45, endValue: 72),
+          DumbbellItem(label: '2021', startValue: 52, endValue: 68),
+          DumbbellItem(label: '2022', startValue: 38, endValue: 85),
+          DumbbellItem(label: '2023', startValue: 60, endValue: 78),
+          DumbbellItem(label: '2024', startValue: 55, endValue: 92),
+        ],
+        orientation: DumbbellOrientation.horizontal,
+        markerSize: 12,
+        connectorWidth: 3,
+        showLabels: true,
+        showValues: true,
+        startColor: Color(0xFF6366F1),
+        endColor: Color(0xFF22C55E),
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 800),
+      ),
+    );
+  }
+}
+
+class SlopeChartExample extends StatelessWidget {
+  const SlopeChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SlopeChart(
+      data: const SlopeChartData(
+        items: [
+          SlopeItem(label: 'Product A', startValue: 45, endValue: 72, color: Color(0xFF6366F1)),
+          SlopeItem(label: 'Product B', startValue: 68, endValue: 52, color: Color(0xFFEF4444)),
+          SlopeItem(label: 'Product C', startValue: 55, endValue: 85, color: Color(0xFF22C55E)),
+          SlopeItem(label: 'Product D', startValue: 40, endValue: 65, color: Color(0xFFF59E0B)),
+          SlopeItem(label: 'Product E', startValue: 75, endValue: 58, color: Color(0xFF8B5CF6)),
+        ],
+        startLabel: '2023',
+        endLabel: '2024',
+        lineWidth: 2.5,
+        markerSize: 10,
+        showLabels: true,
+        showValues: true,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 1000),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+}
+
+class RoseChartExample extends StatelessWidget {
+  const RoseChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return RoseChart(
+      data: const RoseChartData(
+        segments: [
+          RoseSegment(label: 'N', value: 12, color: Color(0xFF6366F1)),
+          RoseSegment(label: 'NE', value: 8, color: Color(0xFF8B5CF6)),
+          RoseSegment(label: 'E', value: 15, color: Color(0xFFA855F7)),
+          RoseSegment(label: 'SE', value: 22, color: Color(0xFFC084FC)),
+          RoseSegment(label: 'S', value: 18, color: Color(0xFFD8B4FE)),
+          RoseSegment(label: 'SW', value: 10, color: Color(0xFFE9D5FF)),
+          RoseSegment(label: 'W', value: 25, color: Color(0xFFF3E8FF)),
+          RoseSegment(label: 'NW', value: 14, color: Color(0xFFEDE9FE)),
+        ],
+        innerRadius: 0.2,
+        gap: 2,
+        showLabels: true,
+        showValues: true,
+        startAngle: -90,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 1000),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+}
+
+class BumpChartExample extends StatelessWidget {
+  const BumpChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return BumpChart(
+      data: const BumpChartData(
+        series: [
+          BumpSeries(label: 'Team A', rankings: [1, 2, 1, 3, 2, 1], color: Color(0xFF6366F1)),
+          BumpSeries(label: 'Team B', rankings: [2, 1, 3, 1, 1, 2], color: Color(0xFF22C55E)),
+          BumpSeries(label: 'Team C', rankings: [3, 3, 2, 2, 3, 3], color: Color(0xFFF59E0B)),
+          BumpSeries(label: 'Team D', rankings: [4, 4, 4, 4, 4, 4], color: Color(0xFFEF4444)),
+        ],
+        timeLabels: ['Week 1', 'Week 2', 'Week 3', 'Week 4', 'Week 5', 'Week 6'],
+        lineWidth: 3,
+        markerSize: 10,
+        showLabels: true,
+        showRankings: true,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 1000),
+        curve: Curves.easeOutCubic,
+      ),
+    );
+  }
+}
+
+class CalendarHeatmapExample extends StatelessWidget {
+  const CalendarHeatmapExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // Generate sample data for the past year
+    final now = DateTime.now();
+    final random = math.Random(42);
+    final data = <CalendarDataPoint>[];
+
+    for (var i = 0; i < 365; i++) {
+      final date = now.subtract(Duration(days: i));
+      // Generate random values with some patterns
+      final dayOfWeek = date.weekday;
+      final baseValue = dayOfWeek <= 5 ? 3 : 1; // Lower on weekends
+      final value = random.nextInt(5) + baseValue;
+      if (random.nextDouble() > 0.3) {
+        // 70% chance of having data
+        data.add(CalendarDataPoint(date: date, value: value.toDouble()));
+      }
+    }
+
+    return CalendarHeatmapChart(
+      data: CalendarHeatmapData(
+        data: data,
+        colorStops: const [
+          Color(0xFFEBEDF0),
+          Color(0xFF9BE9A8),
+          Color(0xFF40C463),
+          Color(0xFF30A14E),
+          Color(0xFF216E39),
+        ],
+        cellSize: 12,
+        cellSpacing: 3,
+        cellRadius: 2,
+        showDayLabels: true,
+        showMonthLabels: true,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 1000),
+      ),
+    );
+  }
+}
+
+class GanttChartExample extends StatelessWidget {
+  const GanttChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    final now = DateTime.now();
+    return GanttChart(
+      data: GanttChartData(
+        tasks: [
+          GanttTask(
+            id: '1',
+            label: 'Planning',
+            start: now,
+            end: now.add(const Duration(days: 7)),
+            progress: 1.0,
+            color: const Color(0xFF6366F1),
+          ),
+          GanttTask(
+            id: '2',
+            label: 'Design',
+            start: now.add(const Duration(days: 5)),
+            end: now.add(const Duration(days: 15)),
+            progress: 0.8,
+            color: const Color(0xFF8B5CF6),
+          ),
+          GanttTask(
+            id: '3',
+            label: 'Development',
+            start: now.add(const Duration(days: 12)),
+            end: now.add(const Duration(days: 35)),
+            progress: 0.4,
+            color: const Color(0xFFA855F7),
+          ),
+          GanttTask(
+            id: '4',
+            label: 'Testing',
+            start: now.add(const Duration(days: 30)),
+            end: now.add(const Duration(days: 42)),
+            progress: 0.1,
+            color: const Color(0xFFC084FC),
+          ),
+          GanttTask(
+            id: '5',
+            label: 'Deployment',
+            start: now.add(const Duration(days: 40)),
+            end: now.add(const Duration(days: 45)),
+            progress: 0.0,
+            color: const Color(0xFFD8B4FE),
+            isMilestone: false,
+          ),
+          GanttTask(
+            id: '6',
+            label: 'Launch',
+            start: now.add(const Duration(days: 45)),
+            end: now.add(const Duration(days: 45)),
+            progress: 0.0,
+            color: const Color(0xFF22C55E),
+            isMilestone: true,
+          ),
+        ],
+        showProgress: true,
+        showLabels: true,
+        showDates: true,
+        barHeight: 24,
+        barRadius: 4,
+      ),
+      tooltip: const TooltipConfig(enabled: true),
+      animation: const ChartAnimation(
+        duration: Duration(milliseconds: 800),
+      ),
+    );
+  }
+}
+
+class SankeyChartExample extends StatelessWidget {
+  const SankeyChartExample({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return SankeyChart(
+      data: const SankeyChartData(
+        nodes: [
+          SankeyNode(id: 'salary', label: 'Salary', color: Color(0xFF22C55E)),
+          SankeyNode(id: 'freelance', label: 'Freelance', color: Color(0xFF3B82F6)),
+          SankeyNode(id: 'investments', label: 'Investments', color: Color(0xFF8B5CF6)),
+          SankeyNode(id: 'housing', label: 'Housing', color: Color(0xFFEF4444)),
+          SankeyNode(id: 'food', label: 'Food', color: Color(0xFFF59E0B)),
+          SankeyNode(id: 'transport', label: 'Transport', color: Color(0xFF06B6D4)),
+          SankeyNode(id: 'savings', label: 'Savings', color: Color(0xFF10B981)),
+          SankeyNode(id: 'entertainment', label: 'Entertainment', color: Color(0xFFEC4899)),
+        ],
+        links: [
+          SankeyLink(sourceId: 'salary', targetId: 'housing', value: 1500),
+          SankeyLink(sourceId: 'salary', targetId: 'food', value: 800),
+          SankeyLink(sourceId: 'salary', targetId: 'transport', value: 400),
+          SankeyLink(sourceId: 'salary', targetId: 'savings', value: 1200),
+          SankeyLink(sourceId: 'salary', targetId: 'entertainment', value: 300),
+          SankeyLink(sourceId: 'freelance', targetId: 'savings', value: 800),
+          SankeyLink(sourceId: 'freelance', targetId: 'entertainment', value: 200),
+          SankeyLink(sourceId: 'investments', targetId: 'savings', value: 500),
+        ],
+        nodeWidth: 20,
+        nodePadding: 15,
+        linkOpacity: 0.5,
+        showLabels: true,
+        showValues: true,
       ),
       tooltip: const TooltipConfig(enabled: true),
       animation: const ChartAnimation(
