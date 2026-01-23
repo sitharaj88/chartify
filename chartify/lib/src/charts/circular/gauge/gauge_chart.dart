@@ -192,14 +192,14 @@ class _GaugeChartState extends State<GaugeChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final size = Size(constraints.maxWidth, constraints.maxHeight);
         return AnimatedBuilder(
           animation: _animation,
           builder: (context, child) {
             return Stack(
-              alignment: Alignment.center,
               children: [
                 CustomPaint(
-                  size: Size(constraints.maxWidth, constraints.maxHeight),
+                  size: size,
                   painter: _GaugeChartPainter(
                     data: widget.data,
                     theme: theme,
@@ -207,9 +207,12 @@ class _GaugeChartState extends State<GaugeChart>
                     padding: widget.padding,
                   ),
                 ),
-                if (widget.centerWidget != null) widget.centerWidget!,
+                if (widget.centerWidget != null)
+                  Positioned.fill(
+                    child: Center(child: widget.centerWidget!),
+                  ),
                 if (widget.centerWidget == null && widget.data.showValue)
-                  _buildDefaultCenterWidget(theme),
+                  _buildDefaultCenterWidget(theme, size),
               ],
             );
           },
@@ -218,25 +221,36 @@ class _GaugeChartState extends State<GaugeChart>
     );
   }
 
-  Widget _buildDefaultCenterWidget(ChartThemeData theme) {
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Text(
-          widget.data.formattedValue,
-          style: theme.titleStyle.copyWith(
-            fontSize: 32,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-        if (widget.data.label != null)
+  Widget _buildDefaultCenterWidget(ChartThemeData theme, Size size) {
+    // Position value BELOW the needle hub to avoid overlap
+    final centerY = size.height / 2;
+    final valueTop = centerY + widget.data.needleBaseRadius + 8;
+
+    return Positioned(
+      left: 0,
+      right: 0,
+      top: valueTop,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
           Text(
-            widget.data.label!,
-            style: theme.labelStyle.copyWith(
-              color: theme.labelStyle.color?.withValues(alpha: 0.7),
+            widget.data.formattedValue,
+            textAlign: TextAlign.center,
+            style: theme.titleStyle.copyWith(
+              fontSize: 36,
+              fontWeight: FontWeight.bold,
             ),
           ),
-      ],
+          if (widget.data.label != null)
+            Text(
+              widget.data.label!,
+              textAlign: TextAlign.center,
+              style: theme.labelStyle.copyWith(
+                color: theme.labelStyle.color?.withValues(alpha: 0.7),
+              ),
+            ),
+        ],
+      ),
     );
   }
 }
@@ -458,49 +472,93 @@ class _GaugeChartPainter extends CircularChartPainter {
     final needleColor = data.needleColor ?? theme.getSeriesColor(0);
     final needleLength = innerRadius * data.needleLength;
 
-    final needleTip = Offset(
-      center.dx + needleLength * math.cos(needleAngle),
-      center.dy + needleLength * math.sin(needleAngle),
-    );
+    // Create tapered needle path for better visibility
+    final needlePath = _createNeedlePath(center, needleAngle, needleLength);
 
     // Draw needle shadow
-    final shadowPaint = getPaint(
-      color: Colors.black.withValues(alpha: 0.2),
-      strokeWidth: data.needleWidth + 2,
-      strokeCap: StrokeCap.round,
-    );
-    canvas.drawLine(
-      Offset(center.dx + 2, center.dy + 2),
-      Offset(needleTip.dx + 2, needleTip.dy + 2),
-      shadowPaint,
-    );
+    canvas.save();
+    canvas.translate(2, 2);
+    final shadowPaint = Paint()
+      ..color = Colors.black.withValues(alpha: 0.25)
+      ..style = PaintingStyle.fill
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+    canvas.drawPath(needlePath, shadowPaint);
+    canvas.restore();
 
-    // Draw needle
-    final needlePaint = getPaint(
-      color: needleColor,
-      strokeWidth: data.needleWidth,
-      strokeCap: StrokeCap.round,
-    );
-    canvas.drawLine(center, needleTip, needlePaint);
+    // Draw needle body
+    final needlePaint = Paint()
+      ..color = needleColor
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(needlePath, needlePaint);
 
     // Draw needle base
     if (data.showNeedleBase) {
-      final basePaint = getPaint(
-        color: needleColor,
-        style: PaintingStyle.fill,
+      // Shadow for base
+      final baseShadowPaint = Paint()
+        ..color = Colors.black.withValues(alpha: 0.2)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+      canvas.drawCircle(
+        Offset(center.dx + 1, center.dy + 2),
+        data.needleBaseRadius,
+        baseShadowPaint,
       );
+
+      // Base circle
+      final basePaint = Paint()
+        ..color = needleColor
+        ..style = PaintingStyle.fill;
       canvas.drawCircle(center, data.needleBaseRadius, basePaint);
 
-      final baseHighlightPaint = getPaint(
-        color: Colors.white.withValues(alpha: 0.3),
-        style: PaintingStyle.fill,
-      );
+      // Highlight
+      final baseHighlightPaint = Paint()
+        ..color = Colors.white.withValues(alpha: 0.35)
+        ..style = PaintingStyle.fill;
       canvas.drawCircle(
-        Offset(center.dx - 2, center.dy - 2),
-        data.needleBaseRadius * 0.4,
+        Offset(center.dx - data.needleBaseRadius * 0.25,
+            center.dy - data.needleBaseRadius * 0.25),
+        data.needleBaseRadius * 0.35,
         baseHighlightPaint,
       );
     }
+  }
+
+  Path _createNeedlePath(Offset center, double angle, double length) {
+    final path = Path();
+    final perpAngle = angle + math.pi / 2;
+
+    // Needle base width (at center)
+    const baseWidth = 8.0;
+
+    // Base points perpendicular to needle direction
+    final baseLeft = Offset(
+      center.dx + (baseWidth / 2) * math.cos(perpAngle),
+      center.dy + (baseWidth / 2) * math.sin(perpAngle),
+    );
+    final baseRight = Offset(
+      center.dx - (baseWidth / 2) * math.cos(perpAngle),
+      center.dy - (baseWidth / 2) * math.sin(perpAngle),
+    );
+
+    // Tip point
+    final tipPoint = Offset(
+      center.dx + length * math.cos(angle),
+      center.dy + length * math.sin(angle),
+    );
+
+    // Small tail behind center
+    final tailLength = baseWidth * 0.5;
+    final tailPoint = Offset(
+      center.dx - tailLength * math.cos(angle),
+      center.dy - tailLength * math.sin(angle),
+    );
+
+    path.moveTo(tailPoint.dx, tailPoint.dy);
+    path.lineTo(baseLeft.dx, baseLeft.dy);
+    path.lineTo(tipPoint.dx, tipPoint.dy);
+    path.lineTo(baseRight.dx, baseRight.dy);
+    path.close();
+
+    return path;
   }
 
   @override

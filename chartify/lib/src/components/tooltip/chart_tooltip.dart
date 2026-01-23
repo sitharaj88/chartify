@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -359,6 +360,7 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
 
   // Debounce
   int _updateCounter = 0;
+  Timer? _hideDebounceTimer;
 
   // Keys for measurement
   final GlobalKey _tooltipKey = GlobalKey();
@@ -411,6 +413,7 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
 
   @override
   void dispose() {
+    _hideDebounceTimer?.cancel();
     widget.controller.removeListener(_onControllerChanged);
     _visibilityController.dispose();
     _moveController.dispose();
@@ -434,6 +437,10 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   void _showTooltip(TooltipData data, int counter) {
     if (!mounted || counter != _updateCounter) return;
 
+    // Cancel any pending hide - we're showing now
+    _hideDebounceTimer?.cancel();
+    _hideDebounceTimer = null;
+
     final newPoint = data.position;
 
     setState(() {
@@ -450,6 +457,12 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
         // Already showing - animate to new position
         _currentDataPoint = _displayDataPoint;
         _moveController.forward(from: 0);
+
+        // CRITICAL: If visibility controller was reversing (fading out),
+        // re-forward it to keep tooltip visible
+        if (_visibilityController.status == AnimationStatus.reverse) {
+          _visibilityController.forward();
+        }
       }
     });
 
@@ -464,13 +477,20 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
   void _hideTooltip(int counter) {
     if (!mounted || !_isShowing) return;
 
-    _visibilityController.reverse().then((_) {
-      if (mounted && counter == _updateCounter) {
-        setState(() {
-          _isShowing = false;
-          _tooltipData = null;
-        });
-      }
+    // Use debounce delay to prevent flicker when moving between data points
+    // This gives time for a new point to be hovered before hiding
+    _hideDebounceTimer?.cancel();
+    _hideDebounceTimer = Timer(const Duration(milliseconds: 16), () {
+      if (!mounted || counter != _updateCounter) return;
+
+      _visibilityController.reverse().then((_) {
+        if (mounted && counter == _updateCounter) {
+          setState(() {
+            _isShowing = false;
+            _tooltipData = null;
+          });
+        }
+      });
     });
   }
 

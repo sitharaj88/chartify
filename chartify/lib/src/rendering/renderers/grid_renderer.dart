@@ -14,8 +14,8 @@ class GridConfig extends RendererConfig {
     this.lineColor,
     this.lineWidth = 1.0,
     this.dashPattern,
-    this.horizontalTickCount,
-    this.verticalTickCount,
+    this.horizontalTickCount = 5,
+    this.verticalTickCount = 5,
     this.showBorder = false,
     this.borderColor,
     this.borderWidth = 1.0,
@@ -41,11 +41,11 @@ class GridConfig extends RendererConfig {
   /// Dash pattern for grid lines (null for solid).
   final List<double>? dashPattern;
 
-  /// Number of horizontal grid lines (hint).
-  final int? horizontalTickCount;
+  /// Number of horizontal grid lines (hint). Default is 5 for cleaner charts.
+  final int horizontalTickCount;
 
-  /// Number of vertical grid lines (hint).
-  final int? verticalTickCount;
+  /// Number of vertical grid lines (hint). Default is 5 for cleaner charts.
+  final int verticalTickCount;
 
   /// Whether to draw a border around the chart area.
   final bool showBorder;
