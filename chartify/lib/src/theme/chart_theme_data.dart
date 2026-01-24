@@ -3,6 +3,8 @@ import 'dart:ui';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
+import '../accessibility/contrast_validator.dart';
+
 /// Theme data for charts.
 ///
 /// Provides consistent styling across all chart types.
@@ -238,6 +240,42 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
 
   /// Gets a color from the palette for a series.
   Color getSeriesColor(int index) => colorPalette[index];
+
+  /// Validates that all palette colors meet contrast requirements against the background.
+  ///
+  /// Returns a map of failing color indices to their contrast issues.
+  /// An empty map means all colors pass validation.
+  Map<int, ContrastIssue> validateColorContrast({
+    ContrastLevel level = ContrastLevel.aa,
+  }) =>
+      ContrastValidator.validatePalette(
+        colorPalette.colors,
+        backgroundColor,
+        level: level,
+      );
+
+  /// Returns true if all palette colors meet the specified contrast level.
+  bool meetsContrastRequirements({ContrastLevel level = ContrastLevel.aa}) =>
+      validateColorContrast(level: level).isEmpty;
+
+  /// Creates a copy of this theme with colors adjusted for accessibility.
+  ///
+  /// Automatically adjusts any palette colors that don't meet the specified
+  /// contrast level against the background.
+  ChartThemeData withAccessibleColors({ContrastLevel level = ContrastLevel.aa}) {
+    final accessibleColors = colorPalette.colors.map((color) {
+      if (ContrastValidator.meetsLevel(color, backgroundColor, level)) {
+        return color;
+      }
+      return ContrastValidator.suggestAccessibleColor(
+        color,
+        backgroundColor,
+        level: level,
+      );
+    }).toList();
+
+    return copyWith(colorPalette: ColorPalette(accessibleColors));
+  }
 
   @override
   ChartThemeData copyWith({
@@ -488,6 +526,60 @@ class ColorPalette {
 
   /// The number of colors in this palette.
   int get length => colors.length;
+
+  /// Creates a high contrast palette suitable for accessibility.
+  ///
+  /// These colors meet WCAG AA requirements on most backgrounds.
+  factory ColorPalette.highContrast({Brightness brightness = Brightness.light}) {
+    if (brightness == Brightness.dark) {
+      return const ColorPalette([
+        Color(0xFFFFFFFF), // White
+        Color(0xFFFFFF00), // Yellow
+        Color(0xFF00FFFF), // Cyan
+        Color(0xFFFF00FF), // Magenta
+        Color(0xFF00FF00), // Lime
+        Color(0xFFFFAA00), // Orange
+        Color(0xFFFF6699), // Pink
+        Color(0xFF99FF99), // Light Green
+      ]);
+    }
+    return const ColorPalette([
+      Color(0xFF000000), // Black
+      Color(0xFF0000CC), // Dark Blue
+      Color(0xFFCC0000), // Dark Red
+      Color(0xFF006600), // Dark Green
+      Color(0xFF660066), // Dark Purple
+      Color(0xFF996600), // Dark Orange
+      Color(0xFF006666), // Dark Teal
+      Color(0xFF660000), // Dark Maroon
+    ]);
+  }
+
+  /// Validates all colors against a background and returns contrast issues.
+  Map<int, ContrastIssue> validateContrast(
+    Color background, {
+    ContrastLevel level = ContrastLevel.aa,
+  }) =>
+      ContrastValidator.validatePalette(colors, background, level: level);
+
+  /// Returns a new palette with colors adjusted to meet contrast requirements.
+  ColorPalette ensureContrast(
+    Color background, {
+    ContrastLevel level = ContrastLevel.aa,
+  }) {
+    final adjustedColors = colors.map((color) {
+      if (ContrastValidator.meetsLevel(color, background, level)) {
+        return color;
+      }
+      return ContrastValidator.suggestAccessibleColor(
+        color,
+        background,
+        level: level,
+      );
+    }).toList();
+
+    return ColorPalette(adjustedColors);
+  }
 
   /// Interpolates between two palettes.
   ColorPalette lerp(ColorPalette other, double t) {

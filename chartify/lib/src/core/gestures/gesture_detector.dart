@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 
 import 'package:flutter/foundation.dart';
@@ -288,6 +289,13 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   Offset? _lastFocalPoint;
   double _lastScale = 1.0;
   bool _isTouching = false;
+  Timer? _tooltipHideTimer;
+
+  @override
+  void dispose() {
+    _tooltipHideTimer?.cancel();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -358,7 +366,9 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
     if (_isTouching) {
       _isTouching = false;
       // Keep tooltip visible briefly after lifting finger
-      Future.delayed(const Duration(milliseconds: 800), () {
+      _tooltipHideTimer?.cancel();
+      _tooltipHideTimer = Timer(const Duration(milliseconds: 800), () {
+        if (!mounted) return;
         if (!_isTouching) {
           widget.controller.clearHoveredPoint();
           widget.controller.hideTooltip();
@@ -370,6 +380,7 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   void _handlePointerCancel(PointerCancelEvent event) {
     if (_isTouching) {
       _isTouching = false;
+      _tooltipHideTimer?.cancel();
       widget.controller.clearHoveredPoint();
       widget.controller.hideTooltip();
     }

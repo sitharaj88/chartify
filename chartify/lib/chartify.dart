@@ -72,6 +72,10 @@ export 'src/core/math/geometry/coordinate_transform.dart';
 // Core - Utilities
 export 'src/core/utils/object_pool.dart';
 export 'src/core/utils/cache_manager.dart';
+export 'src/core/utils/data_validator.dart';
+
+// Core - Error Handling
+export 'src/core/errors/chart_error_boundary.dart';
 
 // Rendering - Renderers (hide duplicates from core)
 export 'src/rendering/renderers/renderer.dart';
@@ -108,7 +112,9 @@ export 'src/charts/_base/cartesian_chart_base.dart' hide CartesianChartPainter;
 export 'src/charts/_base/circular_chart_base.dart' hide CircularChartPainter;
 
 // Accessibility
+export 'src/accessibility/chart_accessibility.dart';
 export 'src/accessibility/chart_semantics.dart' hide ChartType;
+export 'src/accessibility/contrast_validator.dart';
 export 'src/accessibility/high_contrast.dart';
 
 // Plugins

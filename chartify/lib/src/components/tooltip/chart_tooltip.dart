@@ -131,8 +131,9 @@ class TooltipPositioner {
   TooltipPositioner._();
 
   /// Layout constants
-  static const double _tooltipGap = 8.0;
-  static const double _minArrowMargin = 12.0;
+  static const double _tooltipGap = 8;
+  /// Minimum margin from tooltip edge for arrow (matches arrow base half-width)
+  static const double _minArrowMargin = 6;
 
   /// Calculate optimal tooltip position with smart edge detection.
   ///
