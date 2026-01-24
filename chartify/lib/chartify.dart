@@ -209,6 +209,12 @@ export 'src/charts/cartesian/bump/bump_chart.dart';
 
 // Charts - Cartesian - Gantt
 export 'src/charts/cartesian/gantt/gantt_chart.dart';
+export 'src/charts/cartesian/gantt/gantt_chart_data.dart';
+export 'src/charts/cartesian/gantt/gantt_dependency.dart';
+export 'src/charts/cartesian/gantt/gantt_validator.dart';
+export 'src/charts/cartesian/gantt/gantt_scheduler.dart';
+export 'src/charts/cartesian/gantt/gantt_interactions.dart';
+export 'src/charts/cartesian/gantt/gantt_view_controller.dart';
 
 // Charts - Polar - Rose
 export 'src/charts/polar/rose/rose_chart.dart';
