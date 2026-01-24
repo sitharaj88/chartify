@@ -132,8 +132,11 @@ class BarData {
 ///
 /// Renders bar charts with support for vertical/horizontal orientation,
 /// rounded corners, gradients, and value labels.
+///
+/// For large datasets (50+ bars), viewport culling is automatically
+/// applied to only render visible bars.
 class BarPainter extends SeriesPainter<BarSeriesConfig>
-    with GradientMixin, AnimatedSeriesMixin {
+    with GradientMixin, AnimatedSeriesMixin, ViewportCullingMixin {
   BarPainter({
     required super.config,
     required super.seriesIndex,
@@ -154,6 +157,10 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
   // Cached computations
   List<Rect>? _cachedBarRects;
   int? _cachedDataHash;
+
+  // Viewport culling state
+  int _visibleStartIndex = 0;
+  List<BarData> _visibleData = [];
 
   /// Updates the data.
   void updateData(List<BarData> newData) {
@@ -190,6 +197,9 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
   ) {
     if (!config.visible || data.isEmpty) return;
 
+    // Apply viewport culling for large datasets
+    _applyViewportCulling(transform.xBounds);
+
     // Compute bar rectangles
     final currentHash = _computeDataHash();
     if (_cachedDataHash != currentHash || _cachedBarRects == null) {
@@ -206,7 +216,8 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
 
     // Draw bars
     for (var i = 0; i < barRects.length; i++) {
-      _drawBar(canvas, chartArea, barRects[i], i);
+      final originalIndex = _visibleStartIndex + i;
+      _drawBar(canvas, chartArea, barRects[i], originalIndex);
     }
 
     // Draw value labels
@@ -215,11 +226,31 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
     }
   }
 
+  /// Applies viewport culling to get visible data.
+  void _applyViewportCulling(Bounds visibleBounds) {
+    // Skip culling for small datasets
+    if (data.length <= cullingThreshold) {
+      _visibleStartIndex = 0;
+      _visibleData = data;
+      return;
+    }
+
+    final result = cullDataToViewport(
+      data,
+      visibleBounds,
+      getX: (d) => d.x,
+    );
+
+    _visibleStartIndex = result.startIndex;
+    _visibleData = result.data;
+  }
+
   List<Rect> _computeBarRects(Rect chartArea, CoordinateTransform transform) {
     final rects = <Rect>[];
-    if (data.isEmpty) return rects;
+    if (_visibleData.isEmpty) return rects;
 
-    // Calculate bar width
+    // Calculate bar width based on total data count (not visible)
+    // to maintain consistent bar widths during panning
     final availableWidth = config.orientation == BarOrientation.vertical
         ? chartArea.width
         : chartArea.height;
@@ -230,8 +261,8 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
     final groupBarWidth = totalBarWidth / groupCount;
     final barWidth = groupBarWidth * 0.9; // Small gap between grouped bars
 
-    for (var i = 0; i < data.length; i++) {
-      final bar = data[i];
+    for (var i = 0; i < _visibleData.length; i++) {
+      final bar = _visibleData[i];
 
       // Apply animation
       final animatedY = bar.y * config.animationProgress;
@@ -276,17 +307,19 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
 
   void _registerHitRegions(List<Rect> barRects) {
     for (var i = 0; i < barRects.length; i++) {
-      final bar = data[i];
+      // Use original data index (accounting for viewport culling offset)
+      final originalIndex = _visibleStartIndex + i;
+      final bar = _visibleData[i];
       final rect = barRects[i];
 
       final info = DataPointInfo(
         seriesIndex: seriesIndex,
-        dataIndex: i,
+        dataIndex: originalIndex,
         screenPosition: rect.center,
         dataX: bar.x,
         dataY: bar.y,
         label: bar.label,
-        color: _getBarColor(i),
+        color: _getBarColor(originalIndex),
         value: config.valueFormatter?.call(bar.y) ?? bar.y.toString(),
       );
 
@@ -294,8 +327,10 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
     }
   }
 
-  void _drawBar(Canvas canvas, Rect chartArea, Rect rect, int index) {
-    final color = _getBarColor(index);
+  void _drawBar(
+      Canvas canvas, Rect chartArea, Rect rect, int originalIndex) {
+    final color = _getBarColor(originalIndex);
+    final barY = data[originalIndex].y;
 
     // Create bar paint
     final fillPaint = Paint()..style = PaintingStyle.fill;
@@ -310,7 +345,7 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
 
     // Draw bar with optional corner radius
     if (config.cornerRadius > 0) {
-      final rrect = _createRoundedBar(rect);
+      final rrect = _createRoundedBar(rect, barY);
       canvas.drawRRect(rrect, fillPaint);
 
       // Draw border
@@ -335,12 +370,13 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
     }
   }
 
-  RRect _createRoundedBar(Rect rect) {
+  RRect _createRoundedBar(Rect rect, double yValue) {
     final radius = Radius.circular(config.cornerRadius);
 
     // Only round the top corners for vertical bars, left for horizontal
+    // Use the actual bar's y value to determine direction
     if (config.orientation == BarOrientation.vertical) {
-      if (data[0].y >= 0) {
+      if (yValue >= 0) {
         return RRect.fromRectAndCorners(
           rect,
           topLeft: radius,
@@ -354,7 +390,7 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
         );
       }
     } else {
-      if (data[0].y >= 0) {
+      if (yValue >= 0) {
         return RRect.fromRectAndCorners(
           rect,
           topRight: radius,
@@ -370,15 +406,16 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
     }
   }
 
-  Color _getBarColor(int index) {
-    // Check for individual bar color
-    if (data[index].color != null) {
-      return data[index].color!;
+  /// Gets the color for a bar at the given original index.
+  Color _getBarColor(int originalIndex) {
+    // Check for individual bar color from original data
+    if (originalIndex < data.length && data[originalIndex].color != null) {
+      return data[originalIndex].color!;
     }
 
     // Check for colors array
-    if (config.colors != null && index < config.colors!.length) {
-      return config.colors![index];
+    if (config.colors != null && originalIndex < config.colors!.length) {
+      return config.colors![originalIndex];
     }
 
     return config.color;
@@ -392,7 +429,7 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
         );
 
     for (var i = 0; i < barRects.length; i++) {
-      final bar = data[i];
+      final bar = _visibleData[i];
       final rect = barRects[i];
 
       final valueText = config.valueFormatter?.call(bar.y) ??

@@ -352,17 +352,26 @@ class _RadarChartPainter extends PolarChartPainter {
           strokeWidth: 2,
         );
 
-        for (final point in points) {
-          canvas.drawCircle(point, series.pointRadius + 1, pointBorderPaint);
-          canvas.drawCircle(point, series.pointRadius, pointPaint);
+        for (var pointIndex = 0; pointIndex < points.length; pointIndex++) {
+          final point = points[pointIndex];
+          final isHovered = controller.hoveredPoint?.seriesIndex == seriesIndex &&
+              controller.hoveredPoint?.pointIndex == pointIndex;
+
+          if (isHovered) {
+            // Draw larger highlight for hovered point
+            final highlightPaint = getPaint(
+              color: seriesColor.withAlpha(51),
+              style: PaintingStyle.fill,
+            );
+            canvas.drawCircle(point, series.pointRadius * 2.5, highlightPaint);
+            canvas.drawCircle(point, series.pointRadius + 3, pointBorderPaint);
+            canvas.drawCircle(point, series.pointRadius + 2, pointPaint);
+          } else {
+            canvas.drawCircle(point, series.pointRadius + 1, pointBorderPaint);
+            canvas.drawCircle(point, series.pointRadius, pointPaint);
+          }
         }
       }
-    }
-
-    // Perform hit testing
-    final hoveredPoint = controller.hoveredPoint;
-    if (hoveredPoint == null) {
-      // Check current hover position
     }
   }
 

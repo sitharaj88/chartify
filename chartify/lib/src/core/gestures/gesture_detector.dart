@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
 import '../base/chart_controller.dart';
+import 'spatial_index.dart';
 
 /// Configuration for chart interactions.
 @immutable
@@ -531,8 +532,28 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
 }
 
 /// Hit tester for finding data points at a position.
+///
+/// Uses spatial indexing (QuadTree) for O(log n) hit testing performance
+/// with large numbers of data points.
 class ChartHitTester {
+  /// Creates a hit tester.
+  ///
+  /// Optionally provide [bounds] for the chart area to optimize spatial indexing.
+  /// If not provided, bounds will be computed from added targets.
+  ChartHitTester({Rect? bounds}) : _bounds = bounds;
+
   final List<_HitTarget> _targets = [];
+  Rect? _bounds;
+  QuadTree<_HitTarget>? _spatialIndex;
+  bool _indexDirty = true;
+
+  /// Sets the bounds for spatial indexing.
+  ///
+  /// Call this before adding targets for optimal performance.
+  void setBounds(Rect bounds) {
+    _bounds = bounds;
+    _indexDirty = true;
+  }
 
   /// Adds a circular hit target.
   void addCircle({
@@ -540,7 +561,9 @@ class ChartHitTester {
     required double radius,
     required DataPointInfo info,
   }) {
-    _targets.add(_CircleHitTarget(center: center, radius: radius, info: info));
+    final target = _CircleHitTarget(center: center, radius: radius, info: info);
+    _targets.add(target);
+    _indexDirty = true;
   }
 
   /// Adds a rectangular hit target.
@@ -548,7 +571,9 @@ class ChartHitTester {
     required Rect rect,
     required DataPointInfo info,
   }) {
-    _targets.add(_RectHitTarget(rect: rect, info: info));
+    final target = _RectHitTarget(rect: rect, info: info);
+    _targets.add(target);
+    _indexDirty = true;
   }
 
   /// Adds a path-based hit target.
@@ -557,7 +582,9 @@ class ChartHitTester {
     required DataPointInfo info,
     double strokeWidth = 10.0,
   }) {
-    _targets.add(_PathHitTarget(path: path, info: info, strokeWidth: strokeWidth));
+    final target = _PathHitTarget(path: path, info: info, strokeWidth: strokeWidth);
+    _targets.add(target);
+    _indexDirty = true;
   }
 
   /// Adds an arc/sector hit target (for pie charts).
@@ -569,21 +596,139 @@ class ChartHitTester {
     required double sweepAngle,
     required DataPointInfo info,
   }) {
-    _targets.add(_ArcHitTarget(
+    final target = _ArcHitTarget(
       center: center,
       innerRadius: innerRadius,
       outerRadius: outerRadius,
       startAngle: startAngle,
       sweepAngle: sweepAngle,
       info: info,
-    ));
+    );
+    _targets.add(target);
+    _indexDirty = true;
   }
 
   /// Clears all hit targets.
-  void clear() => _targets.clear();
+  void clear() {
+    _targets.clear();
+    _spatialIndex?.clear();
+    _indexDirty = true;
+  }
+
+  /// Rebuilds the spatial index if needed.
+  void _ensureIndex() {
+    if (!_indexDirty && _spatialIndex != null) return;
+    if (_targets.isEmpty) {
+      _spatialIndex = null;
+      _indexDirty = false;
+      return;
+    }
+
+    // Compute bounds if not provided
+    final bounds = _bounds ?? _computeBounds();
+    if (bounds.isEmpty) {
+      _spatialIndex = null;
+      _indexDirty = false;
+      return;
+    }
+
+    // Rebuild spatial index
+    _spatialIndex = QuadTree<_HitTarget>(bounds: bounds);
+    for (final target in _targets) {
+      final targetBounds = _getTargetBounds(target);
+      _spatialIndex!.insert(target, targetBounds);
+    }
+
+    _indexDirty = false;
+  }
+
+  /// Computes bounding rectangle from all targets.
+  Rect _computeBounds() {
+    if (_targets.isEmpty) return Rect.zero;
+
+    double minX = double.infinity;
+    double minY = double.infinity;
+    double maxX = double.negativeInfinity;
+    double maxY = double.negativeInfinity;
+
+    for (final target in _targets) {
+      final bounds = _getTargetBounds(target);
+      if (bounds.left < minX) minX = bounds.left;
+      if (bounds.top < minY) minY = bounds.top;
+      if (bounds.right > maxX) maxX = bounds.right;
+      if (bounds.bottom > maxY) maxY = bounds.bottom;
+    }
+
+    // Add padding for query radius
+    const padding = 50.0;
+    return Rect.fromLTRB(minX - padding, minY - padding, maxX + padding, maxY + padding);
+  }
+
+  /// Gets the bounding rectangle for a hit target.
+  Rect _getTargetBounds(_HitTarget target) {
+    if (target is _CircleHitTarget) {
+      return Rect.fromCenter(
+        center: target.center,
+        width: target.radius * 2,
+        height: target.radius * 2,
+      );
+    } else if (target is _RectHitTarget) {
+      return target.rect;
+    } else if (target is _PathHitTarget) {
+      return target.path.getBounds().inflate(target.strokeWidth);
+    } else if (target is _ArcHitTarget) {
+      // Bounding box of the arc
+      return Rect.fromCenter(
+        center: target.center,
+        width: target.outerRadius * 2,
+        height: target.outerRadius * 2,
+      );
+    }
+    return Rect.zero;
+  }
 
   /// Tests if the given position hits any target.
+  ///
+  /// Uses O(log n) spatial query when possible.
   DataPointInfo? hitTest(Offset position, {double radius = 20.0}) {
+    _ensureIndex();
+
+    // Use spatial index for large datasets (>20 targets)
+    if (_spatialIndex != null && _targets.length > 20) {
+      return _hitTestSpatial(position, radius);
+    }
+
+    // Fall back to linear search for small datasets
+    return _hitTestLinear(position, radius);
+  }
+
+  /// Spatial O(log n) hit testing.
+  DataPointInfo? _hitTestSpatial(Offset position, double radius) {
+    // Query candidates from spatial index
+    final queryRect = Rect.fromCenter(
+      center: position,
+      width: radius * 2,
+      height: radius * 2,
+    );
+    final candidates = _spatialIndex!.queryRect(queryRect);
+
+    // Find closest among candidates
+    DataPointInfo? closest;
+    double closestDistance = double.infinity;
+
+    for (final target in candidates) {
+      final distance = target.distanceTo(position);
+      if (distance <= radius && distance < closestDistance) {
+        closestDistance = distance;
+        closest = target.info;
+      }
+    }
+
+    return closest;
+  }
+
+  /// Linear O(n) hit testing for small datasets.
+  DataPointInfo? _hitTestLinear(Offset position, double radius) {
     DataPointInfo? closest;
     double closestDistance = double.infinity;
 
@@ -599,7 +744,41 @@ class ChartHitTester {
   }
 
   /// Returns all targets within the given radius.
+  ///
+  /// Uses O(log n) spatial query when possible.
   List<DataPointInfo> hitTestAll(Offset position, {double radius = 20.0}) {
+    _ensureIndex();
+
+    // Use spatial index for large datasets
+    if (_spatialIndex != null && _targets.length > 20) {
+      return _hitTestAllSpatial(position, radius);
+    }
+
+    // Fall back to linear search
+    return _hitTestAllLinear(position, radius);
+  }
+
+  /// Spatial O(log n) all-targets hit testing.
+  List<DataPointInfo> _hitTestAllSpatial(Offset position, double radius) {
+    final queryRect = Rect.fromCenter(
+      center: position,
+      width: radius * 2,
+      height: radius * 2,
+    );
+    final candidates = _spatialIndex!.queryRect(queryRect);
+    final results = <DataPointInfo>[];
+
+    for (final target in candidates) {
+      if (target.distanceTo(position) <= radius) {
+        results.add(target.info);
+      }
+    }
+
+    return results;
+  }
+
+  /// Linear O(n) all-targets hit testing.
+  List<DataPointInfo> _hitTestAllLinear(Offset position, double radius) {
     final results = <DataPointInfo>[];
 
     for (final target in _targets) {
@@ -610,6 +789,9 @@ class ChartHitTester {
 
     return results;
   }
+
+  /// Number of registered hit targets.
+  int get length => _targets.length;
 }
 
 abstract class _HitTarget {

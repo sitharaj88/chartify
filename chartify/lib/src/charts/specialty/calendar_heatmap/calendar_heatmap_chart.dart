@@ -406,11 +406,19 @@ class _CalendarHeatmapPainter extends ChartPainter {
   }
 
   Color _getColorForRatio(double ratio, List<Color> colors) {
-    if (colors.length < 2) return colors.first;
+    // Handle empty or single color array
+    if (colors.isEmpty) return Colors.grey;
+    if (colors.length == 1) return colors.first;
 
-    final index = (ratio * (colors.length - 1)).floor();
-    final localRatio = (ratio * (colors.length - 1)) - index;
+    // Clamp ratio to valid range to prevent out-of-bounds access
+    final clampedRatio = ratio.clamp(0.0, 1.0);
 
+    // Calculate index and local ratio for interpolation
+    final scaledValue = clampedRatio * (colors.length - 1);
+    final index = scaledValue.floor();
+    final localRatio = scaledValue - index;
+
+    // Handle edge case where ratio is exactly 1.0
     if (index >= colors.length - 1) return colors.last;
 
     return Color.lerp(colors[index], colors[index + 1], localRatio)!;

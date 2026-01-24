@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../../../animation/chart_animation.dart';
@@ -57,8 +59,11 @@ class BubbleSizeConfig {
     return minSize + (maxSize - minSize) * normalizedValue.clamp(0, 1);
   }
 
-  double _sqrt(double x) => x >= 0 ? x * x : -(x.abs() * x.abs());
-  double _log(double x) => x > 0 ? (x + 1).toString().length.toDouble() : 0;
+  /// Computes the square root for bubble size scaling.
+  double _sqrt(double x) => x >= 0 ? math.sqrt(x) : -math.sqrt(x.abs());
+
+  /// Computes the natural logarithm for bubble size scaling.
+  double _log(double x) => x > 0 ? math.log(x) : 0;
 }
 
 /// A data point for bubble charts.

@@ -149,9 +149,14 @@ class _RadialBarChartPainter extends CircularChartPainter {
 
     if (barCount == 0) return;
 
+    // Calculate the minimum radius that must be preserved
+    final minRadius = maxRadius * data.innerRadius;
+
     // Calculate total space needed for all bars
     final totalBarSpace = barCount * data.thickness + (barCount - 1) * data.trackGap;
-    final availableSpace = maxRadius * (1 - data.innerRadius);
+    final availableSpace = maxRadius - minRadius;
+
+    // Scale bars if they don't fit, preserving proportions
     final scale = totalBarSpace > availableSpace ? availableSpace / totalBarSpace : 1.0;
 
     final scaledThickness = data.thickness * scale;
@@ -163,9 +168,12 @@ class _RadialBarChartPainter extends CircularChartPainter {
       final barThickness = (bar.thickness ?? data.thickness) * scale;
 
       // Calculate radius for this bar (outer bars first)
-      final radius = maxRadius - (i * (scaledThickness + scaledGap)) - barThickness / 2;
+      // Start from maxRadius and work inward, ensuring we don't go below minRadius
+      final barOffset = i * (scaledThickness + scaledGap) + barThickness / 2;
+      final radius = maxRadius - barOffset;
 
-      if (radius <= 0) continue;
+      // Skip bars that would go below the minimum radius
+      if (radius - barThickness / 2 < minRadius) continue;
 
       final color = bar.color ?? theme.getSeriesColor(i);
 

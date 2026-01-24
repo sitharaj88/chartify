@@ -546,93 +546,196 @@ class _PieChartPainter extends CircularChartPainter {
     final total = data.total;
     if (total <= 0) return;
 
+    // Minimum percentage threshold for showing labels (2%)
+    const minLabelThreshold = 0.02;
+
+    final textStyle = data.labelStyle ?? theme.labelStyle.copyWith(fontSize: 12);
+
+    // First pass: calculate all label positions and bounds
+    final labelInfos = <_LabelInfo>[];
     var currentAngle = degreesToRadians(startAngle);
 
     for (var i = 0; i < data.sections.length; i++) {
       final section = data.sections[i];
-      if (section.label == null) {
-        currentAngle += (section.value / total) * 2 * math.pi * animationValue;
+      final sweepAngle = (section.value / total) * 2 * math.pi * animationValue;
+      final midAngle = currentAngle + sweepAngle / 2;
+      final percentage = section.value / total;
+
+      // Skip labels for sections below threshold or without labels
+      if (section.label == null || percentage < minLabelThreshold) {
+        currentAngle += sweepAngle;
         continue;
       }
 
-      final sweepAngle = (section.value / total) * 2 * math.pi * animationValue;
-      final midAngle = currentAngle + sweepAngle / 2;
-      final percentage = (section.value / total * 100).toStringAsFixed(1);
+      final percentageStr = (percentage * 100).toStringAsFixed(1);
+      final labelText = '${section.label!}\n$percentageStr%';
 
-      final textStyle = data.labelStyle ?? theme.labelStyle.copyWith(fontSize: 12);
+      // Calculate label size
+      final textSpan = TextSpan(text: labelText, style: textStyle);
+      final textPainter = TextPainter(
+        text: textSpan,
+        textAlign: TextAlign.center,
+        textDirection: TextDirection.ltr,
+      )..layout();
+
+      Offset labelPos;
+      bool isRightSide = true;
 
       if (data.labelPosition == PieLabelPosition.inside) {
         final labelRadius = outerRadius * 0.7;
-        final labelPos = Offset(
+        labelPos = Offset(
           center.dx + labelRadius * math.cos(midAngle),
           center.dy + labelRadius * math.sin(midAngle),
         );
-        _drawText(canvas, '${section.label!}\n$percentage%', labelPos, textStyle);
       } else {
-        if (data.labelConnector == PieLabelConnector.elbow) {
-          _drawElbowConnectorLabel(
-            canvas,
-            center,
-            outerRadius,
-            midAngle,
-            section.label!,
-            percentage,
-            textStyle,
-          );
-        } else {
-          // Straight connector
-          final labelRadius = outerRadius + 20;
-          final labelPos = Offset(
-            center.dx + labelRadius * math.cos(midAngle),
-            center.dy + labelRadius * math.sin(midAngle),
-          );
+        // Outside label position
+        const elbowLength = 20.0;
+        const horizontalLength = 15.0;
+        isRightSide = midAngle > -math.pi / 2 && midAngle < math.pi / 2;
 
-          // Draw connector line
-          final lineStart = Offset(
-            center.dx + outerRadius * math.cos(midAngle),
-            center.dy + outerRadius * math.sin(midAngle),
-          );
-          final linePaint = Paint()
-            ..color = theme.labelStyle.color ?? Colors.grey
-            ..strokeWidth = 1;
-          canvas.drawLine(lineStart, labelPos, linePaint);
-
-          _drawText(canvas, '${section.label!}\n$percentage%', labelPos, textStyle);
-        }
+        final elbowPoint = Offset(
+          center.dx + (outerRadius + elbowLength) * math.cos(midAngle),
+          center.dy + (outerRadius + elbowLength) * math.sin(midAngle),
+        );
+        labelPos = Offset(
+          elbowPoint.dx + (isRightSide ? horizontalLength + 4 : -horizontalLength - textPainter.width - 4),
+          elbowPoint.dy,
+        );
       }
+
+      final bounds = Rect.fromCenter(
+        center: labelPos,
+        width: textPainter.width + 8,
+        height: textPainter.height + 4,
+      );
+
+      labelInfos.add(_LabelInfo(
+        index: i,
+        section: section,
+        midAngle: midAngle,
+        labelText: labelText,
+        position: labelPos,
+        bounds: bounds,
+        textPainter: textPainter,
+        isRightSide: isRightSide,
+        visible: true,
+      ));
 
       currentAngle += sweepAngle;
     }
+
+    // Second pass: detect and resolve collisions for outside labels
+    if (data.labelPosition != PieLabelPosition.inside) {
+      _resolveCollisions(labelInfos, center, outerRadius);
+    }
+
+    // Third pass: draw visible labels
+    for (final info in labelInfos) {
+      if (!info.visible) continue;
+
+      if (data.labelPosition == PieLabelPosition.inside) {
+        _drawText(canvas, info.labelText, info.position, textStyle);
+      } else {
+        _drawLabelWithConnector(
+          canvas,
+          center,
+          outerRadius,
+          info,
+          textStyle,
+        );
+      }
+    }
   }
 
-  void _drawElbowConnectorLabel(
+  /// Resolves label collisions by adjusting vertical positions.
+  void _resolveCollisions(List<_LabelInfo> labels, Offset center, double outerRadius) {
+    // Separate left and right side labels
+    final rightLabels = labels.where((l) => l.isRightSide).toList();
+    final leftLabels = labels.where((l) => !l.isRightSide).toList();
+
+    // Sort by Y position
+    rightLabels.sort((a, b) => a.position.dy.compareTo(b.position.dy));
+    leftLabels.sort((a, b) => a.position.dy.compareTo(b.position.dy));
+
+    // Resolve collisions on each side
+    _resolveOneSide(rightLabels, center, outerRadius, isRight: true);
+    _resolveOneSide(leftLabels, center, outerRadius, isRight: false);
+  }
+
+  void _resolveOneSide(List<_LabelInfo> labels, Offset center, double outerRadius, {required bool isRight}) {
+    if (labels.isEmpty) return;
+
+    const minSpacing = 4.0;
+    const maxIterations = 10;
+
+    for (var iter = 0; iter < maxIterations; iter++) {
+      var hasCollision = false;
+
+      for (var i = 0; i < labels.length - 1; i++) {
+        final current = labels[i];
+        final next = labels[i + 1];
+
+        if (!current.visible || !next.visible) continue;
+
+        final overlap = (current.bounds.bottom + minSpacing) - next.bounds.top;
+        if (overlap > 0) {
+          hasCollision = true;
+          // Push labels apart
+          final adjustment = overlap / 2;
+          current.position = Offset(current.position.dx, current.position.dy - adjustment);
+          next.position = Offset(next.position.dx, next.position.dy + adjustment);
+
+          // Update bounds
+          current.bounds = Rect.fromCenter(
+            center: current.position,
+            width: current.bounds.width,
+            height: current.bounds.height,
+          );
+          next.bounds = Rect.fromCenter(
+            center: next.position,
+            width: next.bounds.width,
+            height: next.bounds.height,
+          );
+        }
+      }
+
+      if (!hasCollision) break;
+    }
+
+    // Hide labels that would go too far outside the chart area
+    final maxDistance = outerRadius * 2;
+    for (final label in labels) {
+      if ((label.position.dy - center.dy).abs() > maxDistance) {
+        label.visible = false;
+      }
+    }
+  }
+
+  void _drawLabelWithConnector(
     Canvas canvas,
     Offset center,
     double outerRadius,
-    double midAngle,
-    String label,
-    String percentage,
+    _LabelInfo info,
     TextStyle style,
   ) {
-    // 1. Start point on pie edge
+    // Start point on pie edge
     final startPoint = Offset(
-      center.dx + outerRadius * math.cos(midAngle),
-      center.dy + outerRadius * math.sin(midAngle),
+      center.dx + outerRadius * math.cos(info.midAngle),
+      center.dy + outerRadius * math.sin(info.midAngle),
     );
 
-    // 2. Elbow point (extends outward)
+    // Elbow point
     const elbowLength = 20.0;
     final elbowPoint = Offset(
-      center.dx + (outerRadius + elbowLength) * math.cos(midAngle),
-      center.dy + (outerRadius + elbowLength) * math.sin(midAngle),
+      center.dx + (outerRadius + elbowLength) * math.cos(info.midAngle),
+      center.dy + (outerRadius + elbowLength) * math.sin(info.midAngle),
     );
 
-    // 3. Horizontal line to label
-    final isRightSide = midAngle > -math.pi / 2 && midAngle < math.pi / 2;
+    // End point (adjusted Y for collision resolution)
     const horizontalLength = 15.0;
     final labelPoint = Offset(
-      elbowPoint.dx + (isRightSide ? horizontalLength : -horizontalLength),
-      elbowPoint.dy,
+      elbowPoint.dx + (info.isRightSide ? horizontalLength : -horizontalLength),
+      info.position.dy,
     );
 
     // Draw connector lines
@@ -643,20 +746,12 @@ class _PieChartPainter extends CircularChartPainter {
     canvas.drawLine(startPoint, elbowPoint, linePaint);
     canvas.drawLine(elbowPoint, labelPoint, linePaint);
 
-    // Draw label text
-    final labelText = '$label\n$percentage%';
-    final textSpan = TextSpan(text: labelText, style: style);
-    final textPainter = TextPainter(
-      text: textSpan,
-      textAlign: isRightSide ? TextAlign.left : TextAlign.right,
-      textDirection: TextDirection.ltr,
-    )..layout();
-
+    // Draw label
     final textOffset = Offset(
-      isRightSide ? labelPoint.dx + 4 : labelPoint.dx - textPainter.width - 4,
-      labelPoint.dy - textPainter.height / 2,
+      info.isRightSide ? labelPoint.dx + 4 : labelPoint.dx - info.textPainter.width - 4,
+      labelPoint.dy - info.textPainter.height / 2,
     );
-    textPainter.paint(canvas, textOffset);
+    info.textPainter.paint(canvas, textOffset);
   }
 
   void _drawText(Canvas canvas, String text, Offset position, TextStyle style) {
@@ -680,6 +775,31 @@ class _PieChartPainter extends CircularChartPainter {
       data != oldDelegate.data ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
       hoverScale != oldDelegate.hoverScale;
+}
+
+/// Helper class for label collision detection.
+class _LabelInfo {
+  _LabelInfo({
+    required this.index,
+    required this.section,
+    required this.midAngle,
+    required this.labelText,
+    required this.position,
+    required this.bounds,
+    required this.textPainter,
+    required this.isRightSide,
+    required this.visible,
+  });
+
+  final int index;
+  final PieSection section;
+  final double midAngle;
+  final String labelText;
+  Offset position;
+  Rect bounds;
+  final TextPainter textPainter;
+  final bool isRightSide;
+  bool visible;
 }
 
 /// A donut chart widget (pie chart with a hole in the center).

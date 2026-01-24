@@ -335,17 +335,26 @@ class _BarChartPainter extends CustomPainter {
       if (!series.visible) continue;
       maxLength = math.max(maxLength, series.data.length);
 
-      if (data.grouping == BarGrouping.stacked ||
-          data.grouping == BarGrouping.percentStacked) {
+      if (data.grouping == BarGrouping.stacked) {
+        // For regular stacked, sum all values per category
         for (var i = 0; i < series.data.length; i++) {
-          double stackSum = 0;
+          double positiveSum = 0;
+          double negativeSum = 0;
           for (final s in data.series) {
             if (!s.visible || i >= s.data.length) continue;
-            stackSum += s.data[i].y.toDouble();
+            final val = s.data[i].y.toDouble();
+            if (val >= 0) {
+              positiveSum += val;
+            } else {
+              negativeSum += val;
+            }
           }
-          if (stackSum > yMax) yMax = stackSum;
-          if (stackSum < yMin) yMin = stackSum;
+          if (positiveSum > yMax) yMax = positiveSum;
+          if (negativeSum < yMin) yMin = negativeSum;
         }
+      } else if (data.grouping == BarGrouping.percentStacked) {
+        // For percent-stacked, y-axis is always 0-100%
+        // We'll set the bounds after the loop
       } else {
         for (final point in series.data) {
           final y = point.y.toDouble();
@@ -356,6 +365,15 @@ class _BarChartPainter extends CustomPainter {
     }
 
     _categoryCount = maxLength;
+
+    // For percent-stacked, use 0-1 range (representing 0-100%)
+    if (data.grouping == BarGrouping.percentStacked) {
+      yMin = 0;
+      yMax = 1;
+      yBounds = Bounds(min: yMin, max: yMax);
+      onBoundsCalculated?.call(yBounds!);
+      return;
+    }
 
     // Apply axis config
     if (data.yAxis.min != null) yMin = data.yAxis.min!;
@@ -442,6 +460,20 @@ class _BarChartPainter extends CustomPainter {
         ? (groupWidth / seriesCount) * (1 - data.barSpacing)
         : groupWidth;
 
+    // Pre-calculate category totals for percent-stacked mode
+    final categoryTotals = <int, double>{};
+    if (data.grouping == BarGrouping.percentStacked) {
+      for (var categoryIndex = 0; categoryIndex < _categoryCount; categoryIndex++) {
+        double total = 0;
+        for (final series in visibleSeries) {
+          if (categoryIndex < series.data.length) {
+            total += series.data[categoryIndex].y.toDouble().abs();
+          }
+        }
+        categoryTotals[categoryIndex] = total;
+      }
+    }
+
     for (var categoryIndex = 0; categoryIndex < _categoryCount; categoryIndex++) {
       double stackOffset = 0;
       double negativeStackOffset = 0;
@@ -451,8 +483,20 @@ class _BarChartPainter extends CustomPainter {
         if (categoryIndex >= series.data.length) continue;
 
         final point = series.data[categoryIndex];
-        final value = point.y.toDouble();
+        final rawValue = point.y.toDouble();
         final originalSeriesIndex = data.series.indexOf(series);
+
+        // Calculate the value to use for bar height
+        double value;
+        if (data.grouping == BarGrouping.percentStacked) {
+          // Convert to percentage (0-1 range)
+          final total = categoryTotals[categoryIndex] ?? 1;
+          value = total > 0 ? rawValue.abs() / total : 0;
+          // Preserve sign for proper stacking
+          if (rawValue < 0) value = -value;
+        } else {
+          value = rawValue;
+        }
 
         // Calculate bar position
         double barStart, barEnd;
@@ -645,7 +689,15 @@ class _BarChartPainter extends CustomPainter {
 
     for (final tick in yTicks) {
       final y = _yScale.scale(tick);
-      final label = data.yAxis.labelFormatter?.call(tick) ?? _formatNumber(tick);
+      String label;
+      if (data.yAxis.labelFormatter != null) {
+        label = data.yAxis.labelFormatter!.call(tick);
+      } else if (data.grouping == BarGrouping.percentStacked) {
+        // Format as percentage for percent-stacked mode
+        label = '${(tick * 100).round()}%';
+      } else {
+        label = _formatNumber(tick);
+      }
 
       final textSpan = TextSpan(text: label, style: textStyle);
       final textPainter = TextPainter(

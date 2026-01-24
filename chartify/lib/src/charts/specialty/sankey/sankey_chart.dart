@@ -244,8 +244,14 @@ class _SankeyChartState extends State<SankeyChart>
       }
 
       final link = widget.data.links[idx];
-      final sourceNode = widget.data.nodes.firstWhere((n) => n.id == link.sourceId);
-      final targetNode = widget.data.nodes.firstWhere((n) => n.id == link.targetId);
+      final sourceNode = widget.data.nodes.where((n) => n.id == link.sourceId).firstOrNull;
+      final targetNode = widget.data.nodes.where((n) => n.id == link.targetId).firstOrNull;
+
+      // Handle missing nodes gracefully
+      if (sourceNode == null || targetNode == null) {
+        return TooltipData(position: info.position, entries: const []);
+      }
+
       final color = link.color ?? sourceNode.color ?? theme.getSeriesColor(0);
 
       return TooltipData(
@@ -300,6 +306,16 @@ class _SankeyChartPainter extends ChartPainter {
     final nodePositions = layout.$1;
     final linkPositions = layout.$2;
 
+    // Build lookup maps for O(1) access
+    final nodeMap = <String, SankeyNode>{};
+    for (final node in data.nodes) {
+      nodeMap[node.id] = node;
+    }
+    final positionMap = <String, SankeyNodePosition>{};
+    for (final pos in nodePositions) {
+      positionMap[pos.node.id] = pos;
+    }
+
     // Draw links first (behind nodes)
     for (var i = 0; i < linkPositions.length; i++) {
       final linkPos = linkPositions[i];
@@ -308,9 +324,12 @@ class _SankeyChartPainter extends ChartPainter {
           controller.hoveredPoint?.seriesIndex == 1 &&
           controller.hoveredPoint?.pointIndex == i;
 
-      final sourceNode = data.nodes.firstWhere((n) => n.id == link.sourceId);
-      final sourcePos = nodePositions.firstWhere((p) => p.node.id == link.sourceId);
-      final targetPos = nodePositions.firstWhere((p) => p.node.id == link.targetId);
+      final sourceNode = nodeMap[link.sourceId];
+      final sourcePos = positionMap[link.sourceId];
+      final targetPos = positionMap[link.targetId];
+
+      // Skip links with missing nodes
+      if (sourceNode == null || sourcePos == null || targetPos == null) continue;
 
       final color = link.color ?? sourceNode.color ?? theme.getSeriesColor(
           data.nodes.indexOf(sourceNode));
@@ -364,33 +383,55 @@ class _SankeyChartPainter extends ChartPainter {
 
   (List<SankeyNodePosition>, List<SankeyLinkPosition>) _calculateLayout(
       Rect chartArea) {
-    // Build graph structure
+    // Build graph structure with maps for O(1) lookups
     final nodeMap = <String, SankeyNode>{};
     for (final node in data.nodes) {
       nodeMap[node.id] = node;
     }
 
+    // Filter links to only include those with valid source and target nodes
+    final validLinks = data.links.where(
+      (l) => nodeMap.containsKey(l.sourceId) && nodeMap.containsKey(l.targetId)
+    ).toList();
+
+    // Detect circular dependencies using DFS with path tracking
+    // The detection is used to ensure the layout algorithm handles cycles gracefully
+    _detectCycle(validLinks, nodeMap.keys.toSet());
+
     // Calculate node columns (depth)
     final nodeDepth = <String, int>{};
     final visited = <String>{};
+    final inProgress = <String>{}; // Track nodes in current DFS path
 
     void calculateDepth(String nodeId, int depth) {
+      // Skip if we've completed processing this node
       if (visited.contains(nodeId)) return;
-      visited.add(nodeId);
 
+      // Cycle detected - skip to prevent infinite recursion
+      if (inProgress.contains(nodeId)) return;
+
+      inProgress.add(nodeId);
       nodeDepth[nodeId] = math.max(nodeDepth[nodeId] ?? 0, depth);
 
-      for (final link in data.links.where((l) => l.sourceId == nodeId)) {
+      for (final link in validLinks.where((l) => l.sourceId == nodeId)) {
         calculateDepth(link.targetId, depth + 1);
       }
+
+      inProgress.remove(nodeId);
+      visited.add(nodeId);
     }
 
-    // Find source nodes (no incoming links)
+    // Find source nodes (no incoming links from valid links)
     final sourceNodes = data.nodes.where((n) =>
-        !data.links.any((l) => l.targetId == n.id)).toList();
+        !validLinks.any((l) => l.targetId == n.id)).toList();
 
-    for (final node in sourceNodes) {
-      calculateDepth(node.id, 0);
+    // If graph has cycles and no clear source nodes, start from first node
+    if (sourceNodes.isEmpty && data.nodes.isNotEmpty) {
+      calculateDepth(data.nodes.first.id, 0);
+    } else {
+      for (final node in sourceNodes) {
+        calculateDepth(node.id, 0);
+      }
     }
 
     // Handle disconnected nodes
@@ -457,14 +498,24 @@ class _SankeyChartPainter extends ChartPainter {
       }
     }
 
-    // Calculate link positions
+    // Calculate link positions using map for O(1) lookup
     final linkPositions = <SankeyLinkPosition>[];
     final sourceOffsets = <String, double>{};
     final targetOffsets = <String, double>{};
 
-    for (final link in data.links) {
-      final sourcePos = nodePositions.firstWhere((p) => p.node.id == link.sourceId);
-      final targetPos = nodePositions.firstWhere((p) => p.node.id == link.targetId);
+    // Build position map
+    final posMap = <String, SankeyNodePosition>{};
+    for (final pos in nodePositions) {
+      posMap[pos.node.id] = pos;
+    }
+
+    // Only process valid links (already filtered earlier)
+    for (final link in validLinks) {
+      final sourcePos = posMap[link.sourceId];
+      final targetPos = posMap[link.targetId];
+
+      // Skip if positions not found (shouldn't happen with validLinks)
+      if (sourcePos == null || targetPos == null) continue;
 
       final sourceOffset = sourceOffsets[link.sourceId] ?? 0.0;
       final targetOffset = targetOffsets[link.targetId] ?? 0.0;
@@ -584,6 +635,42 @@ class _SankeyChartPainter extends ChartPainter {
     final y = pos.y + (pos.height - textPainter.height) / 2;
 
     textPainter.paint(canvas, Offset(x, y));
+  }
+
+  /// Detects if the graph contains any cycles using DFS.
+  /// Returns true if a cycle is detected.
+  bool _detectCycle(List<SankeyLink> links, Set<String> nodeIds) {
+    final adjacency = <String, List<String>>{};
+    for (final nodeId in nodeIds) {
+      adjacency[nodeId] = [];
+    }
+    for (final link in links) {
+      adjacency[link.sourceId]?.add(link.targetId);
+    }
+
+    final visited = <String>{};
+    final inStack = <String>{};
+
+    bool dfs(String nodeId) {
+      if (inStack.contains(nodeId)) return true; // Cycle found
+      if (visited.contains(nodeId)) return false;
+
+      visited.add(nodeId);
+      inStack.add(nodeId);
+
+      for (final neighbor in adjacency[nodeId] ?? <String>[]) {
+        if (dfs(neighbor)) return true;
+      }
+
+      inStack.remove(nodeId);
+      return false;
+    }
+
+    for (final nodeId in nodeIds) {
+      if (dfs(nodeId)) return true;
+    }
+
+    return false;
   }
 
   @override

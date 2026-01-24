@@ -70,9 +70,10 @@ export 'src/core/math/geometry/bounds_calculator.dart';
 export 'src/core/math/geometry/coordinate_transform.dart';
 
 // Core - Utilities
-export 'src/core/utils/object_pool.dart';
 export 'src/core/utils/cache_manager.dart';
+export 'src/core/utils/data_decimator.dart';
 export 'src/core/utils/data_validator.dart';
+export 'src/core/utils/object_pool.dart';
 
 // Core - Error Handling
 export 'src/core/errors/chart_error_boundary.dart';
@@ -93,6 +94,7 @@ export 'src/rendering/painters/arc_painter.dart';
 // Rendering - Cache (hide duplicates from core)
 export 'src/rendering/cache/path_cache.dart' hide PathCache;
 export 'src/rendering/cache/text_cache.dart';
+export 'src/rendering/cache/canvas_layer_cache.dart' hide RenderLayer;
 
 // Components - Tooltip
 export 'src/components/tooltip/chart_tooltip.dart';

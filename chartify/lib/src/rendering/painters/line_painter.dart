@@ -114,8 +114,11 @@ class LineSeriesConfig extends SeriesConfig {
 ///
 /// Renders line charts with support for multiple curve types,
 /// markers, and area fills.
+///
+/// For large datasets (50+ points), viewport culling is automatically
+/// applied to only render visible data points.
 class LinePainter extends SeriesPainter<LineSeriesConfig>
-    with CurvedSeriesMixin, AreaFillMixin, GradientMixin, AnimatedSeriesMixin {
+    with CurvedSeriesMixin, AreaFillMixin, GradientMixin, AnimatedSeriesMixin, ViewportCullingMixin {
   LinePainter({
     required super.config,
     required super.seriesIndex,
@@ -134,6 +137,9 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
   Path? _cachedAreaPath;
   List<Offset>? _cachedScreenPositions;
   int? _cachedDataHash;
+
+  // Viewport culling state
+  int _visibleStartIndex = 0;
 
   final MarkerRenderer _markerRenderer = MarkerRenderer(
     config: const MarkerConfig(),
@@ -170,10 +176,13 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
   ) {
     if (!config.visible || data.isEmpty) return;
 
+    // Apply viewport culling for large datasets
+    final visibleData = _getVisibleData(transform.xBounds);
+
     // Compute screen positions
     final currentHash = _computeDataHash();
     if (_cachedDataHash != currentHash || _cachedScreenPositions == null) {
-      _cachedScreenPositions = getScreenPositions(data, transform);
+      _cachedScreenPositions = getScreenPositions(visibleData, transform);
       _cachedDataHash = currentHash;
       _cachedLinePath = null;
       _cachedAreaPath = null;
@@ -206,6 +215,24 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
     }
   }
 
+  /// Gets visible data points with viewport culling applied.
+  List<({double x, double y})> _getVisibleData(Bounds visibleBounds) {
+    // Skip culling for small datasets
+    if (data.length <= cullingThreshold) {
+      _visibleStartIndex = 0;
+      return data;
+    }
+
+    final result = cullDataToViewport(
+      data,
+      visibleBounds,
+      getX: (d) => d.x,
+    );
+
+    _visibleStartIndex = result.startIndex;
+    return result.data;
+  }
+
   List<Offset> _applyAnimation(List<Offset> positions) {
     if (config.animationProgress >= 1.0) return positions;
 
@@ -219,13 +246,18 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
 
     for (var i = 0; i < positions.length; i++) {
       final pos = positions[i];
+      // Use original data index (accounting for viewport culling offset)
+      final originalIndex = _visibleStartIndex + i;
+
       final info = DataPointInfo(
         seriesIndex: seriesIndex,
-        dataIndex: i,
+        dataIndex: originalIndex,
         screenPosition: pos,
-        dataX: data[i].x,
-        dataY: data[i].y,
-        label: labels != null && i < labels!.length ? labels![i] : null,
+        dataX: data[originalIndex].x,
+        dataY: data[originalIndex].y,
+        label: labels != null && originalIndex < labels!.length
+            ? labels![originalIndex]
+            : null,
         color: config.color,
       );
 

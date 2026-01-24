@@ -216,6 +216,134 @@ mixin AnimatedSeriesMixin<T extends SeriesConfig> on SeriesPainter<T> {
   }
 }
 
+/// Mixin for viewport-aware data culling.
+///
+/// Provides efficient rendering of large datasets by only processing
+/// data points that are visible within the current viewport.
+///
+/// Usage:
+/// ```dart
+/// class MyPainter extends SeriesPainter<MyConfig>
+///     with ViewportCullingMixin<MyConfig> {
+///
+///   @override
+///   void render(Canvas canvas, Rect chartArea, CoordinateTransform transform) {
+///     final visibleData = cullDataToViewport(
+///       data,
+///       transform.xBounds,
+///       getX: (d) => d.x,
+///     );
+///     // Render only visibleData
+///   }
+/// }
+/// ```
+mixin ViewportCullingMixin<T extends SeriesConfig> on SeriesPainter<T> {
+  /// Margin percentage outside visible viewport to include (for smooth panning).
+  double get cullingMargin => 0.1;
+
+  /// Minimum data count before culling is applied.
+  int get cullingThreshold => 50;
+
+  /// Culls a list of data points to those visible within the viewport.
+  ///
+  /// [data] - The full data list.
+  /// [visibleBounds] - The visible x-range in data coordinates.
+  /// [getX] - Function to extract x value from data item.
+  /// [margin] - Extra percentage on each side to include.
+  ///
+  /// Returns a record containing:
+  /// - `data`: The culled data list
+  /// - `startIndex`: Original index of first visible item
+  /// - `endIndex`: Original index of last visible item
+  ({List<D> data, int startIndex, int endIndex}) cullDataToViewport<D>(
+    List<D> data,
+    Bounds visibleBounds, {
+    required double Function(D) getX,
+    double? margin,
+  }) {
+    // Skip culling for small datasets
+    if (data.length <= cullingThreshold) {
+      return (data: data, startIndex: 0, endIndex: data.length - 1);
+    }
+
+    final effectiveMargin = margin ?? cullingMargin;
+    final range = visibleBounds.max - visibleBounds.min;
+    final marginAmount = range * effectiveMargin;
+    final minX = visibleBounds.min - marginAmount;
+    final maxX = visibleBounds.max + marginAmount;
+
+    // Binary search for start index (assuming sorted by x)
+    var startIdx = _binarySearchLeft(data, minX, getX);
+    var endIdx = _binarySearchRight(data, maxX, getX);
+
+    // Include one point before and after for proper line connections
+    if (startIdx > 0) startIdx--;
+    if (endIdx < data.length - 1) endIdx++;
+
+    return (
+      data: data.sublist(startIdx, endIdx + 1),
+      startIndex: startIdx,
+      endIndex: endIdx,
+    );
+  }
+
+  /// Binary search for leftmost item >= value.
+  int _binarySearchLeft<D>(
+    List<D> data,
+    double value,
+    double Function(D) getX,
+  ) {
+    var low = 0;
+    var high = data.length;
+
+    while (low < high) {
+      final mid = (low + high) ~/ 2;
+      if (getX(data[mid]) < value) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+
+    return low.clamp(0, data.length - 1);
+  }
+
+  /// Binary search for rightmost item <= value.
+  int _binarySearchRight<D>(
+    List<D> data,
+    double value,
+    double Function(D) getX,
+  ) {
+    var low = 0;
+    var high = data.length;
+
+    while (low < high) {
+      final mid = (low + high) ~/ 2;
+      if (getX(data[mid]) <= value) {
+        low = mid + 1;
+      } else {
+        high = mid;
+      }
+    }
+
+    return (low - 1).clamp(0, data.length - 1);
+  }
+
+  /// Checks if any data points are visible in the viewport.
+  bool hasVisibleData<D>(
+    List<D> data,
+    Bounds visibleBounds, {
+    required double Function(D) getX,
+  }) {
+    if (data.isEmpty) return false;
+
+    final firstX = getX(data.first);
+    final lastX = getX(data.last);
+
+    return !(lastX < visibleBounds.min || firstX > visibleBounds.max);
+  }
+}
+
 /// Manager for multiple series painters.
 class SeriesPainterManager {
   SeriesPainterManager();
