@@ -17,6 +17,8 @@ interface SidebarSection {
 
 interface SidebarProps {
   sections: SidebarSection[]
+  onNavigate?: () => void
+  mobile?: boolean
 }
 
 const sectionIcons: Record<string, React.ReactNode> = {
@@ -45,7 +47,7 @@ const itemIcons: Record<string, React.ReactNode> = {
   'Plugins': <Puzzle size={14} />,
 }
 
-export function Sidebar({ sections }: SidebarProps) {
+export function Sidebar({ sections, onNavigate, mobile = false }: SidebarProps) {
   const location = useLocation()
   const [openSections, setOpenSections] = useState<Set<string>>(() => {
     // Open the section containing the current page by default
@@ -75,8 +77,8 @@ export function Sidebar({ sections }: SidebarProps) {
   }
 
   return (
-    <aside className="w-72 flex-shrink-0 hidden lg:block">
-      <div className="sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto pb-10 pr-4">
+    <aside className={mobile ? 'w-full' : 'w-72 flex-shrink-0 hidden lg:block'}>
+      <div className={mobile ? 'pb-6' : 'sticky top-20 h-[calc(100vh-5rem)] overflow-y-auto pb-10 pr-4'}>
         {/* Search placeholder */}
         <div className="mb-6">
           <button className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-slate-800/50 rounded-xl border border-slate-200 dark:border-slate-700 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
@@ -136,6 +138,7 @@ export function Sidebar({ sections }: SidebarProps) {
                             <li key={item.path}>
                               <Link
                                 to={item.path}
+                                onClick={onNavigate}
                                 className={`flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all ${
                                   isActive
                                     ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20 font-medium'
