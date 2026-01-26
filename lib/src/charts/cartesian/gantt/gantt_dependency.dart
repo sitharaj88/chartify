@@ -129,14 +129,12 @@ class GanttDependency {
     String? toTaskId,
     DependencyType? type,
     Duration? lag,
-  }) {
-    return GanttDependency(
+  }) => GanttDependency(
       fromTaskId: fromTaskId ?? this.fromTaskId,
       toTaskId: toTaskId ?? this.toTaskId,
       type: type ?? this.type,
       lag: lag ?? this.lag,
     );
-  }
 
   @override
   bool operator ==(Object other) {
@@ -171,14 +169,11 @@ class GanttDependencyFactory {
     String fromTaskId,
     String toTaskId, {
     Duration lag = Duration.zero,
-  }) {
-    return GanttDependency(
+  }) => GanttDependency(
       fromTaskId: fromTaskId,
       toTaskId: toTaskId,
-      type: DependencyType.finishToStart,
       lag: lag,
     );
-  }
 
   /// Creates a Start-to-Start dependency.
   ///
@@ -187,14 +182,12 @@ class GanttDependencyFactory {
     String fromTaskId,
     String toTaskId, {
     Duration lag = Duration.zero,
-  }) {
-    return GanttDependency(
+  }) => GanttDependency(
       fromTaskId: fromTaskId,
       toTaskId: toTaskId,
       type: DependencyType.startToStart,
       lag: lag,
     );
-  }
 
   /// Creates a Finish-to-Finish dependency.
   ///
@@ -203,14 +196,12 @@ class GanttDependencyFactory {
     String fromTaskId,
     String toTaskId, {
     Duration lag = Duration.zero,
-  }) {
-    return GanttDependency(
+  }) => GanttDependency(
       fromTaskId: fromTaskId,
       toTaskId: toTaskId,
       type: DependencyType.finishToFinish,
       lag: lag,
     );
-  }
 
   /// Creates a Start-to-Finish dependency.
   ///
@@ -219,14 +210,12 @@ class GanttDependencyFactory {
     String fromTaskId,
     String toTaskId, {
     Duration lag = Duration.zero,
-  }) {
-    return GanttDependency(
+  }) => GanttDependency(
       fromTaskId: fromTaskId,
       toTaskId: toTaskId,
       type: DependencyType.startToFinish,
       lag: lag,
     );
-  }
 }
 
 /// Utility class for working with dependencies.
@@ -259,32 +248,26 @@ class GanttDependencyUtils {
   static List<String> getPredecessors(
     String taskId,
     List<GanttDependency> dependencies,
-  ) {
-    return dependencies
+  ) => dependencies
         .where((d) => d.toTaskId == taskId)
         .map((d) => d.fromTaskId)
         .toList();
-  }
 
   /// Gets all successor task IDs for a given task.
   static List<String> getSuccessors(
     String taskId,
     List<GanttDependency> dependencies,
-  ) {
-    return dependencies
+  ) => dependencies
         .where((d) => d.fromTaskId == taskId)
         .map((d) => d.toTaskId)
         .toList();
-  }
 
   /// Checks if a dependency already exists between two tasks.
   static bool dependencyExists(
     String fromTaskId,
     String toTaskId,
     List<GanttDependency> dependencies,
-  ) {
-    return dependencies.any(
+  ) => dependencies.any(
       (d) => d.fromTaskId == fromTaskId && d.toTaskId == toTaskId,
     );
-  }
 }

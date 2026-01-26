@@ -33,8 +33,7 @@ export 'candlestick_chart_data.dart';
 /// ```
 class CandlestickChart extends StatefulWidget {
   const CandlestickChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -119,7 +118,7 @@ class _CandlestickChartState extends State<CandlestickChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -240,7 +239,7 @@ class _CandlestickChartState extends State<CandlestickChart>
           TooltipEntry(
             color: color,
             label: 'Vol: ${_formatVolume(candle.volume!)}',
-            value: candle.volume!,
+            value: candle.volume,
           ),
       ],
       xLabel: _formatDate(candle.date),
@@ -267,9 +266,7 @@ class _CandlestickChartState extends State<CandlestickChart>
     return value.toStringAsFixed(0);
   }
 
-  String _formatDate(DateTime date) {
-    return '${date.month}/${date.day}/${date.year}';
-  }
+  String _formatDate(DateTime date) => '${date.month}/${date.day}/${date.year}';
 }
 
 class _CandlestickChartPainter extends CartesianChartPainter {
@@ -279,8 +276,8 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller, showGrid: data.showGrid) {
+    required super.padding,
+  }) : super(repaint: controller, showGrid: data.showGrid) {
     _calculateBounds();
   }
 
@@ -295,8 +292,8 @@ class _CandlestickChartPainter extends CartesianChartPainter {
   void _calculateBounds() {
     if (data.data.isEmpty) return;
 
-    double priceMin = double.infinity;
-    double priceMax = double.negativeInfinity;
+    var priceMin = double.infinity;
+    var priceMax = double.negativeInfinity;
     double volumeMax = 0;
 
     for (final candle in data.data) {
@@ -385,7 +382,7 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     final color = candle.isBullish ? data.bullishColor : data.bearishColor;
     var displayColor = color;
     if (isHovered) {
-      displayColor = color.withValues(alpha: 1.0);
+      displayColor = color.withValues(alpha: 1);
     }
 
     final highY = _priceToY(candle.high, chartArea);

@@ -97,8 +97,7 @@ class LRUCache<K, V> {
 /// A cache with time-based expiration.
 class TimedCache<K, V> {
   TimedCache({
-    this.maxSize = 100,
-    required this.expiration,
+    required this.expiration, this.maxSize = 100,
     this.onEvict,
   });
 
@@ -254,29 +253,19 @@ class CacheKeyBuilder {
   CacheKeyBuilder._();
 
   /// Creates a key for data point rendering.
-  static String dataPoint(double x, double y, int seriesIndex) {
-    return 'dp_${x.toStringAsFixed(2)}_${y.toStringAsFixed(2)}_$seriesIndex';
-  }
+  static String dataPoint(double x, double y, int seriesIndex) => 'dp_${x.toStringAsFixed(2)}_${y.toStringAsFixed(2)}_$seriesIndex';
 
   /// Creates a key for path rendering.
-  static String path(int seriesIndex, double width, double height) {
-    return 'path_${seriesIndex}_${width.toInt()}_${height.toInt()}';
-  }
+  static String path(int seriesIndex, double width, double height) => 'path_${seriesIndex}_${width.toInt()}_${height.toInt()}';
 
   /// Creates a key for text layout.
-  static String text(String content, double fontSize, int maxWidth) {
-    return 'text_${content.hashCode}_${fontSize.toInt()}_$maxWidth';
-  }
+  static String text(String content, double fontSize, int maxWidth) => 'text_${content.hashCode}_${fontSize.toInt()}_$maxWidth';
 
   /// Creates a key for axis tick computation.
-  static String axisTicks(double min, double max, int tickCount) {
-    return 'ticks_${min.toStringAsFixed(4)}_${max.toStringAsFixed(4)}_$tickCount';
-  }
+  static String axisTicks(double min, double max, int tickCount) => 'ticks_${min.toStringAsFixed(4)}_${max.toStringAsFixed(4)}_$tickCount';
 
   /// Creates a key for bounds computation.
-  static String bounds(int dataHash, bool includeZero) {
-    return 'bounds_${dataHash}_$includeZero';
-  }
+  static String bounds(int dataHash, bool includeZero) => 'bounds_${dataHash}_$includeZero';
 }
 
 /// Central cache manager for chart rendering.
@@ -286,7 +275,7 @@ class ChartCacheManager {
   static final instance = ChartCacheManager._();
 
   /// Cache for computed paths.
-  final paths = LRUCache<String, dynamic>(maxSize: 100);
+  final paths = LRUCache<String, dynamic>();
 
   /// Cache for text layouts.
   final textLayouts = LRUCache<String, dynamic>(maxSize: 200);

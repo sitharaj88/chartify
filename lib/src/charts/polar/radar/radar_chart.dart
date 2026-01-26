@@ -4,11 +4,11 @@ import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
 import '../../../animation/chart_animation.dart';
+import '../../../components/tooltip/chart_tooltip.dart';
 import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
-import '../../../components/tooltip/chart_tooltip.dart';
 
 /// A single data series for the radar chart.
 @immutable
@@ -92,8 +92,7 @@ enum RadarGridType {
 /// Radar/Spider chart widget.
 class RadarChart extends StatefulWidget {
   const RadarChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation = const ChartAnimation(),
     this.tooltipConfig = const TooltipConfig(),
@@ -208,8 +207,7 @@ class _RadarChartState extends State<RadarChart>
             onExit: _handleHoverExit,
             child: AnimatedBuilder(
               animation: _animation,
-              builder: (context, child) {
-                return CustomPaint(
+              builder: (context, child) => CustomPaint(
                   size: Size(constraints.maxWidth, constraints.maxHeight),
                   painter: _RadarChartPainter(
                     data: widget.data,
@@ -218,8 +216,7 @@ class _RadarChartState extends State<RadarChart>
                     controller: _controller,
                     padding: widget.padding,
                   ),
-                );
-              },
+                ),
             ),
           ),
         );
@@ -240,13 +237,11 @@ class _RadarChartState extends State<RadarChart>
 class _RadarChartPainter extends PolarChartPainter {
   _RadarChartPainter({
     required this.data,
-    required ChartThemeData theme,
+    required super.theme,
     required this.controller,
     required this.padding,
-    double animationValue = 1.0,
+    super.animationValue,
   }) : super(
-          theme: theme,
-          animationValue: animationValue,
           axisCount: data.axes.length,
           tickCount: data.tickCount,
           repaint: controller,
@@ -434,7 +429,7 @@ class _RadarChartPainter extends PolarChartPainter {
     final center = chartArea.center;
     final radius = chartArea.width / 2;
     final axisCount = data.axes.length;
-    final labelOffset = 20.0;
+    const labelOffset = 20.0;
 
     for (var i = 0; i < axisCount; i++) {
       final angle = degreesToRadians(-90 + (360 / axisCount) * i);
@@ -464,11 +459,9 @@ class _RadarChartPainter extends PolarChartPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RadarChartPainter oldDelegate) {
-    return super.shouldRepaint(oldDelegate) ||
+  bool shouldRepaint(covariant _RadarChartPainter oldDelegate) => super.shouldRepaint(oldDelegate) ||
         data != oldDelegate.data ||
         padding != oldDelegate.padding;
-  }
 
   @override
   bool? hitTest(Offset position) {

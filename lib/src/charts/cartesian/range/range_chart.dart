@@ -29,8 +29,7 @@ export 'range_chart_data.dart';
 /// ```
 class RangeChart extends StatefulWidget {
   const RangeChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -112,7 +111,7 @@ class _RangeChartState extends State<RangeChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -217,9 +216,9 @@ class _RangeChartState extends State<RangeChart>
       entries.add(TooltipEntry(
         color: color.withValues(alpha: 0.7),
         label: 'Mid',
-        value: item.mid!,
+        value: item.mid,
         formattedValue: item.mid!.toStringAsFixed(1),
-      ));
+      ),);
     }
 
     return TooltipData(
@@ -318,7 +317,7 @@ class _RangeChartPainter extends ChartPainter {
 
       // Draw bar
       final fillColor = isHovered
-          ? color.withValues(alpha: 1.0)
+          ? color.withValues(alpha: 1)
           : color.withValues(alpha: 0.7);
 
       final paint = Paint()
@@ -390,7 +389,7 @@ class _RangeChartPainter extends ChartPainter {
   }
 
   void _drawGrid(Canvas canvas, Rect chartArea, double minValue,
-      double maxValue, bool isHorizontal) {
+      double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..strokeWidth = 1;
@@ -416,7 +415,7 @@ class _RangeChartPainter extends ChartPainter {
   }
 
   void _drawAxis(Canvas canvas, Rect chartArea, double minValue,
-      double maxValue, bool isHorizontal) {
+      double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.axisLineColor
       ..strokeWidth = 1;
@@ -473,14 +472,14 @@ class _RangeChartPainter extends ChartPainter {
         textPainter.paint(
           canvas,
           Offset(chartArea.left - textPainter.width - 8,
-              y - textPainter.height / 2),
+              y - textPainter.height / 2,),
         );
       }
     }
   }
 
   void _drawLabel(Canvas canvas, RangeItem item, Rect barRect,
-      bool isHorizontal, Rect chartArea) {
+      bool isHorizontal, Rect chartArea,) {
     final textSpan = TextSpan(
       text: item.label,
       style: theme.labelStyle.copyWith(fontSize: 11),

@@ -28,8 +28,7 @@ export 'histogram_chart_data.dart';
 /// ```
 class HistogramChart extends StatefulWidget {
   const HistogramChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -117,7 +116,7 @@ class _HistogramChartState extends State<HistogramChart>
     if (widget.data != oldWidget.data) {
       _bins = widget.data.calculateBins();
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -252,8 +251,8 @@ class _HistogramChartPainter extends CartesianChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller) {
+    required super.padding,
+  }) : super(repaint: controller) {
     _calculateBounds();
   }
 
@@ -278,9 +277,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
       case HistogramMode.frequency:
         _yMax = bins.map((b) => b.count).reduce(math.max).toDouble();
       case HistogramMode.density:
-        _yMax = bins.map((b) {
-          return totalCount > 0 ? b.count / totalCount / b.width : 0.0;
-        }).reduce(math.max);
+        _yMax = bins.map((b) => totalCount > 0 ? b.count / totalCount / b.width : 0.0).reduce(math.max);
       case HistogramMode.cumulative:
         _yMax = totalCount.toDouble();
       case HistogramMode.cumulativePercent:
@@ -354,7 +351,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
   void _drawBar(Canvas canvas, Rect rect, Color color, bool isHovered) {
     var fillColor = color;
     if (isHovered) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withValues(alpha: 1);
     }
 
     final fillPaint = Paint()
@@ -366,7 +363,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
     // Draw border
     if (data.borderWidth > 0) {
       final borderPaint = Paint()
-        ..color = data.borderColor ?? color.withValues(alpha: 1.0)
+        ..color = data.borderColor ?? color.withValues(alpha: 1)
         ..strokeWidth = data.borderWidth
         ..style = PaintingStyle.stroke;
 

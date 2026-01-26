@@ -236,12 +236,10 @@ class CatmullRomInterpolator extends CurveInterpolator {
     );
   }
 
-  Offset _reflectPoint(Offset reference, Offset point) {
-    return Offset(
+  Offset _reflectPoint(Offset reference, Offset point) => Offset(
       2 * point.dx - reference.dx,
       2 * point.dy - reference.dy,
     );
-  }
 
   Offset _catmullRomPoint(Offset p0, Offset p1, Offset p2, Offset p3, double t) {
     final t2 = t * t;

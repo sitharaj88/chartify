@@ -29,8 +29,7 @@ export 'dumbbell_chart_data.dart';
 /// ```
 class DumbbellChart extends StatefulWidget {
   const DumbbellChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -112,7 +111,7 @@ class _DumbbellChartState extends State<DumbbellChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -396,7 +395,7 @@ class _DumbbellChartPainter extends ChartPainter {
   }
 
   void _drawGrid(Canvas canvas, Rect chartArea, double minValue,
-      double maxValue, bool isHorizontal) {
+      double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..strokeWidth = 1;
@@ -422,7 +421,7 @@ class _DumbbellChartPainter extends ChartPainter {
   }
 
   void _drawAxis(Canvas canvas, Rect chartArea, double minValue,
-      double maxValue, bool isHorizontal) {
+      double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.axisLineColor
       ..strokeWidth = 1;
@@ -477,14 +476,14 @@ class _DumbbellChartPainter extends ChartPainter {
         textPainter.paint(
           canvas,
           Offset(chartArea.left - textPainter.width - 8,
-              y - textPainter.height / 2),
+              y - textPainter.height / 2,),
         );
       }
     }
   }
 
   void _drawLabel(Canvas canvas, DumbbellItem item, Rect chartArea,
-      double itemCenter, bool isHorizontal) {
+      double itemCenter, bool isHorizontal,) {
     final textSpan = TextSpan(
       text: item.label,
       style: theme.labelStyle.copyWith(fontSize: 11),
@@ -514,7 +513,7 @@ class _DumbbellChartPainter extends ChartPainter {
   }
 
   void _drawDifference(Canvas canvas, DumbbellItem item, Offset startPoint,
-      Offset endPoint, bool isHorizontal, Color color) {
+      Offset endPoint, bool isHorizontal, Color color,) {
     final sign = item.isPositive ? '+' : '';
     final textSpan = TextSpan(
       text: '$sign${item.difference.toStringAsFixed(0)}',

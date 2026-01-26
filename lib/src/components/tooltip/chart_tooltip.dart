@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart' show defaultTargetPlatform, TargetPlatform;
+import 'package:flutter/foundation.dart' show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 
@@ -81,8 +81,7 @@ class TooltipConfig {
     bool? showArrow,
     double? arrowSize,
     bool? touchFriendly,
-  }) {
-    return TooltipConfig(
+  }) => TooltipConfig(
       enabled: enabled ?? this.enabled,
       showOnHover: showOnHover ?? this.showOnHover,
       showOnTap: showOnTap ?? this.showOnTap,
@@ -104,7 +103,6 @@ class TooltipConfig {
       arrowSize: arrowSize ?? this.arrowSize,
       touchFriendly: touchFriendly ?? this.touchFriendly,
     );
-  }
 }
 
 enum TooltipPosition { auto, top, bottom, left, right }
@@ -358,12 +356,7 @@ class TooltipEntry {
 /// Modern tooltip overlay with smooth animations and accurate positioning.
 class ChartTooltipOverlay extends StatefulWidget {
   const ChartTooltipOverlay({
-    super.key,
-    required this.child,
-    required this.controller,
-    required this.config,
-    required this.theme,
-    required this.chartArea,
+    required this.child, required this.controller, required this.config, required this.theme, required this.chartArea, super.key,
     this.tooltipDataBuilder,
   });
 
@@ -430,7 +423,7 @@ class _ChartTooltipOverlayState extends State<ChartTooltipOverlay>
       reverseCurve: ChartCurves.emphasizedAccelerate,
     );
 
-    _scaleAnimation = Tween<double>(begin: 0.92, end: 1.0).animate(
+    _scaleAnimation = Tween<double>(begin: 0.92, end: 1).animate(
       CurvedAnimation(
         parent: _visibilityController,
         curve: ChartCurves.emphasizedDecelerate,
@@ -787,8 +780,7 @@ class _ModernIndicatorDot extends StatelessWidget {
   final bool isDark;
 
   @override
-  Widget build(BuildContext context) {
-    return Container(
+  Widget build(BuildContext context) => Container(
       width: size + 6,
       height: size + 6,
       decoration: BoxDecoration(
@@ -818,18 +810,12 @@ class _ModernIndicatorDot extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Modern tooltip with accurate arrow pointing.
 class _ModernTooltip extends StatelessWidget {
   const _ModernTooltip({
-    super.key,
-    required this.data,
-    required this.config,
-    required this.theme,
-    required this.position,
-    required this.arrowOffset,
+    required this.data, required this.config, required this.theme, required this.position, required this.arrowOffset, super.key,
   });
 
   final TooltipData data;
@@ -1084,7 +1070,7 @@ class _TooltipContent extends StatelessWidget {
                 ),
               ],
             ),
-          )),
+          ),),
         ],
       ),
     );

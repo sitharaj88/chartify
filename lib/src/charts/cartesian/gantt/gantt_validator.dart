@@ -114,7 +114,7 @@ class GanttValidator {
         errors.add(const GanttValidationError(
           code: GanttErrorCode.emptyTaskId,
           message: 'Task ID cannot be empty',
-        ));
+        ),);
         continue;
       }
 
@@ -124,7 +124,7 @@ class GanttValidator {
           code: GanttErrorCode.duplicateTaskId,
           message: 'Duplicate task ID found',
           taskId: task.id,
-        ));
+        ),);
       } else {
         taskIds.add(task.id);
       }
@@ -136,7 +136,7 @@ class GanttValidator {
           message:
               'End date (${task.end}) is before start date (${task.start})',
           taskId: task.id,
-        ));
+        ),);
       }
 
       // Check for zero duration non-milestones
@@ -145,7 +145,7 @@ class GanttValidator {
           code: GanttWarningCode.zeroDuration,
           message: 'Task has zero duration but is not marked as milestone',
           taskId: task.id,
-        ));
+        ),);
       }
 
       // Validate progress range
@@ -155,7 +155,7 @@ class GanttValidator {
           message:
               'Progress (${task.progress}) must be between 0.0 and 1.0',
           taskId: task.id,
-        ));
+        ),);
       }
 
       // Check for completed future tasks
@@ -164,7 +164,7 @@ class GanttValidator {
           code: GanttWarningCode.completedFutureTask,
           message: 'Task is marked as complete but end date is in the future',
           taskId: task.id,
-        ));
+        ),);
       }
 
       // Check for empty label
@@ -173,7 +173,7 @@ class GanttValidator {
           code: GanttWarningCode.emptyLabel,
           message: 'Task has no label',
           taskId: task.id,
-        ));
+        ),);
       }
 
       // Validate dependencies exist
@@ -184,7 +184,7 @@ class GanttValidator {
               code: GanttErrorCode.missingDependency,
               message: 'Dependency "$depId" does not exist',
               taskId: task.id,
-            ));
+            ),);
           }
         }
       }
@@ -197,7 +197,7 @@ class GanttValidator {
         code: GanttErrorCode.circularDependency,
         message: 'Circular dependency detected: ${cycle.join(" → ")}',
         taskId: cycle.first,
-      ));
+      ),);
     }
 
     return GanttValidationResult(errors: errors, warnings: warnings);
@@ -261,7 +261,7 @@ class GanttValidator {
       errors.add(const GanttValidationError(
         code: GanttErrorCode.emptyTaskId,
         message: 'Task ID cannot be empty',
-      ));
+      ),);
     }
 
     if (!task.isMilestone && task.end.isBefore(task.start)) {
@@ -269,7 +269,7 @@ class GanttValidator {
         code: GanttErrorCode.invalidDateRange,
         message: 'End date must be after start date',
         taskId: task.id,
-      ));
+      ),);
     }
 
     if (task.progress < 0 || task.progress > 1) {
@@ -277,7 +277,7 @@ class GanttValidator {
         code: GanttErrorCode.invalidProgress,
         message: 'Progress must be between 0.0 and 1.0',
         taskId: task.id,
-      ));
+      ),);
     }
 
     return errors;

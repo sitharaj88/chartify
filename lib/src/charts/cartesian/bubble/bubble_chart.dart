@@ -36,8 +36,7 @@ export 'bubble_chart_data.dart';
 /// ```
 class BubbleChart extends StatefulWidget {
   const BubbleChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -122,7 +121,7 @@ class _BubbleChartState extends State<BubbleChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -241,8 +240,8 @@ class _BubbleChartPainter extends CartesianChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller) {
+    required super.padding,
+  }) : super(repaint: controller) {
     _calculateBounds();
   }
 
@@ -250,20 +249,24 @@ class _BubbleChartPainter extends CartesianChartPainter {
   final ChartController controller;
   final ChartHitTester hitTester;
 
-  double _xMin = 0, _xMax = 1, _yMin = 0, _yMax = 1;
-  double _sizeMin = 0, _sizeMax = 1;
+  double _xMin = 0;
+  double _xMax = 1;
+  double _yMin = 0;
+  double _yMax = 1;
+  double _sizeMin = 0;
+  double _sizeMax = 1;
   bool _boundsCalculated = false;
 
   void _calculateBounds() {
     if (_boundsCalculated) return;
 
-    double xMin = double.infinity;
-    double xMax = double.negativeInfinity;
-    double yMin = double.infinity;
-    double yMax = double.negativeInfinity;
-    double sizeMin = double.infinity;
-    double sizeMax = double.negativeInfinity;
-    bool hasData = false;
+    var xMin = double.infinity;
+    var xMax = double.negativeInfinity;
+    var yMin = double.infinity;
+    var yMax = double.negativeInfinity;
+    var sizeMin = double.infinity;
+    var sizeMax = double.negativeInfinity;
+    var hasData = false;
 
     for (final series in data.series) {
       if (!series.visible) continue;
@@ -389,7 +392,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
           pointIndex: pointIndex,
           point: point,
           series: series,
-        ));
+        ),);
       }
     }
 
@@ -431,7 +434,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
 
     var fillColor = bubble.color.withValues(alpha: bubble.opacity);
     if (isHovered) {
-      fillColor = bubble.color.withValues(alpha: math.min(1.0, bubble.opacity + 0.2));
+      fillColor = bubble.color.withValues(alpha: math.min(1, bubble.opacity + 0.2));
     }
     if (isSelected) {
       fillColor = bubble.color;

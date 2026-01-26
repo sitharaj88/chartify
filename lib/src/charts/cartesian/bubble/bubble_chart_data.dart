@@ -90,8 +90,7 @@ class BubbleDataPoint<X, Y extends num> extends DataPoint<X, Y> {
 /// A data series for bubble charts.
 class BubbleSeries<X, Y extends num> {
   const BubbleSeries({
-    this.name,
-    required this.data,
+    required this.data, this.name,
     this.color,
     this.visible = true,
     this.borderColor,

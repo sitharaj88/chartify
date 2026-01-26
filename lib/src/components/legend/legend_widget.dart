@@ -11,8 +11,7 @@ import '../../theme/chart_theme_data.dart';
 /// horizontal, vertical, and wrapped layouts.
 class ChartLegend extends StatefulWidget {
   const ChartLegend({
-    super.key,
-    required this.items,
+    required this.items, super.key,
     this.config,
     this.position = ChartPosition.bottom,
     this.layout = LegendLayout.horizontal,
@@ -85,34 +84,27 @@ class _ChartLegendState extends State<ChartLegend> {
     }
   }
 
-  Widget _buildHorizontalLegend(LegendConfig config) {
-    return SingleChildScrollView(
+  Widget _buildHorizontalLegend(LegendConfig config) => SingleChildScrollView(
       scrollDirection: Axis.horizontal,
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: _buildItems(config),
       ),
     );
-  }
 
-  Widget _buildVerticalLegend(LegendConfig config) {
-    return Column(
+  Widget _buildVerticalLegend(LegendConfig config) => Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
       children: _buildItems(config),
     );
-  }
 
-  Widget _buildWrappedLegend(LegendConfig config) {
-    return Wrap(
+  Widget _buildWrappedLegend(LegendConfig config) => Wrap(
       spacing: config.itemSpacing,
       runSpacing: config.lineSpacing,
       children: _buildItems(config),
     );
-  }
 
-  List<Widget> _buildItems(LegendConfig config) {
-    return List.generate(widget.items.length, (index) {
+  List<Widget> _buildItems(LegendConfig config) => List.generate(widget.items.length, (index) {
       final item = widget.items[index];
       final isHovered = _hoveredIndex == index;
 
@@ -128,7 +120,6 @@ class _ChartLegendState extends State<ChartLegend> {
             : null,
       );
     });
-  }
 }
 
 class _LegendItemWidget extends StatelessWidget {
@@ -192,16 +183,14 @@ class _LegendItemWidget extends StatelessWidget {
     return content;
   }
 
-  Widget _buildMarker(double opacity) {
-    return CustomPaint(
+  Widget _buildMarker(double opacity) => CustomPaint(
       size: Size(config.markerSize, config.markerSize),
       painter: _MarkerPainter(
         shape: item.shape,
-        color: item.color.withAlpha((item.color.alpha * opacity).round()),
+        color: item.color.withAlpha(((item.color.a * 255.0).round() * opacity).round().clamp(0, 255)),
         size: config.markerSize,
       ),
     );
-  }
 
   Widget _buildLabel(double opacity) {
     final style = (config.labelStyle ??
@@ -265,11 +254,9 @@ class _MarkerPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _MarkerPainter oldDelegate) {
-    return shape != oldDelegate.shape ||
+  bool shouldRepaint(covariant _MarkerPainter oldDelegate) => shape != oldDelegate.shape ||
         color != oldDelegate.color ||
         size != oldDelegate.size;
-  }
 }
 
 /// Builder for creating legends programmatically.
@@ -278,8 +265,8 @@ class LegendBuilder {
 
   ChartPosition position;
   LegendLayout _layout = LegendLayout.horizontal;
-  double _itemSpacing = 16.0;
-  double _markerSize = 12.0;
+  double _itemSpacing = 16;
+  double _markerSize = 12;
   TextStyle? _labelStyle;
   bool _showValues = false;
   bool _interactive = true;
@@ -338,7 +325,7 @@ class LegendBuilder {
       value: value,
       percentage: percentage,
       isVisible: isVisible,
-    ));
+    ),);
     return this;
   }
 
@@ -357,8 +344,7 @@ class LegendBuilder {
   }
 
   /// Builds the legend widget.
-  ChartLegend build() {
-    return ChartLegend(
+  ChartLegend build() => ChartLegend(
       items: _items,
       position: position,
       layout: _layout,
@@ -369,13 +355,10 @@ class LegendBuilder {
       interactive: _interactive,
       onItemTap: _onItemTap,
     );
-  }
 }
 
 /// Extension for creating legends from color lists.
 extension ColorsLegendExtension on List<Color> {
   /// Creates a legend from colors and labels.
-  LegendBuilder legend(List<String> labels) {
-    return LegendBuilder().addItems(labels, this);
-  }
+  LegendBuilder legend(List<String> labels) => LegendBuilder().addItems(labels, this);
 }

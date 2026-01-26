@@ -118,8 +118,7 @@ class GaugeChartData {
 /// Gauge chart widget.
 class GaugeChart extends StatefulWidget {
   const GaugeChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.animation = const ChartAnimation(),
     this.centerWidget,
     this.padding = const EdgeInsets.all(20),
@@ -195,8 +194,7 @@ class _GaugeChartState extends State<GaugeChart>
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         return AnimatedBuilder(
           animation: _animation,
-          builder: (context, child) {
-            return Stack(
+          builder: (context, child) => Stack(
               children: [
                 CustomPaint(
                   size: size,
@@ -209,13 +207,12 @@ class _GaugeChartState extends State<GaugeChart>
                 ),
                 if (widget.centerWidget != null)
                   Positioned.fill(
-                    child: Center(child: widget.centerWidget!),
+                    child: Center(child: widget.centerWidget),
                   ),
                 if (widget.centerWidget == null && widget.data.showValue)
                   _buildDefaultCenterWidget(theme, size),
               ],
-            );
-          },
+            ),
         );
       },
     );
@@ -259,12 +256,10 @@ class _GaugeChartState extends State<GaugeChart>
 class _GaugeChartPainter extends CircularChartPainter {
   _GaugeChartPainter({
     required this.data,
-    required ChartThemeData theme,
+    required super.theme,
     required this.padding,
-    double animationValue = 1.0,
+    super.animationValue,
   }) : super(
-          theme: theme,
-          animationValue: animationValue,
           startAngle: data.startAngle,
         );
 
@@ -306,7 +301,6 @@ class _GaugeChartPainter extends CircularChartPainter {
     final backgroundPaint = getPaint(
       color: theme.gridLineColor.withValues(alpha: 0.3),
       strokeWidth: data.thickness,
-      strokeCap: StrokeCap.round,
     );
 
     final rect = Rect.fromCircle(
@@ -373,7 +367,7 @@ class _GaugeChartPainter extends CircularChartPainter {
     final valueAngle = data.sweepAngle * animatedValue;
 
     // Determine color based on ranges
-    Color valueColor = theme.getSeriesColor(0);
+    var valueColor = theme.getSeriesColor(0);
     if (data.ranges != null && data.ranges!.isNotEmpty) {
       final currentValue = data.value;
       for (final range in data.ranges!) {
@@ -387,7 +381,6 @@ class _GaugeChartPainter extends CircularChartPainter {
     final valuePaint = getPaint(
       color: valueColor,
       strokeWidth: data.thickness,
-      strokeCap: StrokeCap.round,
     );
 
     final rect = Rect.fromCircle(
@@ -406,8 +399,8 @@ class _GaugeChartPainter extends CircularChartPainter {
 
   void _drawTicks(Canvas canvas, Offset center, double radius) {
     final tickRadius = radius + 5;
-    final majorTickLength = 10.0;
-    final minorTickLength = 5.0;
+    const majorTickLength = 10.0;
+    const minorTickLength = 5.0;
 
     final majorTickPaint = getPaint(
       color: theme.axisLineColor,
@@ -416,7 +409,6 @@ class _GaugeChartPainter extends CircularChartPainter {
 
     final minorTickPaint = getPaint(
       color: theme.axisLineColor.withValues(alpha: 0.5),
-      strokeWidth: 1,
     );
 
     final totalTicks =
@@ -425,7 +417,7 @@ class _GaugeChartPainter extends CircularChartPainter {
     for (var i = 0; i <= totalTicks; i++) {
       final isMajor = i % (data.minorTickCount + 1) == 0;
       final angle = degreesToRadians(
-          data.startAngle + data.sweepAngle * (i / totalTicks));
+          data.startAngle + data.sweepAngle * (i / totalTicks),);
       final tickLength = isMajor ? majorTickLength : minorTickLength;
 
       final outerPoint = Offset(
@@ -515,7 +507,7 @@ class _GaugeChartPainter extends CircularChartPainter {
         ..style = PaintingStyle.fill;
       canvas.drawCircle(
         Offset(center.dx - data.needleBaseRadius * 0.25,
-            center.dy - data.needleBaseRadius * 0.25),
+            center.dy - data.needleBaseRadius * 0.25,),
         data.needleBaseRadius * 0.35,
         baseHighlightPaint,
       );
@@ -546,7 +538,7 @@ class _GaugeChartPainter extends CircularChartPainter {
     );
 
     // Small tail behind center
-    final tailLength = baseWidth * 0.5;
+    const tailLength = baseWidth * 0.5;
     final tailPoint = Offset(
       center.dx - tailLength * math.cos(angle),
       center.dy - tailLength * math.sin(angle),
@@ -573,9 +565,7 @@ class _GaugeChartPainter extends CircularChartPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _GaugeChartPainter oldDelegate) {
-    return super.shouldRepaint(oldDelegate) ||
+  bool shouldRepaint(covariant _GaugeChartPainter oldDelegate) => super.shouldRepaint(oldDelegate) ||
         data != oldDelegate.data ||
         padding != oldDelegate.padding;
-  }
 }

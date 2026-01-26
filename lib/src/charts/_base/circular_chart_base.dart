@@ -3,7 +3,6 @@ import 'dart:math' as math;
 import 'package:flutter/widgets.dart';
 
 import '../../core/math/geometry/coordinate_transform.dart';
-import '../../theme/chart_theme_data.dart';
 import 'chart_widget_mixin.dart';
 
 /// Base configuration for circular charts (pie, donut, radial, etc.).
@@ -61,8 +60,7 @@ class CircularChartConfig {
     Color? strokeColor,
     double? gapAngle,
     Offset? centerOffset,
-  }) {
-    return CircularChartConfig(
+  }) => CircularChartConfig(
       padding: padding ?? this.padding,
       startAngle: startAngle ?? this.startAngle,
       sweepAngle: sweepAngle ?? this.sweepAngle,
@@ -73,7 +71,6 @@ class CircularChartConfig {
       gapAngle: gapAngle ?? this.gapAngle,
       centerOffset: centerOffset ?? this.centerOffset,
     );
-  }
 }
 
 /// Data for a circular chart segment.
@@ -116,8 +113,7 @@ class CircularSegment {
   CircularSegment withAngles({
     required double startAngle,
     required double sweepAngle,
-  }) {
-    return CircularSegment(
+  }) => CircularSegment(
       value: value,
       color: color,
       label: label,
@@ -126,16 +122,13 @@ class CircularSegment {
       isExploded: isExploded,
       explodeOffset: explodeOffset,
     );
-  }
 }
 
 /// Base painter for circular charts.
 abstract class CircularChartPainter extends BaseChartPainter {
   CircularChartPainter({
     required super.theme,
-    super.animationProgress,
-    required this.config,
-    required this.segments,
+    required this.config, required this.segments, super.animationProgress,
   });
 
   final CircularChartConfig config;
@@ -189,7 +182,7 @@ abstract class CircularChartPainter extends BaseChartPainter {
   List<CircularSegment> _computeSegmentAngles() {
     if (segments.isEmpty) return [];
 
-    final total = segments.fold(0.0, (sum, s) => sum + s.value.abs());
+    final total = segments.fold<double>(0, (sum, s) => sum + s.value.abs());
     if (total == 0) return [];
 
     final totalGap = config.gapAngle * segments.length;
@@ -206,7 +199,7 @@ abstract class CircularChartPainter extends BaseChartPainter {
       computed.add(segment.withAngles(
         startAngle: currentAngle,
         sweepAngle: sweepAngle,
-      ));
+      ),);
 
       currentAngle += sweepAngle + config.gapAngle;
     }
@@ -277,7 +270,6 @@ abstract class CircularChartPainter extends BaseChartPainter {
       path.arcToPoint(
         outerEnd,
         radius: Radius.circular(radius),
-        clockwise: true,
         largeArc: segment.sweepAngle > 180,
       );
       path.lineTo(innerEnd.dx, innerEnd.dy);
@@ -301,7 +293,6 @@ abstract class CircularChartPainter extends BaseChartPainter {
           segmentCenter.dy + radius * math.sin(endRad),
         ),
         radius: Radius.circular(radius),
-        clockwise: true,
         largeArc: segment.sweepAngle > 180,
       );
       path.close();
@@ -329,8 +320,12 @@ abstract class CircularChartPainter extends BaseChartPainter {
     // Calculate angle
     var angle = math.atan2(dy, dx) * 180 / math.pi;
     angle = angle - config.startAngle;
-    while (angle < 0) angle += 360;
-    while (angle >= 360) angle -= 360;
+    while (angle < 0) {
+      angle += 360;
+    }
+    while (angle >= 360) {
+      angle -= 360;
+    }
 
     // Find segment
     for (var i = 0; i < computedSegments.length; i++) {
@@ -347,10 +342,8 @@ abstract class CircularChartPainter extends BaseChartPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CircularChartPainter oldDelegate) {
-    return animationProgress != oldDelegate.animationProgress ||
+  bool shouldRepaint(covariant CircularChartPainter oldDelegate) => animationProgress != oldDelegate.animationProgress ||
         segments != oldDelegate.segments;
-  }
 }
 
 /// Builder for circular chart configurations.
@@ -417,8 +410,7 @@ class CircularChartBuilder {
   }
 
   /// Builds the configuration.
-  CircularChartConfig build() {
-    return CircularChartConfig(
+  CircularChartConfig build() => CircularChartConfig(
       padding: _padding,
       startAngle: _startAngle,
       sweepAngle: _sweepAngle,
@@ -428,5 +420,4 @@ class CircularChartBuilder {
       strokeColor: _strokeColor,
       gapAngle: _gapAngle,
     );
-  }
 }

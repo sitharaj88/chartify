@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:ui';
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
 
@@ -219,9 +218,7 @@ enum TooltipBehavior {
 class ChartGestureDetector extends StatefulWidget {
   /// Creates a chart gesture detector.
   const ChartGestureDetector({
-    super.key,
-    required this.child,
-    required this.controller,
+    required this.child, required this.controller, super.key,
     this.interactions = const ChartInteractions(),
     this.hitTester,
     this.onTap,
@@ -288,7 +285,7 @@ class ChartGestureDetector extends StatefulWidget {
 
 class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   Offset? _lastFocalPoint;
-  double _lastScale = 1.0;
+  double _lastScale = 1;
   bool _isTouching = false;
   Timer? _tooltipHideTimer;
 
@@ -300,7 +297,7 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
 
   @override
   Widget build(BuildContext context) {
-    Widget child = widget.child;
+    var child = widget.child;
 
     // Add hover detection for desktop/web
     if (widget.interactions.enableHover ||
@@ -646,10 +643,10 @@ class ChartHitTester {
   Rect _computeBounds() {
     if (_targets.isEmpty) return Rect.zero;
 
-    double minX = double.infinity;
-    double minY = double.infinity;
-    double maxX = double.negativeInfinity;
-    double maxY = double.negativeInfinity;
+    var minX = double.infinity;
+    var minY = double.infinity;
+    var maxX = double.negativeInfinity;
+    var maxY = double.negativeInfinity;
 
     for (final target in _targets) {
       final bounds = _getTargetBounds(target);
@@ -714,7 +711,7 @@ class ChartHitTester {
 
     // Find closest among candidates
     DataPointInfo? closest;
-    double closestDistance = double.infinity;
+    var closestDistance = double.infinity;
 
     for (final target in candidates) {
       final distance = target.distanceTo(position);
@@ -730,7 +727,7 @@ class ChartHitTester {
   /// Linear O(n) hit testing for small datasets.
   DataPointInfo? _hitTestLinear(Offset position, double radius) {
     DataPointInfo? closest;
-    double closestDistance = double.infinity;
+    var closestDistance = double.infinity;
 
     for (final target in _targets) {
       final distance = target.distanceTo(position);
@@ -861,11 +858,7 @@ class _PathHitTarget implements _HitTarget {
     // For more accurate hit testing, would need to compute actual distance to path
     if (path.contains(position)) return 0;
 
-    // Check inflated path
-    final inflatedPath = Path()
-      ..addPath(path, Offset.zero);
     // Note: For production, use path.computeMetrics() to calculate actual distance
-
     return double.infinity;
   }
 }
@@ -900,7 +893,7 @@ class _ArcHitTarget implements _HitTarget {
     }
 
     // Check angle bounds
-    var angle = delta.direction; // Returns angle in radians from -pi to pi
+    final angle = delta.direction; // Returns angle in radians from -pi to pi
 
     // Normalize angles to 0 to 2*pi range
     var normalizedStart = startAngle;

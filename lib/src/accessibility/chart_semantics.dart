@@ -66,7 +66,7 @@ class ChartSemantics {
     final buffer = StringBuffer();
 
     // Chart type and title
-    buffer.write('${_chartTypeName(chartType)}');
+    buffer.write(_chartTypeName(chartType));
     if (title != null) {
       buffer.write(' titled "$title"');
     }
@@ -159,12 +159,10 @@ class ChartSemantics {
   }
 
   /// Generates navigation hints for keyboard users.
-  String get navigationHints {
-    return 'Use arrow keys to navigate between data points. '
+  String get navigationHints => 'Use arrow keys to navigate between data points. '
         'Press Enter to select a point. '
         'Press Escape to clear selection. '
         'Press Tab to move to the next chart element.';
-  }
 
   /// Formats a dynamic value for display.
   String _formatDynamicValue(dynamic value) {
@@ -309,9 +307,7 @@ class SeriesDescription {
 /// appropriate semantic labels for the chart content.
 class SemanticChartWrapper extends StatelessWidget {
   const SemanticChartWrapper({
-    super.key,
-    required this.child,
-    required this.semantics,
+    required this.child, required this.semantics, super.key,
     this.focusNode,
     this.onFocusChange,
   });
@@ -329,8 +325,7 @@ class SemanticChartWrapper extends StatelessWidget {
   final ValueChanged<bool>? onFocusChange;
 
   @override
-  Widget build(BuildContext context) {
-    return Semantics(
+  Widget build(BuildContext context) => Semantics(
       label: semantics.chartDescription,
       hint: semantics.navigationHints,
       container: true,
@@ -340,7 +335,6 @@ class SemanticChartWrapper extends StatelessWidget {
         child: child,
       ),
     );
-  }
 }
 
 /// Mixin for charts that support accessibility features.
@@ -443,8 +437,7 @@ mixin ChartAccessibilityMixin<T extends StatefulWidget> on State<T> {
   void Function(String announcement)? onPointAnnouncement;
 
   /// Build the focus-handling wrapper.
-  Widget buildAccessibleChart(Widget chart) {
-    return Focus(
+  Widget buildAccessibleChart(Widget chart) => Focus(
       focusNode: _chartFocusNode,
       onKeyEvent: _handleKeyEvent,
       child: Semantics(
@@ -454,7 +447,6 @@ mixin ChartAccessibilityMixin<T extends StatefulWidget> on State<T> {
         child: chart,
       ),
     );
-  }
 
   /// Handle keyboard events for navigation.
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {

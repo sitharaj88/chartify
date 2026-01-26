@@ -28,8 +28,7 @@ export 'calendar_heatmap_data.dart';
 /// ```
 class CalendarHeatmapChart extends StatefulWidget {
   const CalendarHeatmapChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -111,7 +110,7 @@ class _CalendarHeatmapChartState extends State<CalendarHeatmapChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -223,7 +222,7 @@ class _CalendarHeatmapChartState extends State<CalendarHeatmapChart>
 
   static const _monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 }
 
@@ -245,7 +244,7 @@ class _CalendarHeatmapPainter extends ChartPainter {
   static const _dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', ''];
   static const _monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
   @override
@@ -382,7 +381,7 @@ class _CalendarHeatmapPainter extends ChartPainter {
       textPainter.paint(
         canvas,
         Offset(chartArea.left - textPainter.width - 4,
-            y - textPainter.height / 2),
+            y - textPainter.height / 2,),
       );
     }
   }

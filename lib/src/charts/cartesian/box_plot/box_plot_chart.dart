@@ -30,8 +30,7 @@ export 'box_plot_chart_data.dart';
 /// ```
 class BoxPlotChart extends StatefulWidget {
   const BoxPlotChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -116,7 +115,7 @@ class _BoxPlotChartState extends State<BoxPlotChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -213,7 +212,7 @@ class _BoxPlotChartState extends State<BoxPlotChart>
         TooltipEntry(color: color, label: 'Q1', value: item.q1),
         TooltipEntry(color: color, label: 'Min', value: item.min),
         if (item.mean != null)
-          TooltipEntry(color: color, label: 'Mean', value: item.mean!),
+          TooltipEntry(color: color, label: 'Mean', value: item.mean),
       ],
       xLabel: item.label,
     );
@@ -227,8 +226,8 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller) {
+    required super.padding,
+  }) : super(repaint: controller) {
     _calculateBounds();
   }
 
@@ -242,8 +241,8 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
   void _calculateBounds() {
     if (data.items.isEmpty) return;
 
-    double minValue = double.infinity;
-    double maxValue = double.negativeInfinity;
+    var minValue = double.infinity;
+    var maxValue = double.negativeInfinity;
 
     for (final item in data.items) {
       minValue = math.min(minValue, item.min);

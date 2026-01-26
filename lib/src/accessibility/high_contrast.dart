@@ -32,9 +32,7 @@ class HighContrastColors {
   ];
 
   /// Gets high contrast colors based on brightness.
-  static List<Color> forBrightness(Brightness brightness) {
-    return brightness == Brightness.dark ? darkBackground : lightBackground;
-  }
+  static List<Color> forBrightness(Brightness brightness) => brightness == Brightness.dark ? darkBackground : lightBackground;
 }
 
 /// Configuration for high contrast mode.
@@ -89,8 +87,7 @@ class HighContrastConfig {
     bool? useStrongBorders,
     double? borderWidth,
     Color? borderColor,
-  }) {
-    return HighContrastConfig(
+  }) => HighContrastConfig(
       enabled: enabled ?? this.enabled,
       increaseStrokeWidth: increaseStrokeWidth ?? this.increaseStrokeWidth,
       strokeWidthMultiplier: strokeWidthMultiplier ?? this.strokeWidthMultiplier,
@@ -101,7 +98,6 @@ class HighContrastConfig {
       borderWidth: borderWidth ?? this.borderWidth,
       borderColor: borderColor ?? this.borderColor,
     );
-  }
 }
 
 /// Patterns for distinguishing data series in high contrast mode.
@@ -243,7 +239,8 @@ class PatternPainter {
     final diagonal = bounds.width + bounds.height;
 
     for (var d = -diagonal; d <= diagonal; d += spacing) {
-      Offset start, end;
+      Offset start;
+      Offset end;
       if (reverse) {
         start = Offset(bounds.right + d, bounds.top);
         end = Offset(bounds.left + d, bounds.bottom);
@@ -320,9 +317,7 @@ mixin HighContrastMixin {
 /// Widget that provides high contrast mode context.
 class HighContrastProvider extends InheritedWidget {
   const HighContrastProvider({
-    super.key,
-    required super.child,
-    required this.config,
+    required super.child, required this.config, super.key,
   });
 
   /// The high contrast configuration.
@@ -341,9 +336,7 @@ class HighContrastProvider extends InheritedWidget {
   }
 
   @override
-  bool updateShouldNotify(HighContrastProvider oldWidget) {
-    return config != oldWidget.config;
-  }
+  bool updateShouldNotify(HighContrastProvider oldWidget) => config != oldWidget.config;
 }
 
 /// Extension for checking system high contrast settings.

@@ -57,27 +57,23 @@ class ExportPlugin extends ChartPlugin {
   Future<Uint8List?> exportToPng({
     double? scale,
     GlobalKey? boundaryKey,
-  }) async {
-    return _export(
+  }) async => _export(
       format: ExportFormat.png,
       scale: scale ?? defaultScale,
       boundaryKey: boundaryKey ?? _boundaryKey,
     );
-  }
 
   /// Exports the chart to JPEG format.
   Future<Uint8List?> exportToJpeg({
     double? scale,
     int? quality,
     GlobalKey? boundaryKey,
-  }) async {
-    return _export(
+  }) async => _export(
       format: ExportFormat.jpeg,
       scale: scale ?? defaultScale,
       quality: quality ?? defaultQuality,
       boundaryKey: boundaryKey ?? _boundaryKey,
     );
-  }
 
   /// Exports the chart to the specified format.
   Future<Uint8List?> export({
@@ -85,14 +81,12 @@ class ExportPlugin extends ChartPlugin {
     double? scale,
     int? quality,
     GlobalKey? boundaryKey,
-  }) async {
-    return _export(
+  }) async => _export(
       format: format ?? defaultFormat,
       scale: scale ?? defaultScale,
       quality: quality ?? defaultQuality,
       boundaryKey: boundaryKey ?? _boundaryKey,
     );
-  }
 
   Future<Uint8List?> _export({
     required ExportFormat format,
@@ -197,8 +191,7 @@ class ExportConfig {
     bool? includeTitle,
     bool? includeLegend,
     EdgeInsets? padding,
-  }) {
-    return ExportConfig(
+  }) => ExportConfig(
       format: format ?? this.format,
       scale: scale ?? this.scale,
       quality: quality ?? this.quality,
@@ -207,14 +200,12 @@ class ExportConfig {
       includeLegend: includeLegend ?? this.includeLegend,
       padding: padding ?? this.padding,
     );
-  }
 }
 
 /// Widget wrapper that enables chart export.
 class ExportableChart extends StatefulWidget {
   const ExportableChart({
-    super.key,
-    required this.child,
+    required this.child, super.key,
     this.onExportReady,
   });
 
@@ -262,18 +253,14 @@ class _ExportableChartState extends State<ExportableChart> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return RepaintBoundary(
+  Widget build(BuildContext context) => RepaintBoundary(
       key: _boundaryKey,
       child: widget.child,
     );
-  }
 }
 
 /// Extension for easy export access.
 extension ExportExtension on BuildContext {
   /// Gets the export plugin if available.
-  ExportPlugin? get exportPlugin {
-    return PluginRegistry.instance.getByType<ExportPlugin>();
-  }
+  ExportPlugin? get exportPlugin => PluginRegistry.instance.getByType<ExportPlugin>();
 }

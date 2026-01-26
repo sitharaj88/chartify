@@ -145,6 +145,59 @@ class AxisConfig {
     this.position,
   });
 
+  /// Creates a linear axis configuration.
+  factory AxisConfig.linear({
+    String? id,
+    String? label,
+    double? min,
+    double? max,
+  }) =>
+      AxisConfig(
+        id: id,
+        label: label,
+        min: min,
+        max: max,
+      );
+
+  /// Creates a logarithmic axis configuration.
+  factory AxisConfig.logarithmic({
+    String? id,
+    String? label,
+    double? min,
+    double? max,
+  }) =>
+      AxisConfig(
+        id: id,
+        type: AxisType.logarithmic,
+        label: label,
+        min: min,
+        max: max,
+      );
+
+  /// Creates a time axis configuration.
+  factory AxisConfig.time({
+    String? id,
+    String? label,
+    String Function(double value)? labelFormatter,
+  }) =>
+      AxisConfig(
+        id: id,
+        type: AxisType.time,
+        label: label,
+        labelFormatter: labelFormatter,
+      );
+
+  /// Creates a category axis configuration.
+  factory AxisConfig.category({
+    String? id,
+    String? label,
+  }) =>
+      AxisConfig(
+        id: id,
+        type: AxisType.category,
+        label: label,
+      );
+
   /// Unique identifier for this axis (for multi-axis charts).
   final String? id;
 
@@ -224,61 +277,6 @@ class AxisConfig {
         labelRotation: labelRotation ?? this.labelRotation,
         reversed: reversed ?? this.reversed,
         position: position ?? this.position,
-      );
-
-  /// Creates a linear axis configuration.
-  factory AxisConfig.linear({
-    String? id,
-    String? label,
-    double? min,
-    double? max,
-  }) =>
-      AxisConfig(
-        id: id,
-        type: AxisType.linear,
-        label: label,
-        min: min,
-        max: max,
-      );
-
-  /// Creates a logarithmic axis configuration.
-  factory AxisConfig.logarithmic({
-    String? id,
-    String? label,
-    double? min,
-    double? max,
-  }) =>
-      AxisConfig(
-        id: id,
-        type: AxisType.logarithmic,
-        label: label,
-        min: min,
-        max: max,
-      );
-
-  /// Creates a time axis configuration.
-  factory AxisConfig.time({
-    String? id,
-    String? label,
-    String Function(double value)? labelFormatter,
-  }) =>
-      AxisConfig(
-        id: id,
-        type: AxisType.time,
-        label: label,
-        labelFormatter: labelFormatter,
-      );
-
-  /// Creates a category axis configuration.
-  factory AxisConfig.category({
-    String? id,
-    String? label,
-    List<String>? categories,
-  }) =>
-      AxisConfig(
-        id: id,
-        type: AxisType.category,
-        label: label,
       );
 
   @override

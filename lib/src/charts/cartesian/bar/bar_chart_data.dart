@@ -104,8 +104,7 @@ class BarChartData extends ChartData {
     ChartAnimation? animation,
     String? title,
     String? subtitle,
-  }) {
-    return BarChartData(
+  }) => BarChartData(
       series: series ?? this.series,
       xAxis: xAxis ?? this.xAxis,
       yAxis: yAxis ?? this.yAxis,
@@ -115,5 +114,4 @@ class BarChartData extends ChartData {
       groupSpacing: groupSpacing ?? this.groupSpacing,
       animation: animation ?? this.animation,
     );
-  }
 }

@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 
@@ -112,8 +111,7 @@ class AxisConfig extends RendererConfig {
     int? tickCount,
     String Function(dynamic value)? labelFormatter,
     double? minLabelSpacing,
-  }) {
-    return AxisConfig(
+  }) => AxisConfig(
       visible: visible ?? this.visible,
       position: position ?? this.position,
       title: title ?? this.title,
@@ -133,7 +131,6 @@ class AxisConfig extends RendererConfig {
       labelFormatter: labelFormatter ?? this.labelFormatter,
       minLabelSpacing: minLabelSpacing ?? this.minLabelSpacing,
     );
-  }
 }
 
 /// Result of label layout calculation with collision detection.
@@ -174,7 +171,6 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
 
   // Cached calculations
   List<T>? _cachedTicks;
-  List<CachedTextLayout>? _cachedLabels;
   double? _cachedMaxLabelSize;
   List<_LabelLayoutResult>? _cachedLabelLayouts;
   Size? _cachedCanvasSize;
@@ -201,7 +197,6 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
 
   void _invalidateCache() {
     _cachedTicks = null;
-    _cachedLabels = null;
     _cachedMaxLabelSize = null;
     _cachedLabelLayouts = null;
     _cachedCanvasSize = null;
@@ -275,7 +270,7 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
         );
 
     final results = <_LabelLayoutResult>[];
-    double lastLabelEnd = double.negativeInfinity;
+    var lastLabelEnd = double.negativeInfinity;
 
     for (final tick in ticks) {
       final position = _getTickPosition(tick, chartArea);
@@ -288,7 +283,7 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
       final layout = _textCache.layoutText(truncatedLabel, labelStyle);
 
       // Calculate label offset
-      Offset labelOffset = _calculateLabelOffset(position, layout, chartArea);
+      var labelOffset = _calculateLabelOffset(position, layout, chartArea);
 
       // Clamp label position to canvas bounds
       labelOffset = _clampLabelToCanvas(labelOffset, layout, canvasSize, chartArea);
@@ -310,7 +305,7 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
         labelOffset: labelOffset,
         visible: !hasCollision,
         truncated: truncatedLabel != label,
-      ));
+      ),);
 
       // Only update lastLabelEnd if this label is visible
       if (!hasCollision) {
@@ -672,16 +667,13 @@ class AxisFactory {
     TextStyle? labelStyle,
     TextStyle? titleStyle,
     Color? color,
-  }) {
-    return AxisConfig(
-      position: ChartPosition.bottom,
+  }) => AxisConfig(
       title: title,
       titleStyle: titleStyle,
       labelStyle: labelStyle,
       lineColor: color,
       tickColor: color,
     );
-  }
 
   /// Creates a standard left Y axis.
   static AxisConfig leftAxis({
@@ -689,8 +681,7 @@ class AxisFactory {
     TextStyle? labelStyle,
     TextStyle? titleStyle,
     Color? color,
-  }) {
-    return AxisConfig(
+  }) => AxisConfig(
       position: ChartPosition.left,
       title: title,
       titleStyle: titleStyle,
@@ -698,23 +689,18 @@ class AxisFactory {
       lineColor: color,
       tickColor: color,
     );
-  }
 
   /// Creates a minimal axis (line only, no ticks or labels).
-  static AxisConfig minimalAxis(ChartPosition position, {Color? color}) {
-    return AxisConfig(
+  static AxisConfig minimalAxis(ChartPosition position, {Color? color}) => AxisConfig(
       position: position,
       lineColor: color,
       showTicks: false,
       showLabels: false,
     );
-  }
 
   /// Creates a hidden axis (for layout calculation only).
-  static AxisConfig hiddenAxis(ChartPosition position) {
-    return AxisConfig(
+  static AxisConfig hiddenAxis(ChartPosition position) => AxisConfig(
       position: position,
       visible: false,
     );
-  }
 }

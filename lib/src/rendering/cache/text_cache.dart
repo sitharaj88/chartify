@@ -91,7 +91,6 @@ class TextCache {
     );
 
     painter.layout(
-      minWidth: 0,
       maxWidth: key.maxWidth ?? double.infinity,
     );
 
@@ -113,8 +112,7 @@ class TextCache {
     int? maxLines,
     TextAlign? textAlign,
     TextDirection textDirection = TextDirection.ltr,
-  }) {
-    return getOrCompute(
+  }) => getOrCompute(
       TextLayoutKey(
         text: text,
         style: style,
@@ -124,7 +122,6 @@ class TextCache {
       ),
       textDirection: textDirection,
     );
-  }
 
   /// Gets the size of text without caching.
   ///
@@ -207,12 +204,10 @@ class TextRenderer {
     canvas.restore();
   }
 
-  Offset _calculateOffset(Offset position, Size size, Alignment alignment) {
-    return Offset(
+  Offset _calculateOffset(Offset position, Size size, Alignment alignment) => Offset(
       position.dx - (alignment.x + 1) / 2 * size.width,
       position.dy - (alignment.y + 1) / 2 * size.height,
     );
-  }
 
   /// Gets the size of text.
   Size getTextSize(String text, TextStyle style, {double? maxWidth}) {
@@ -234,11 +229,10 @@ class NumberLabelCache {
   final int precision;
   final String? locale;
 
-  final _formattedCache = LRUCache<double, String>(maxSize: 100);
+  final _formattedCache = LRUCache<double, String>();
 
   /// Formats a number for display.
-  String format(double value) {
-    return _formattedCache.getOrPut(value, () {
+  String format(double value) => _formattedCache.getOrPut(value, () {
       // Smart formatting based on value
       if (value == value.truncateToDouble()) {
         return value.toInt().toString();
@@ -255,12 +249,9 @@ class NumberLabelCache {
         return value.toStringAsFixed(precision);
       }
     });
-  }
 
   /// Formats with custom suffix.
-  String formatWithSuffix(double value, String suffix) {
-    return '${format(value)}$suffix';
-  }
+  String formatWithSuffix(double value, String suffix) => '${format(value)}$suffix';
 
   /// Clears the format cache.
   void clear() => _formattedCache.clear();
@@ -273,7 +264,7 @@ class ChartTextCache {
   static final instance = ChartTextCache._();
 
   /// Cache for axis labels.
-  final axisLabels = TextCache(maxSize: 200);
+  final axisLabels = TextCache();
 
   /// Cache for data labels.
   final dataLabels = TextCache(maxSize: 300);

@@ -17,36 +17,6 @@ class BoxPlotItem {
     this.color,
   });
 
-  /// Label for this box plot.
-  final String label;
-
-  /// Minimum value (whisker end).
-  final double min;
-
-  /// First quartile (25th percentile).
-  final double q1;
-
-  /// Median (50th percentile).
-  final double median;
-
-  /// Third quartile (75th percentile).
-  final double q3;
-
-  /// Maximum value (whisker end).
-  final double max;
-
-  /// Optional list of outlier values.
-  final List<double>? outliers;
-
-  /// Optional mean value.
-  final double? mean;
-
-  /// Custom color for this box.
-  final Color? color;
-
-  /// Interquartile range (Q3 - Q1).
-  double get iqr => q3 - q1;
-
   /// Create from raw data values.
   factory BoxPlotItem.fromValues({
     required String label,
@@ -100,6 +70,36 @@ class BoxPlotItem {
       color: color,
     );
   }
+
+  /// Label for this box plot.
+  final String label;
+
+  /// Minimum value (whisker end).
+  final double min;
+
+  /// First quartile (25th percentile).
+  final double q1;
+
+  /// Median (50th percentile).
+  final double median;
+
+  /// Third quartile (75th percentile).
+  final double q3;
+
+  /// Maximum value (whisker end).
+  final double max;
+
+  /// Optional list of outlier values.
+  final List<double>? outliers;
+
+  /// Optional mean value.
+  final double? mean;
+
+  /// Custom color for this box.
+  final Color? color;
+
+  /// Interquartile range (Q3 - Q1).
+  double get iqr => q3 - q1;
 
   static double _percentile(List<double> sorted, double p) {
     if (sorted.isEmpty) return 0;

@@ -34,8 +34,7 @@ export 'sankey_chart_data.dart';
 /// ```
 class SankeyChart extends StatefulWidget {
   const SankeyChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -119,7 +118,7 @@ class _SankeyChartState extends State<SankeyChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -218,10 +217,10 @@ class _SankeyChartState extends State<SankeyChart>
       // Calculate total flow through node
       final inflow = widget.data.links
           .where((l) => l.targetId == node.id)
-          .fold(0.0, (sum, l) => sum + l.value);
+          .fold<double>(0, (sum, l) => sum + l.value);
       final outflow = widget.data.links
           .where((l) => l.sourceId == node.id)
-          .fold(0.0, (sum, l) => sum + l.value);
+          .fold<double>(0, (sum, l) => sum + l.value);
       final total = math.max(inflow, outflow);
 
       return TooltipData(
@@ -286,14 +285,12 @@ class _SankeyChartPainter extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left,
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -332,7 +329,7 @@ class _SankeyChartPainter extends ChartPainter {
       if (sourceNode == null || sourcePos == null || targetPos == null) continue;
 
       final color = link.color ?? sourceNode.color ?? theme.getSeriesColor(
-          data.nodes.indexOf(sourceNode));
+          data.nodes.indexOf(sourceNode),);
 
       _drawLink(
         canvas,
@@ -382,7 +379,7 @@ class _SankeyChartPainter extends ChartPainter {
   }
 
   (List<SankeyNodePosition>, List<SankeyLinkPosition>) _calculateLayout(
-      Rect chartArea) {
+      Rect chartArea,) {
     // Build graph structure with maps for O(1) lookups
     final nodeMap = <String, SankeyNode>{};
     for (final node in data.nodes) {
@@ -391,7 +388,7 @@ class _SankeyChartPainter extends ChartPainter {
 
     // Filter links to only include those with valid source and target nodes
     final validLinks = data.links.where(
-      (l) => nodeMap.containsKey(l.sourceId) && nodeMap.containsKey(l.targetId)
+      (l) => nodeMap.containsKey(l.sourceId) && nodeMap.containsKey(l.targetId),
     ).toList();
 
     // Detect circular dependencies using DFS with path tracking
@@ -423,7 +420,7 @@ class _SankeyChartPainter extends ChartPainter {
 
     // Find source nodes (no incoming links from valid links)
     final sourceNodes = data.nodes.where((n) =>
-        !validLinks.any((l) => l.targetId == n.id)).toList();
+        !validLinks.any((l) => l.targetId == n.id),).toList();
 
     // If graph has cycles and no clear source nodes, start from first node
     if (sourceNodes.isEmpty && data.nodes.isNotEmpty) {
@@ -453,14 +450,14 @@ class _SankeyChartPainter extends ChartPainter {
     for (final node in data.nodes) {
       final inflow = data.links
           .where((l) => l.targetId == node.id)
-          .fold(0.0, (sum, l) => sum + l.value);
+          .fold<double>(0, (sum, l) => sum + l.value);
       final outflow = data.links
           .where((l) => l.sourceId == node.id)
-          .fold(0.0, (sum, l) => sum + l.value);
+          .fold<double>(0, (sum, l) => sum + l.value);
       nodeFlow[node.id] = math.max(inflow, outflow);
     }
 
-    final totalFlow = nodeFlow.values.fold(0.0, (sum, v) => sum + v);
+    final totalFlow = nodeFlow.values.fold<double>(0, (sum, v) => sum + v);
 
     // Calculate positions
     final nodePositions = <SankeyNodePosition>[];
@@ -474,7 +471,7 @@ class _SankeyChartPainter extends ChartPainter {
       final x = chartArea.left + column * columnWidth;
 
       // Calculate total height needed for this column
-      final columnFlow = nodes.fold(0.0, (sum, n) => sum + nodeFlow[n.id]!);
+      final columnFlow = nodes.fold<double>(0, (sum, n) => sum + nodeFlow[n.id]!);
       final availableHeight =
           chartArea.height - (nodes.length - 1) * data.nodePadding;
 
@@ -492,7 +489,7 @@ class _SankeyChartPainter extends ChartPainter {
           y: y,
           height: height,
           column: column,
-        ));
+        ),);
 
         y += height + data.nodePadding;
       }
@@ -529,7 +526,7 @@ class _SankeyChartPainter extends ChartPainter {
         sourceY: sourcePos.y + sourceOffset + width / 2,
         targetY: targetPos.y + targetOffset + width / 2,
         width: width,
-      ));
+      ),);
 
       sourceOffsets[link.sourceId] = sourceOffset + width;
       targetOffsets[link.targetId] = targetOffset + width;
@@ -539,7 +536,7 @@ class _SankeyChartPainter extends ChartPainter {
   }
 
   void _drawNode(Canvas canvas, SankeyNodePosition pos, Color color,
-      bool isHovered, int index) {
+      bool isHovered, int index,) {
     final rect = Rect.fromLTWH(pos.x, pos.y, data.nodeWidth, pos.height);
 
     final paint = Paint()

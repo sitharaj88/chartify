@@ -32,8 +32,7 @@ export 'treemap_chart_data.dart';
 /// ```
 class TreemapChart extends StatefulWidget {
   const TreemapChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -119,7 +118,7 @@ class _TreemapChartState extends State<TreemapChart>
     if (widget.data != oldWidget.data) {
       _layoutCache = [];
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -210,7 +209,7 @@ class _TreemapChartState extends State<TreemapChart>
   TooltipData _buildTooltipData(DataPointInfo info, ChartThemeData theme) {
     final idx = info.pointIndex;
     if (idx < 0 || idx >= _layoutCache.length) {
-      return TooltipData(position: info.position, entries: []);
+      return TooltipData(position: info.position, entries: const []);
     }
 
     final rect = _layoutCache[idx];
@@ -250,14 +249,12 @@ class _TreemapChartPainter extends ChartPainter {
   final void Function(List<TreemapRect>) onLayoutComplete;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left,
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -357,7 +354,7 @@ class _TreemapChartPainter extends ChartPainter {
     if (nodes.isEmpty) return [];
     if (nodes.length == 1) return [bounds];
 
-    final totalValue = nodes.fold(0.0, (sum, n) => sum + n.computedValue);
+    final totalValue = nodes.fold<double>(0, (sum, n) => sum + n.computedValue);
     if (totalValue <= 0) return List.filled(nodes.length, Rect.zero);
 
     // Sort by value descending for better layout
@@ -383,7 +380,7 @@ class _TreemapChartPainter extends ChartPainter {
         final testValue = rowValue + node.computedValue;
 
         final remainingValue =
-            sortedNodes.skip(i).fold(0.0, (sum, n) => sum + n.computedValue);
+            sortedNodes.skip(i).fold<double>(0, (sum, n) => sum + n.computedValue);
         final rowWidth = (testValue / remainingValue) *
             (isVertical ? remaining.width : remaining.height);
 
@@ -406,7 +403,7 @@ class _TreemapChartPainter extends ChartPainter {
 
       // Calculate row dimensions
       final remainingValue =
-          sortedNodes.skip(i - row.length).fold(0.0, (sum, n) => sum + n.computedValue);
+          sortedNodes.skip(i - row.length).fold<double>(0, (sum, n) => sum + n.computedValue);
       final rowWidth = (rowValue / remainingValue) *
           (isVertical ? remaining.width : remaining.height);
 
@@ -461,7 +458,7 @@ class _TreemapChartPainter extends ChartPainter {
   List<Rect> _sliceLayout(List<TreemapNode> nodes, Rect bounds, bool horizontal) {
     if (nodes.isEmpty) return [];
 
-    final totalValue = nodes.fold(0.0, (sum, n) => sum + n.computedValue);
+    final totalValue = nodes.fold<double>(0, (sum, n) => sum + n.computedValue);
     if (totalValue <= 0) return List.filled(nodes.length, Rect.zero);
 
     final result = <Rect>[];
@@ -487,7 +484,7 @@ class _TreemapChartPainter extends ChartPainter {
     if (nodes.isEmpty) return [];
     if (nodes.length == 1) return [bounds];
 
-    final totalValue = nodes.fold(0.0, (sum, n) => sum + n.computedValue);
+    final totalValue = nodes.fold<double>(0, (sum, n) => sum + n.computedValue);
     if (totalValue <= 0) return List.filled(nodes.length, Rect.zero);
 
     // Find split point closest to half
@@ -509,11 +506,12 @@ class _TreemapChartPainter extends ChartPainter {
     final leftNodes = nodes.sublist(0, splitIndex);
     final rightNodes = nodes.sublist(splitIndex);
 
-    final leftTotalValue = leftNodes.fold(0.0, (sum, n) => sum + n.computedValue);
+    final leftTotalValue = leftNodes.fold<double>(0, (sum, n) => sum + n.computedValue);
     final ratio = leftTotalValue / totalValue;
 
     final isVertical = bounds.width >= bounds.height;
-    Rect leftBounds, rightBounds;
+    Rect leftBounds;
+    Rect rightBounds;
 
     if (isVertical) {
       final splitX = bounds.left + bounds.width * ratio;
@@ -553,7 +551,7 @@ class _TreemapChartPainter extends ChartPainter {
     var fillColor = color.withValues(alpha: color.a * opacity);
 
     if (isHovered) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withValues(alpha: 1);
     }
 
     // Draw fill

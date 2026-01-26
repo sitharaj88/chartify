@@ -36,8 +36,7 @@ export 'rose_chart_data.dart';
 /// ```
 class RoseChart extends StatefulWidget {
   const RoseChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -119,7 +118,7 @@ class _RoseChartState extends State<RoseChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -235,14 +234,12 @@ class _RoseChartPainter extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left,
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {

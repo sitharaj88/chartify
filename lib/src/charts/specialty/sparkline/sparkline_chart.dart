@@ -25,8 +25,7 @@ export 'sparkline_chart_data.dart';
 /// ```
 class SparklineChart extends StatefulWidget {
   const SparklineChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.animation = const ChartAnimation(),
     this.padding = EdgeInsets.zero,
   });
@@ -94,8 +93,7 @@ class _SparklineChartState extends State<SparklineChart>
 
     return AnimatedBuilder(
       animation: _animation,
-      builder: (context, child) {
-        return CustomPaint(
+      builder: (context, child) => CustomPaint(
           painter: _SparklinePainter(
             data: widget.data,
             theme: theme,
@@ -103,8 +101,7 @@ class _SparklineChartState extends State<SparklineChart>
             padding: widget.padding,
           ),
           size: Size.infinite,
-        );
-      },
+        ),
     );
   }
 }

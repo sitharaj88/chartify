@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 
@@ -61,7 +60,7 @@ class LegendConfig extends RendererConfig {
     this.markerLabelSpacing = 6.0,
     this.labelStyle,
     this.valueStyle,
-    this.padding = const EdgeInsets.all(8.0),
+    this.padding = const EdgeInsets.all(8),
     this.backgroundColor,
     this.borderColor,
     this.borderWidth = 0.0,
@@ -154,8 +153,7 @@ class LegendConfig extends RendererConfig {
     bool? showPercentages,
     int? maxLines,
     bool? interactive,
-  }) {
-    return LegendConfig(
+  }) => LegendConfig(
       visible: visible ?? this.visible,
       position: position ?? this.position,
       alignment: alignment ?? this.alignment,
@@ -176,7 +174,6 @@ class LegendConfig extends RendererConfig {
       maxLines: maxLines ?? this.maxLines,
       interactive: interactive ?? this.interactive,
     );
-  }
 }
 
 /// Renderer for chart legends.
@@ -204,8 +201,6 @@ class LegendRenderer
 
   // Cached layout information
   List<_LegendItemLayout>? _cachedItemLayouts;
-  Size? _cachedLegendSize;
-  Rect? _lastChartArea;
 
   @override
   LegendConfig get config => _config;
@@ -228,14 +223,12 @@ class LegendRenderer
 
   void _invalidateCache() {
     _cachedItemLayouts = null;
-    _cachedLegendSize = null;
   }
 
   @override
   void render(Canvas canvas, Size size, Rect chartArea) {
     if (!_config.visible || items.isEmpty) return;
 
-    _lastChartArea = chartArea;
     final layouts = _computeLayouts(size, chartArea);
     final legendRect = _computeLegendRect(size, chartArea, layouts);
 
@@ -287,7 +280,7 @@ class LegendRenderer
       overrideConfig: MarkerConfig(
         shape: item.shape,
         size: _config.markerSize,
-        fillColor: item.color.withOpacity(opacity),
+        fillColor: item.color.withValues(alpha: opacity),
       ),
     );
 
@@ -296,7 +289,7 @@ class LegendRenderer
             const TextStyle(fontSize: 12, color: Color(0xFF333333)))
         .copyWith(
       color: (_config.labelStyle?.color ?? const Color(0xFF333333))
-          .withOpacity(opacity),
+          .withValues(alpha: opacity),
     );
 
     final labelLayout = _textCache.layoutText(item.label, labelStyle);
@@ -308,7 +301,7 @@ class LegendRenderer
               const TextStyle(fontSize: 11, color: Color(0xFF666666)))
           .copyWith(
         color: (_config.valueStyle?.color ?? const Color(0xFF666666))
-            .withOpacity(opacity),
+            .withValues(alpha: opacity),
       );
 
       final valueLayout = _textCache.layoutText(item.value!, valueStyle);
@@ -325,7 +318,7 @@ class LegendRenderer
               const TextStyle(fontSize: 11, color: Color(0xFF666666)))
           .copyWith(
         color: (_config.valueStyle?.color ?? const Color(0xFF666666))
-            .withOpacity(opacity),
+            .withValues(alpha: opacity),
       );
 
       final percentLayout = _textCache.layoutText(percentText, valueStyle);
@@ -408,7 +401,7 @@ class LegendRenderer
           y + (itemHeight - labelLayout.height) / 2,
         ),
         bounds: Rect.fromLTWH(x, y, itemWidth, itemHeight),
-      ));
+      ),);
 
       x += itemWidth + _config.itemSpacing;
       lineHeight = lineHeight > itemHeight ? lineHeight : itemHeight;
@@ -471,7 +464,6 @@ class LegendRenderer
       );
     }
 
-    _cachedLegendSize = Size(contentWidth, contentHeight);
     return Rect.fromLTWH(left, top, contentWidth, contentHeight);
   }
 
@@ -586,48 +578,40 @@ class LegendFactory {
   static LegendConfig bottom({
     LegendLayout layout = LegendLayout.horizontal,
     TextStyle? labelStyle,
-  }) {
-    return LegendConfig(
-      position: ChartPosition.bottom,
+  }) => LegendConfig(
       layout: layout,
       labelStyle: labelStyle,
     );
-  }
 
   /// Creates a standard right legend.
   static LegendConfig right({
     TextStyle? labelStyle,
     bool showValues = false,
-  }) {
-    return LegendConfig(
+  }) => LegendConfig(
       position: ChartPosition.right,
       layout: LegendLayout.vertical,
       labelStyle: labelStyle,
       showValues: showValues,
     );
-  }
 
   /// Creates a compact legend with wrap.
   static LegendConfig compact({
     ChartPosition position = ChartPosition.bottom,
     int maxLines = 2,
-  }) {
-    return LegendConfig(
+  }) => LegendConfig(
       position: position,
       layout: LegendLayout.wrap,
       maxLines: maxLines,
       itemSpacing: 12,
       markerSize: 10,
     );
-  }
 
   /// Creates a legend with a background card.
   static LegendConfig card({
     ChartPosition position = ChartPosition.right,
     Color backgroundColor = const Color(0xFFFAFAFA),
     Color borderColor = const Color(0xFFE0E0E0),
-  }) {
-    return LegendConfig(
+  }) => LegendConfig(
       position: position,
       layout: LegendLayout.vertical,
       backgroundColor: backgroundColor,
@@ -636,10 +620,7 @@ class LegendFactory {
       borderRadius: 8,
       padding: const EdgeInsets.all(12),
     );
-  }
 
   /// Creates a hidden legend.
-  static LegendConfig hidden() {
-    return const LegendConfig(visible: false);
-  }
+  static LegendConfig hidden() => const LegendConfig(visible: false);
 }

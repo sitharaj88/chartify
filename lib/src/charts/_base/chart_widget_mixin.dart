@@ -144,7 +144,7 @@ mixin ChartTooltipMixin<T extends StatefulWidget> on State<T> {
     hideTooltip();
 
     final overlay = Overlay.of(context);
-    final renderBox = context.findRenderObject() as RenderBox;
+    final renderBox = context.findRenderObject()! as RenderBox;
     final globalPosition = renderBox.localToGlobal(position);
 
     _tooltipOverlay = OverlayEntry(
@@ -203,9 +203,7 @@ class ChartLayoutHelper {
   }
 
   /// Calculates optimal tick count based on available space.
-  static int calculateTickCount(double availableSpace, {double minSpacing = 50}) {
-    return (availableSpace / minSpacing).floor().clamp(2, 20);
-  }
+  static int calculateTickCount(double availableSpace, {double minSpacing = 50}) => (availableSpace / minSpacing).floor().clamp(2, 20);
 
   /// Determines if labels should be rotated based on available space.
   static bool shouldRotateLabels(
@@ -232,25 +230,19 @@ abstract class BaseChartPainter extends CustomPainter {
   Rect chartArea = Rect.zero;
 
   /// Calculates the chart area from size and insets.
-  Rect calculateChartArea(Size size, EdgeInsets insets) {
-    return Rect.fromLTRB(
+  Rect calculateChartArea(Size size, EdgeInsets insets) => Rect.fromLTRB(
       insets.left,
       insets.top,
       size.width - insets.right,
       size.height - insets.bottom,
     );
-  }
 
   /// Interpolates a value based on animation progress.
-  double animatedValue(double target, {double start = 0}) {
-    return start + (target - start) * animationProgress;
-  }
+  double animatedValue(double target, {double start = 0}) => start + (target - start) * animationProgress;
 
   /// Interpolates an offset based on animation progress.
-  Offset animatedOffset(Offset target, {Offset start = Offset.zero}) {
-    return Offset(
+  Offset animatedOffset(Offset target, {Offset start = Offset.zero}) => Offset(
       animatedValue(target.dx, start: start.dx),
       animatedValue(target.dy, start: start.dy),
     );
-  }
 }

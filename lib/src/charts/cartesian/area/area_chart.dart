@@ -11,13 +11,11 @@ import '../../../core/base/chart_painter.dart';
 import '../../../core/data/data_point.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
-import '../line/line_chart_data.dart';
 
 /// A data series for area charts.
 class AreaSeries<X, Y extends num> {
   const AreaSeries({
-    this.name,
-    required this.data,
+    required this.data, this.name,
     this.color,
     this.visible = true,
     this.strokeWidth = 2.0,
@@ -70,8 +68,7 @@ class AreaChartData {
 /// Supports stacked areas and gradients.
 class AreaChart extends StatefulWidget {
   const AreaChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -103,7 +100,10 @@ class _AreaChartState extends State<AreaChart>
   final ChartHitTester _hitTester = ChartHitTester();
   Rect _chartArea = Rect.zero;
 
-  double _xMin = 0, _xMax = 1, _yMin = 0, _yMax = 1;
+  double _xMin = 0;
+  double _xMax = 1;
+  double _yMin = 0;
+  double _yMax = 1;
   bool _boundsValid = false;
 
   ChartAnimation get _animationConfig =>
@@ -160,7 +160,7 @@ class _AreaChartState extends State<AreaChart>
     if (widget.data != oldWidget.data) {
       _boundsValid = false;
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -177,15 +177,15 @@ class _AreaChartState extends State<AreaChart>
   void _calculateBounds() {
     if (_boundsValid) return;
 
-    double xMin = double.infinity;
-    double xMax = double.negativeInfinity;
-    double yMin = double.infinity;
-    double yMax = double.negativeInfinity;
-    bool hasData = false;
+    var xMin = double.infinity;
+    var xMax = double.negativeInfinity;
+    var yMin = double.infinity;
+    var yMax = double.negativeInfinity;
+    var hasData = false;
 
     if (widget.data.stacked) {
       // For stacked, calculate cumulative max
-      int maxLength = 0;
+      var maxLength = 0;
       for (final series in widget.data.series) {
         if (!series.visible) continue;
         maxLength = math.max(maxLength, series.data.length);
@@ -284,7 +284,7 @@ class _AreaChartState extends State<AreaChart>
     if (!_chartArea.contains(position)) return null;
 
     DataPointInfo? nearest;
-    double minDistance = double.infinity;
+    var minDistance = double.infinity;
 
     for (var seriesIndex = 0; seriesIndex < widget.data.series.length; seriesIndex++) {
       final series = widget.data.series[seriesIndex];
@@ -418,8 +418,8 @@ class _AreaChartPainter extends CartesianChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller) {
+    required super.padding,
+  }) : super(repaint: controller) {
     _calculateBounds();
   }
 
@@ -427,17 +427,20 @@ class _AreaChartPainter extends CartesianChartPainter {
   final ChartController controller;
   final ChartHitTester hitTester;
 
-  double _xMin = 0, _xMax = 1, _yMin = 0, _yMax = 1;
+  double _xMin = 0;
+  double _xMax = 1;
+  double _yMin = 0;
+  double _yMax = 1;
   bool _boundsCalculated = false;
 
   void _calculateBounds() {
     if (_boundsCalculated) return;
 
-    double xMin = double.infinity;
-    double xMax = double.negativeInfinity;
-    double yMin = double.infinity;
-    double yMax = double.negativeInfinity;
-    bool hasData = false;
+    var xMin = double.infinity;
+    var xMax = double.negativeInfinity;
+    var yMin = double.infinity;
+    var yMax = double.negativeInfinity;
+    var hasData = false;
 
     for (final series in data.series) {
       if (!series.visible) continue;
@@ -691,7 +694,6 @@ class _AreaChartPainter extends CartesianChartPainter {
   void paintOverlay(Canvas canvas, Size size) {
     super.paintOverlay(canvas, size);
 
-    final chartArea = getChartArea(size);
     final hoveredPoint = controller.hoveredPoint;
 
     if (hoveredPoint != null) {

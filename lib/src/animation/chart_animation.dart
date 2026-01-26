@@ -1,6 +1,5 @@
 import 'dart:math' as math;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/widgets.dart';
 
 /// Modern easing curves inspired by Material Design 3.
@@ -20,27 +19,27 @@ class ChartCurves {
 
   /// Emphasized curve - slow start, fast middle, slow end.
   /// Best for: Primary animations, transitions, data series entry.
-  static const Curve emphasized = Cubic(0.2, 0.0, 0.0, 1.0);
+  static const Curve emphasized = Cubic(0.2, 0, 0, 1);
 
   /// Emphasized decelerate - for entering elements.
   /// Best for: Elements appearing on screen, tooltips appearing.
-  static const Curve emphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1.0);
+  static const Curve emphasizedDecelerate = Cubic(0.05, 0.7, 0.1, 1);
 
   /// Emphasized accelerate - for exiting elements.
   /// Best for: Elements leaving screen, tooltips disappearing.
-  static const Curve emphasizedAccelerate = Cubic(0.3, 0.0, 0.8, 0.15);
+  static const Curve emphasizedAccelerate = Cubic(0.3, 0, 0.8, 0.15);
 
   /// Standard curve - balanced movement.
   /// Best for: General purpose animations.
-  static const Curve standard = Cubic(0.2, 0.0, 0.0, 1.0);
+  static const Curve standard = Cubic(0.2, 0, 0, 1);
 
   /// Standard decelerate - natural slow down.
   /// Best for: Data point highlights, hover effects.
-  static const Curve standardDecelerate = Cubic(0.0, 0.0, 0.0, 1.0);
+  static const Curve standardDecelerate = Cubic(0, 0, 0, 1);
 
   /// Standard accelerate - natural speed up.
   /// Best for: Hiding elements, exiting animations.
-  static const Curve standardAccelerate = Cubic(0.3, 0.0, 1.0, 1.0);
+  static const Curve standardAccelerate = Cubic(0.3, 0, 1, 1);
 
   /// Spring effect for responsive, bouncy feedback.
   /// Best for: Interactive elements, selection feedback.
@@ -52,15 +51,15 @@ class ChartCurves {
 
   /// Snappy curve - quick and responsive.
   /// Best for: Hover effects, micro-interactions.
-  static const Curve snappy = Cubic(0.4, 0.0, 0.2, 1.0);
+  static const Curve snappy = Cubic(0.4, 0, 0.2, 1);
 
   /// Smooth curve - gentle and flowing.
   /// Best for: Background animations, ambient effects.
-  static const Curve smooth = Cubic(0.4, 0.0, 0.6, 1.0);
+  static const Curve smooth = Cubic(0.4, 0, 0.6, 1);
 
   /// Elastic curve - bouncy spring effect.
   /// Best for: Celebratory animations, achievement indicators.
-  static const Curve elastic = ElasticOutCurve(0.4);
+  static const Curve elastic = ElasticOutCurve();
 
   /// Bounce curve - multiple bounces at end.
   /// Best for: Playful data reveals, fun interactions.
@@ -277,7 +276,7 @@ mixin ChartAnimationMixin<T extends StatefulWidget>
 
   /// Starts the animation from the beginning.
   void startAnimation() {
-    _animationController?.forward(from: 0.0);
+    _animationController?.forward(from: 0);
   }
 
   /// Starts the animation from the current value.
@@ -340,9 +339,7 @@ class StaggeredAnimationController {
       ),
     );
 
-    _animations = _controllers.map((controller) {
-      return CurvedAnimation(parent: controller, curve: curve);
-    }).toList();
+    _animations = _controllers.map((controller) => CurvedAnimation(parent: controller, curve: curve)).toList();
 
     _staggerDelay = staggerDelay;
   }
@@ -362,7 +359,7 @@ class StaggeredAnimationController {
 
   /// Starts all animations with staggered delay.
   Future<void> forward() async {
-    for (int i = 0; i < _controllers.length; i++) {
+    for (var i = 0; i < _controllers.length; i++) {
       if (i > 0) {
         await Future<void>.delayed(_staggerDelay);
       }
@@ -467,28 +464,28 @@ mixin ChartHoverAnimationMixin<T extends StatefulWidget> on State<T> {
     );
 
     _hoverScaleAnimation = Tween<double>(
-      begin: 1.0,
+      begin: 1,
       end: maxScale,
     ).animate(CurvedAnimation(
       parent: _hoverController!,
       curve: ChartCurves.snappy,
-    ));
+    ),);
 
     _hoverGlowAnimation = Tween<double>(
-      begin: 0.0,
+      begin: 0,
       end: maxGlow,
     ).animate(CurvedAnimation(
       parent: _hoverController!,
       curve: ChartCurves.standardDecelerate,
-    ));
+    ),);
 
     _hoverLiftAnimation = Tween<double>(
-      begin: 0.0,
+      begin: 0,
       end: maxLift,
     ).animate(CurvedAnimation(
       parent: _hoverController!,
       curve: ChartCurves.emphasized,
-    ));
+    ),);
 
     _hoverController!.addListener(_onHoverAnimationTick);
   }
@@ -538,14 +535,10 @@ class HoverEffectPainter {
   HoverEffectPainter._();
 
   /// Calculates shadow blur radius based on hover animation value.
-  static double getGlowRadius(double hoverValue, {double maxRadius = 12.0}) {
-    return hoverValue * maxRadius;
-  }
+  static double getGlowRadius(double hoverValue, {double maxRadius = 12.0}) => hoverValue * maxRadius;
 
   /// Calculates shadow color with animated opacity.
-  static Color getGlowColor(Color baseColor, double hoverValue) {
-    return baseColor.withValues(alpha: 0.3 * hoverValue);
-  }
+  static Color getGlowColor(Color baseColor, double hoverValue) => baseColor.withValues(alpha: 0.3 * hoverValue);
 
   /// Creates a shadow list for hover glow effect.
   static List<BoxShadow> createGlowShadows(
@@ -591,15 +584,13 @@ class HoverEffectPainter {
     double scale,
     double lift,
     Offset center,
-  ) {
-    return Matrix4.identity()
+  ) => Matrix4.identity()
       // ignore: deprecated_member_use
       ..translate(center.dx, center.dy - lift)
       // ignore: deprecated_member_use
       ..scale(scale)
       // ignore: deprecated_member_use
       ..translate(-center.dx, -center.dy);
-  }
 }
 
 /// Preset animation configurations for common use cases.
@@ -610,7 +601,6 @@ class ChartAnimationPresets {
   static const ChartAnimation emphasized = ChartAnimation(
     duration: Duration(milliseconds: 600),
     curve: ChartCurves.emphasized,
-    type: AnimationType.draw,
   );
 
   /// Quick responsive animation - best for hover effects and tooltips.
@@ -646,8 +636,6 @@ class ChartAnimationPresets {
   static const ChartAnimation morph = ChartAnimation(
     duration: Duration(milliseconds: 350),
     curve: ChartCurves.standard,
-    type: AnimationType.draw,
     animateOnLoad: false,
-    animateOnDataChange: true,
   );
 }

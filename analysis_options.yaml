@@ -4,7 +4,7 @@ analyzer:
   language:
     strict-casts: true
     strict-inference: true
-    strict-raw-types: true
+    strict-raw-types: false  # Too verbose for generic series types
   errors:
     missing_required_param: error
     missing_return: error
@@ -31,7 +31,7 @@ linter:
     - avoid_js_rounded_ints
     - avoid_multiple_declarations_per_line
     - avoid_null_checks_in_equality_operators
-    - avoid_positional_boolean_parameters
+    # - avoid_positional_boolean_parameters  # Acceptable for simple flag parameters
     - avoid_print
     - avoid_private_typedef_functions
     - avoid_redundant_argument_values
@@ -39,7 +39,7 @@ linter:
     - avoid_renaming_method_parameters
     - avoid_return_types_on_setters
     - avoid_returning_null_for_void
-    - avoid_returning_this
+    # - avoid_returning_this  # Intentional for fluent/builder pattern APIs
     - avoid_setters_without_getters
     - avoid_shadowing_type_parameters
     - avoid_single_cascade_in_expression_statements
@@ -54,7 +54,7 @@ linter:
     - camel_case_extensions
     - camel_case_types
     - cancel_subscriptions
-    - cascade_invocations
+    # - cascade_invocations  # Often reduces readability in complex chains
     - cast_nullable_to_non_nullable
     - close_sinks
     - collection_methods_unrelated_type
@@ -102,10 +102,10 @@ linter:
     - one_member_abstracts
     - only_throw_errors
     - overridden_fields
-    - package_api_docs
+    # - package_api_docs  # Removed in Dart 3.7.0
     - package_names
     - package_prefixed_library_names
-    - parameter_assignments
+    # - parameter_assignments  # Sometimes intentional for mutation
     - prefer_adjacent_string_concatenation
     - prefer_asserts_in_initializer_lists
     - prefer_asserts_with_message
@@ -185,7 +185,7 @@ linter:
     - unnecessary_to_list_in_spreads
     - unreachable_from_main
     - unrelated_type_equality_checks
-    - unsafe_html
+    # - unsafe_html  # Removed in Dart 3.7.0
     - use_build_context_synchronously
     - use_colored_box
     - use_decorated_box
@@ -195,7 +195,7 @@ linter:
     - use_if_null_to_convert_nulls_to_bools
     - use_is_even_rather_than_modulo
     - use_key_in_widget_constructors
-    - use_late_for_private_fields_when_needed
+    # - use_late_for_private_fields_when_needed  # Not a recognized lint rule
     - use_named_constants
     - use_raw_strings
     - use_rethrow_when_possible

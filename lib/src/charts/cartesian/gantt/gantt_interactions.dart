@@ -299,7 +299,7 @@ class GanttInteractionController extends ChangeNotifier {
     _dragOriginalStart = null;
     _dragOriginalEnd = null;
 
-    if (config.hapticFeedback && result?.hasChanged == true) {
+    if (config.hapticFeedback && (result?.hasChanged ?? false)) {
       HapticFeedback.lightImpact();
     }
 
@@ -390,7 +390,7 @@ class GanttInteractionController extends ChangeNotifier {
     _resizeOriginalStart = null;
     _resizeOriginalEnd = null;
 
-    if (config.hapticFeedback && result?.hasChanged == true) {
+    if (config.hapticFeedback && (result?.hasChanged ?? false)) {
       HapticFeedback.lightImpact();
     }
 
@@ -492,7 +492,7 @@ class GanttInteractionController extends ChangeNotifier {
   void _moveFocus(List<GanttTask> tasks, int delta) {
     if (tasks.isEmpty) return;
 
-    int currentIndex = -1;
+    var currentIndex = -1;
     if (_focusedTaskId != null) {
       currentIndex = tasks.indexWhere((t) => t.id == _focusedTaskId);
     }
@@ -530,7 +530,7 @@ class GanttInteractionController extends ChangeNotifier {
         final daysToMonday = weekday == 7 ? 1 : -(weekday - 1);
         return DateTime(date.year, date.month, date.day + daysToMonday);
       case SnapMode.month:
-        return DateTime(date.year, date.month, 1);
+        return DateTime(date.year, date.month);
     }
   }
 

@@ -3,7 +3,6 @@ import 'package:flutter/painting.dart';
 import '../../core/gestures/spatial_index.dart';
 import '../../core/math/geometry/bounds_calculator.dart';
 import '../../core/math/geometry/coordinate_transform.dart';
-import '../renderers/renderer.dart';
 
 /// Base configuration for series rendering.
 abstract class SeriesConfig {
@@ -138,9 +137,7 @@ mixin CurvedSeriesMixin<T extends SeriesConfig> on SeriesPainter<T> {
   List<Offset> getScreenPositions(
     List<({double x, double y})> data,
     CoordinateTransform transform,
-  ) {
-    return data.map((p) => transform.dataToScreen(p.x, p.y)).toList();
-  }
+  ) => data.map((p) => transform.dataToScreen(p.x, p.y)).toList();
 }
 
 /// Mixin for series that support area fills.
@@ -171,49 +168,37 @@ mixin GradientMixin {
     Rect bounds,
     List<Color> colors, {
     List<double>? stops,
-  }) {
-    return LinearGradient(
+  }) => LinearGradient(
       begin: Alignment.topCenter,
       end: Alignment.bottomCenter,
       colors: colors,
       stops: stops,
     ).createShader(bounds);
-  }
 
   /// Creates a horizontal gradient shader.
   Shader createHorizontalGradient(
     Rect bounds,
     List<Color> colors, {
     List<double>? stops,
-  }) {
-    return LinearGradient(
-      begin: Alignment.centerLeft,
-      end: Alignment.centerRight,
+  }) => LinearGradient(
       colors: colors,
       stops: stops,
     ).createShader(bounds);
-  }
 }
 
 /// Mixin for animated series.
 mixin AnimatedSeriesMixin<T extends SeriesConfig> on SeriesPainter<T> {
   /// Interpolates between old and new values.
-  double lerp(double start, double end, double progress) {
-    return start + (end - start) * progress;
-  }
+  double lerp(double start, double end, double progress) => start + (end - start) * progress;
 
   /// Interpolates positions.
-  Offset lerpOffset(Offset start, Offset end, double progress) {
-    return Offset(
+  Offset lerpOffset(Offset start, Offset end, double progress) => Offset(
       lerp(start.dx, end.dx, progress),
       lerp(start.dy, end.dy, progress),
     );
-  }
 
   /// Interpolates colors.
-  Color lerpColor(Color start, Color end, double progress) {
-    return Color.lerp(start, end, progress) ?? end;
-  }
+  Color lerpColor(Color start, Color end, double progress) => Color.lerp(start, end, progress) ?? end;
 }
 
 /// Mixin for viewport-aware data culling.

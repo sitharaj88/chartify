@@ -41,8 +41,7 @@ import 'bar_series.dart';
 /// ```
 class BarChart extends StatefulWidget {
   const BarChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -135,7 +134,7 @@ class _BarChartState extends State<BarChart>
       _yBounds = null;
       _spatialIndex = null;
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -329,7 +328,7 @@ class _BarChartPainter extends CustomPainter {
 
     double yMin = 0;
     double yMax = 0;
-    int maxLength = 0;
+    var maxLength = 0;
 
     for (final series in data.series) {
       if (!series.visible) continue;
@@ -396,7 +395,7 @@ class _BarChartPainter extends CustomPainter {
   }
 
   int _calculateCategoryCount() {
-    int maxLength = 0;
+    var maxLength = 0;
     for (final series in data.series) {
       if (!series.visible) continue;
       maxLength = math.max(maxLength, series.data.length);

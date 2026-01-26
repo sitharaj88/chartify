@@ -3,7 +3,6 @@ import 'package:flutter/painting.dart';
 import '../../core/math/geometry/bounds_calculator.dart';
 import '../../core/math/geometry/coordinate_transform.dart';
 import '../../core/math/interpolation/interpolator.dart';
-import '../cache/path_cache.dart';
 import '../renderers/marker_renderer.dart';
 import 'series_painter.dart';
 
@@ -92,8 +91,7 @@ class LineSeriesConfig extends SeriesConfig {
     Color? areaColor,
     List<Color>? areaGradient,
     double? tension,
-  }) {
-    return LineSeriesConfig(
+  }) => LineSeriesConfig(
       visible: visible ?? this.visible,
       animationProgress: animationProgress ?? this.animationProgress,
       color: color ?? this.color,
@@ -107,7 +105,6 @@ class LineSeriesConfig extends SeriesConfig {
       areaGradient: areaGradient ?? this.areaGradient,
       tension: tension ?? this.tension,
     );
-  }
 }
 
 /// Painter for line series.
@@ -134,7 +131,6 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
 
   // Cached computations
   Path? _cachedLinePath;
-  Path? _cachedAreaPath;
   List<Offset>? _cachedScreenPositions;
   int? _cachedDataHash;
 
@@ -155,7 +151,6 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
   @override
   void invalidateCache() {
     _cachedLinePath = null;
-    _cachedAreaPath = null;
     _cachedScreenPositions = null;
     _cachedDataHash = null;
   }
@@ -185,7 +180,6 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
       _cachedScreenPositions = getScreenPositions(visibleData, transform);
       _cachedDataHash = currentHash;
       _cachedLinePath = null;
-      _cachedAreaPath = null;
     }
 
     final positions = _cachedScreenPositions!;
@@ -294,7 +288,7 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
       case LineCurveType.cardinal:
         return CardinalInterpolator(tension: config.tension);
       case LineCurveType.stepAfter:
-        return StepInterpolator(position: StepPosition.after);
+        return StepInterpolator();
       case LineCurveType.stepBefore:
         return StepInterpolator(position: StepPosition.before);
       case LineCurveType.stepMiddle:
@@ -321,7 +315,7 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
       );
     } else {
       final baseColor = config.areaColor ?? config.color;
-      areaPaint.color = baseColor.withAlpha((baseColor.alpha * 0.3).round());
+      areaPaint.color = baseColor.withAlpha(((baseColor.a * 255.0).round() * 0.3).round().clamp(0, 255));
     }
 
     canvas.drawPath(areaPath, areaPaint);
@@ -369,11 +363,9 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
   void _drawMarkers(Canvas canvas, List<Offset> positions) {
     final markerConfig = config.markerConfig ??
         MarkerConfig(
-          shape: MarkerShape.circle,
           size: config.strokeWidth * 3,
           fillColor: config.color,
           strokeColor: const Color(0xFFFFFFFF),
-          strokeWidth: 2.0,
         );
 
     _markerRenderer.update(markerConfig);
@@ -381,9 +373,7 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
   }
 
   @override
-  (Bounds, Bounds) calculateBounds() {
-    return BoundsCalculator.calculateFromPoints(data);
-  }
+  (Bounds, Bounds) calculateBounds() => BoundsCalculator.calculateFromPoints(data);
 
   @override
   void dispose() {
@@ -402,8 +392,7 @@ class LinePainterFactory {
     required List<({double x, double y})> data,
     required Color color,
     double strokeWidth = 2.0,
-  }) {
-    return LinePainter(
+  }) => LinePainter(
       seriesIndex: seriesIndex,
       data: data,
       config: LineSeriesConfig(
@@ -411,7 +400,6 @@ class LinePainterFactory {
         strokeWidth: strokeWidth,
       ),
     );
-  }
 
   /// Creates a smooth line painter.
   static LinePainter smooth({
@@ -419,8 +407,7 @@ class LinePainterFactory {
     required List<({double x, double y})> data,
     required Color color,
     double strokeWidth = 2.0,
-  }) {
-    return LinePainter(
+  }) => LinePainter(
       seriesIndex: seriesIndex,
       data: data,
       config: LineSeriesConfig(
@@ -429,7 +416,6 @@ class LinePainterFactory {
         curveType: LineCurveType.monotone,
       ),
     );
-  }
 
   /// Creates a line painter with area fill.
   static LinePainter withArea({
@@ -437,8 +423,7 @@ class LinePainterFactory {
     required List<({double x, double y})> data,
     required Color color,
     List<Color>? gradientColors,
-  }) {
-    return LinePainter(
+  }) => LinePainter(
       seriesIndex: seriesIndex,
       data: data,
       config: LineSeriesConfig(
@@ -448,7 +433,6 @@ class LinePainterFactory {
         areaGradient: gradientColors,
       ),
     );
-  }
 
   /// Creates a dashed line painter.
   static LinePainter dashed({
@@ -456,8 +440,7 @@ class LinePainterFactory {
     required List<({double x, double y})> data,
     required Color color,
     List<double> dashPattern = const [5, 3],
-  }) {
-    return LinePainter(
+  }) => LinePainter(
       seriesIndex: seriesIndex,
       data: data,
       config: LineSeriesConfig(
@@ -465,7 +448,6 @@ class LinePainterFactory {
         dashPattern: dashPattern,
       ),
     );
-  }
 
   /// Creates a step line painter.
   static LinePainter step({
@@ -473,8 +455,7 @@ class LinePainterFactory {
     required List<({double x, double y})> data,
     required Color color,
     LineCurveType stepType = LineCurveType.stepAfter,
-  }) {
-    return LinePainter(
+  }) => LinePainter(
       seriesIndex: seriesIndex,
       data: data,
       config: LineSeriesConfig(
@@ -482,5 +463,4 @@ class LinePainterFactory {
         curveType: stepType,
       ),
     );
-  }
 }

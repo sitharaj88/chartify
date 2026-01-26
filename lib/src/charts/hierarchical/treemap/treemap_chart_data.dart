@@ -66,7 +66,7 @@ class TreemapNode {
   double get computedValue {
     if (value != null) return value!;
     if (children == null || children!.isEmpty) return 0;
-    return children!.fold(0.0, (sum, child) => sum + child.computedValue);
+    return children!.fold(0, (sum, child) => sum + child.computedValue);
   }
 
   /// Get all leaf nodes in this subtree.

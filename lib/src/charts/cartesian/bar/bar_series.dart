@@ -6,8 +6,7 @@ import '../../../core/data/data_point.dart';
 /// A data series for bar charts.
 class BarSeries<X, Y extends num> extends ChartSeries<DataPoint<X, Y>> {
   const BarSeries({
-    super.name,
-    required super.data,
+    required super.data, super.name,
     super.color,
     super.visible,
     this.borderColor,
@@ -30,8 +29,7 @@ class BarSeries<X, Y extends num> extends ChartSeries<DataPoint<X, Y>> {
 
   /// Creates a BarSeries from a list of values with auto-generated x values.
   static BarSeries<int, Y> fromValues<Y extends num>({
-    String? name,
-    required List<Y> values,
+    required List<Y> values, String? name,
     Color? color,
     bool visible = true,
     Color? borderColor,
@@ -65,8 +63,7 @@ class BarSeries<X, Y extends num> extends ChartSeries<DataPoint<X, Y>> {
     double? borderWidth,
     BorderRadius? borderRadius,
     Gradient? gradient,
-  }) {
-    return BarSeries<X, Y>(
+  }) => BarSeries<X, Y>(
       name: name ?? this.name,
       data: data ?? this.data,
       color: color ?? this.color,
@@ -76,7 +73,6 @@ class BarSeries<X, Y extends num> extends ChartSeries<DataPoint<X, Y>> {
       borderRadius: borderRadius ?? this.borderRadius,
       gradient: gradient ?? this.gradient,
     );
-  }
 }
 
 /// Configuration for bar positioning and sizing.

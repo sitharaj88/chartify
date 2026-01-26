@@ -29,8 +29,7 @@ import 'pie_chart_data.dart';
 /// ```
 class PieChart extends StatefulWidget {
   const PieChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.tooltip = const TooltipConfig(),
@@ -64,7 +63,7 @@ class _PieChartState extends State<PieChart>
   AnimationController? _hoverController;
   Animation<double>? _hoverAnimation;
   int? _hoveredIndex;
-  double _hoverScale = 0.0;
+  double _hoverScale = 0;
 
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
@@ -140,7 +139,7 @@ class _PieChartState extends State<PieChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
 
@@ -282,7 +281,7 @@ class _PieChartPainter extends CircularChartPainter {
     final center = chartArea.center;
     final outerRadius = chartArea.width / 2;
     // holeRadius: if <= 1, treat as ratio; if > 1, treat as pixels
-    final double innerRadius = data.holeRadius <= 1
+    final innerRadius = data.holeRadius <= 1
         ? outerRadius * data.holeRadius
         : data.holeRadius.clamp(0.0, outerRadius - 10);
 
@@ -579,7 +578,7 @@ class _PieChartPainter extends CircularChartPainter {
       )..layout();
 
       Offset labelPos;
-      bool isRightSide = true;
+      var isRightSide = true;
 
       if (data.labelPosition == PieLabelPosition.inside) {
         final labelRadius = outerRadius * 0.7;
@@ -619,7 +618,7 @@ class _PieChartPainter extends CircularChartPainter {
         textPainter: textPainter,
         isRightSide: isRightSide,
         visible: true,
-      ));
+      ),);
 
       currentAngle += sweepAngle;
     }
@@ -822,8 +821,7 @@ class _LabelInfo {
 /// ```
 class DonutChart extends StatelessWidget {
   const DonutChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.tooltip = const TooltipConfig(),

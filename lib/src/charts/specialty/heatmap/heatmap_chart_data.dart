@@ -120,7 +120,7 @@ class HeatmapChartData {
   double get computedMinValue {
     if (minValue != null) return minValue!;
     if (data.isEmpty) return 0;
-    double min = double.infinity;
+    var min = double.infinity;
     for (final row in data) {
       for (final value in row) {
         if (value < min) min = value;
@@ -133,7 +133,7 @@ class HeatmapChartData {
   double get computedMaxValue {
     if (maxValue != null) return maxValue!;
     if (data.isEmpty) return 1;
-    double max = double.negativeInfinity;
+    var max = double.negativeInfinity;
     for (final row in data) {
       for (final value in row) {
         if (value > max) max = value;

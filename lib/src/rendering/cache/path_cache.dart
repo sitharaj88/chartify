@@ -278,7 +278,7 @@ class ChartPathCache {
   static final instance = ChartPathCache._();
 
   /// Cache for line/area series paths.
-  final seriesPaths = PathCache(maxSize: 100);
+  final seriesPaths = PathCache();
 
   /// Cache for axis paths.
   final axisPaths = PathCache(maxSize: 20);

@@ -212,7 +212,7 @@ class GanttViewController extends ChangeNotifier {
     // Apply resource filter
     if (_visibleResourceIds != null) {
       result = result.where((t) =>
-          t.resourceId == null || _visibleResourceIds!.contains(t.resourceId)).toList();
+          t.resourceId == null || _visibleResourceIds!.contains(t.resourceId),).toList();
     }
 
     // Apply custom filter
@@ -366,14 +366,12 @@ class GanttViewController extends ChangeNotifier {
   }
 
   /// Creates a GanttChartData copy with view controller settings applied.
-  GanttChartData applyToData(GanttChartData data) {
-    return data.copyWith(
+  GanttChartData applyToData(GanttChartData data) => data.copyWith(
       viewMode: _viewMode,
       collapsedGroupIds: _collapsedGroupIds,
       startDate: _visibleStartDate,
       endDate: _visibleEndDate,
     );
-  }
 
   // === Preset Views ===
 
@@ -389,7 +387,7 @@ class GanttViewController extends ChangeNotifier {
   /// Sets view to show this month.
   void showThisMonth() {
     final now = DateTime.now();
-    final startOfMonth = DateTime(now.year, now.month, 1);
+    final startOfMonth = DateTime(now.year, now.month);
     final endOfMonth = DateTime(now.year, now.month + 1, 0);
     setVisibleRange(startOfMonth, endOfMonth);
     viewMode = GanttViewMode.day;
@@ -399,7 +397,7 @@ class GanttViewController extends ChangeNotifier {
   void showThisQuarter() {
     final now = DateTime.now();
     final quarterStart = ((now.month - 1) ~/ 3) * 3 + 1;
-    final startOfQuarter = DateTime(now.year, quarterStart, 1);
+    final startOfQuarter = DateTime(now.year, quarterStart);
     final endOfQuarter = DateTime(now.year, quarterStart + 3, 0);
     setVisibleRange(startOfQuarter, endOfQuarter);
     viewMode = GanttViewMode.week;
@@ -408,7 +406,7 @@ class GanttViewController extends ChangeNotifier {
   /// Sets view to show this year.
   void showThisYear() {
     final now = DateTime.now();
-    final startOfYear = DateTime(now.year, 1, 1);
+    final startOfYear = DateTime(now.year);
     final endOfYear = DateTime(now.year, 12, 31);
     setVisibleRange(startOfYear, endOfYear);
     viewMode = GanttViewMode.month;
@@ -471,7 +469,7 @@ class GanttExporter {
         'Is Milestone',
         'Is Group',
         'Priority',
-      ].join(separator));
+      ].join(separator),);
     }
 
     // Data rows
@@ -486,8 +484,8 @@ class GanttExporter {
         _escapeCsv(task.resourceName ?? ''),
         _escapeCsv(task.parentId ?? ''),
         _escapeCsv(task.dependencies?.join(';') ?? ''),
-        task.isMilestoneType ? 'Yes' : 'No',
-        task.isGroup ? 'Yes' : 'No',
+        if (task.isMilestoneType) 'Yes' else 'No',
+        if (task.isGroup) 'Yes' else 'No',
         task.priority?.toString() ?? '',
       ];
       buffer.writeln(row.join(separator));
@@ -516,7 +514,7 @@ class GanttExporter {
             'baselineStart': task.baselineStart!.toIso8601String(),
           if (task.baselineEnd != null)
             'baselineEnd': task.baselineEnd!.toIso8601String(),
-        }).toList();
+        },).toList();
 
     // Manual JSON encoding to avoid import
     return _encodeJson(taskMaps);
@@ -545,7 +543,7 @@ class GanttExporter {
     if (value == null) return 'null';
     if (value is bool) return value.toString();
     if (value is num) return value.toString();
-    if (value is String) return '"${value.replaceAll('"', '\\"')}"';
+    if (value is String) return '"${value.replaceAll('"', r'\"')}"';
     if (value is List) {
       final items = value.map(_encodeJsonValue).join(', ');
       return '[$items]';

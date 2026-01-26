@@ -469,7 +469,7 @@ class ChartSpatialIndex {
 
     // Return the one with smallest bounds (most specific)
     return results.reduce((a, b) =>
-      a.bounds.width * a.bounds.height < b.bounds.width * b.bounds.height ? a : b
+      a.bounds.width * a.bounds.height < b.bounds.width * b.bounds.height ? a : b,
     );
   }
 
@@ -480,9 +480,7 @@ class ChartSpatialIndex {
   }
 
   /// Finds the nearest data point.
-  HitTestInfo<dynamic>? findNearest(Offset point, {double maxDistance = 50.0}) {
-    return _index.findNearest(point, maxDistance: maxDistance);
-  }
+  HitTestInfo<dynamic>? findNearest(Offset point, {double maxDistance = 50.0}) => _index.findNearest(point, maxDistance: maxDistance);
 
   /// Clears the index.
   void clear() => _index.clear();

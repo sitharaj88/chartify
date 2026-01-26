@@ -149,26 +149,22 @@ class LinearScale extends Scale<double> {
   }
 
   @override
-  Scale<double> copyWithDomain(double min, double max) {
-    return LinearScale(
+  Scale<double> copyWithDomain(double min, double max) => LinearScale(
       domain: (min, max),
       range: _range,
       clamp: clamp,
       nice: nice,
       niceTickCount: niceTickCount,
     );
-  }
 
   @override
-  Scale<double> copyWithRange(double start, double end) {
-    return LinearScale(
+  Scale<double> copyWithRange(double start, double end) => LinearScale(
       domain: _domain,
       range: (start, end),
       clamp: clamp,
       nice: nice,
       niceTickCount: niceTickCount,
     );
-  }
 
   /// Computes a nice step value for tick generation.
   static double _tickStep(double min, double max, int count) {
@@ -209,7 +205,7 @@ class LinearScale extends Scale<double> {
   /// Calculates decimal precision needed for a step value.
   static int _calculatePrecision(double step) {
     if (step >= 1) return 0;
-    return -((math.log(step) / math.ln10).floor());
+    return -(math.log(step) / math.ln10).floor();
   }
 }
 
@@ -309,34 +305,28 @@ class LogScale extends Scale<double> {
   }
 
   @override
-  String Function(double) tickFormatter({int? precision}) {
-    return (value) {
+  String Function(double) tickFormatter({int? precision}) => (value) {
       if (value >= 1000000) return '${(value / 1000000).toStringAsFixed(1)}M';
       if (value >= 1000) return '${(value / 1000).toStringAsFixed(1)}K';
       if (value >= 1) return value.toStringAsFixed(0);
       return value.toStringAsPrecision(2);
     };
-  }
 
   @override
-  Scale<double> copyWithDomain(double min, double max) {
-    return LogScale(
+  Scale<double> copyWithDomain(double min, double max) => LogScale(
       domain: (min, max),
       range: _range,
       base: base,
       clamp: clamp,
     );
-  }
 
   @override
-  Scale<double> copyWithRange(double start, double end) {
-    return LogScale(
+  Scale<double> copyWithRange(double start, double end) => LogScale(
       domain: _domain,
       range: (start, end),
       base: base,
       clamp: clamp,
     );
-  }
 }
 
 /// A band scale for categorical/ordinal data.
@@ -410,9 +400,7 @@ class BandScale<T> extends Scale<T> {
   }
 
   /// Returns the center position of the band for a value.
-  double scaleCenter(T value) {
-    return scale(value) + bandwidth / 2;
-  }
+  double scaleCenter(T value) => scale(value) + bandwidth / 2;
 
   @override
   T invert(double value) {
@@ -428,9 +416,7 @@ class BandScale<T> extends Scale<T> {
   List<T> ticks({int? count}) => _domain;
 
   @override
-  String Function(T) tickFormatter({int? precision}) {
-    return (value) => value.toString();
-  }
+  String Function(T) tickFormatter({int? precision}) => (value) => value.toString();
 
   @override
   Scale<T> copyWithDomain(T min, T max) {
@@ -445,26 +431,22 @@ class BandScale<T> extends Scale<T> {
   }
 
   @override
-  Scale<T> copyWithRange(double start, double end) {
-    return BandScale<T>(
+  Scale<T> copyWithRange(double start, double end) => BandScale<T>(
       domain: _domain,
       range: (start, end),
       paddingInner: paddingInner,
       paddingOuter: paddingOuter,
       align: align,
     );
-  }
 
   /// Creates a new band scale with the given domain list.
-  BandScale<T> withDomainList(List<T> newDomain) {
-    return BandScale<T>(
+  BandScale<T> withDomainList(List<T> newDomain) => BandScale<T>(
       domain: newDomain,
       range: _range,
       paddingInner: paddingInner,
       paddingOuter: paddingOuter,
       align: align,
     );
-  }
 }
 
 /// A time scale for DateTime values.
@@ -564,18 +546,14 @@ class TimeScale extends Scale<DateTime> {
   }
 
   @override
-  Scale<DateTime> copyWithDomain(DateTime min, DateTime max) {
-    return TimeScale(domain: (min, max), range: _range, clamp: clamp);
-  }
+  Scale<DateTime> copyWithDomain(DateTime min, DateTime max) => TimeScale(domain: (min, max), range: _range, clamp: clamp);
 
   @override
-  Scale<DateTime> copyWithRange(double start, double end) {
-    return TimeScale(domain: _domain, range: (start, end), clamp: clamp);
-  }
+  Scale<DateTime> copyWithRange(double start, double end) => TimeScale(domain: _domain, range: (start, end), clamp: clamp);
 
   static const _monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
   static _TimeInterval _chooseInterval(Duration span, int count) {
@@ -624,23 +602,23 @@ class TimeScale extends Scale<DateTime> {
   }
 
   static final _intervals = [
-    _TimeInterval(_IntervalType.second, 1),
-    _TimeInterval(_IntervalType.second, 5),
-    _TimeInterval(_IntervalType.second, 15),
-    _TimeInterval(_IntervalType.second, 30),
-    _TimeInterval(_IntervalType.minute, 1),
-    _TimeInterval(_IntervalType.minute, 5),
-    _TimeInterval(_IntervalType.minute, 15),
-    _TimeInterval(_IntervalType.minute, 30),
-    _TimeInterval(_IntervalType.hour, 1),
-    _TimeInterval(_IntervalType.hour, 3),
-    _TimeInterval(_IntervalType.hour, 6),
-    _TimeInterval(_IntervalType.hour, 12),
-    _TimeInterval(_IntervalType.day, 1),
-    _TimeInterval(_IntervalType.day, 7),
-    _TimeInterval(_IntervalType.month, 1),
-    _TimeInterval(_IntervalType.month, 3),
-    _TimeInterval(_IntervalType.year, 1),
+    const _TimeInterval(_IntervalType.second, 1),
+    const _TimeInterval(_IntervalType.second, 5),
+    const _TimeInterval(_IntervalType.second, 15),
+    const _TimeInterval(_IntervalType.second, 30),
+    const _TimeInterval(_IntervalType.minute, 1),
+    const _TimeInterval(_IntervalType.minute, 5),
+    const _TimeInterval(_IntervalType.minute, 15),
+    const _TimeInterval(_IntervalType.minute, 30),
+    const _TimeInterval(_IntervalType.hour, 1),
+    const _TimeInterval(_IntervalType.hour, 3),
+    const _TimeInterval(_IntervalType.hour, 6),
+    const _TimeInterval(_IntervalType.hour, 12),
+    const _TimeInterval(_IntervalType.day, 1),
+    const _TimeInterval(_IntervalType.day, 7),
+    const _TimeInterval(_IntervalType.month, 1),
+    const _TimeInterval(_IntervalType.month, 3),
+    const _TimeInterval(_IntervalType.year, 1),
   ];
 }
 

@@ -50,8 +50,7 @@ import 'line_series.dart';
 class LineChart extends StatefulWidget {
   /// Creates a line chart.
   const LineChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -169,7 +168,7 @@ class _LineChartState extends State<LineChart>
       _yBounds = null;
       _spatialIndex = null;
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -371,7 +370,7 @@ class _LineChartState extends State<LineChart>
           theme.getSeriesColor(info.seriesIndex),
       label: info.seriesName ?? 'Series ${info.seriesIndex + 1}',
       value: info.yValue,
-    ));
+    ),);
 
     for (var i = 0; i < widget.data.series.length; i++) {
       if (i == info.seriesIndex) continue;
@@ -384,7 +383,7 @@ class _LineChartState extends State<LineChart>
             color: series.color ?? theme.getSeriesColor(i),
             label: series.name ?? 'Series ${i + 1}',
             value: point.y,
-          ));
+          ),);
           break;
         }
       }
@@ -1092,7 +1091,7 @@ class _LineChartPainter extends CustomPainter {
             xValue: point.x,
             yValue: point.y,
             seriesName: series.name,
-          ));
+          ),);
           break;
         }
       }

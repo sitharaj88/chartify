@@ -32,8 +32,7 @@ export 'waterfall_chart_data.dart';
 /// ```
 class WaterfallChart extends StatefulWidget {
   const WaterfallChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -118,7 +117,7 @@ class _WaterfallChartState extends State<WaterfallChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -241,8 +240,8 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
-    required EdgeInsets padding,
-  }) : super(padding: padding, repaint: controller) {
+    required super.padding,
+  }) : super(repaint: controller) {
     _calculateBounds();
   }
 
@@ -286,7 +285,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
         start: barStart,
         end: barEnd,
         runningTotal: runningTotal,
-      ));
+      ),);
 
       minValue = math.min(minValue, math.min(barStart, barEnd));
       maxValue = math.max(maxValue, math.max(barStart, barEnd));
@@ -401,7 +400,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
 
     var fillColor = color;
     if (isHovered) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withValues(alpha: 1);
     }
 
     final paint = Paint()

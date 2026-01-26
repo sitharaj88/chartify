@@ -60,7 +60,7 @@ class ObjectPool<T> {
 /// Specialized pool for Paint objects.
 class PaintPool {
   PaintPool({int maxSize = 30}) : _pool = ObjectPool<Paint>(
-    create: () => Paint(),
+    create: Paint.new,
     reset: (paint) {
       paint
         ..color = const Color(0xFF000000)
@@ -120,7 +120,7 @@ class PaintPool {
 /// Specialized pool for Path objects.
 class PathPool {
   PathPool({int maxSize = 50}) : _pool = ObjectPool<Path>(
-    create: () => Path(),
+    create: Path.new,
     reset: (path) => path.reset(),
     maxSize: maxSize,
   );

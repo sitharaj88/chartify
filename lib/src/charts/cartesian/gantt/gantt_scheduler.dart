@@ -125,12 +125,12 @@ class GanttScheduler {
           taskId: dep.fromTaskId,
           type: dep.type,
           lag: dep.lag,
-        ));
+        ),);
         successors[dep.fromTaskId]!.add(_DependencyInfo(
           taskId: dep.toTaskId,
           type: dep.type,
           lag: dep.lag,
-        ));
+        ),);
       }
     }
 
@@ -148,12 +148,12 @@ class GanttScheduler {
                 taskId: depId,
                 type: DependencyType.finishToStart,
                 lag: Duration.zero,
-              ));
+              ),);
               successors[depId]!.add(_DependencyInfo(
                 taskId: task.id,
                 type: DependencyType.finishToStart,
                 lag: Duration.zero,
-              ));
+              ),);
             }
           }
         }
@@ -166,7 +166,7 @@ class GanttScheduler {
     final processed = <String>{};
 
     // Find project start date
-    DateTime projectStartDate = tasks.first.start;
+    var projectStartDate = tasks.first.start;
     for (final task in tasks) {
       if (task.start.isBefore(projectStartDate)) {
         projectStartDate = task.start;
@@ -247,7 +247,7 @@ class GanttScheduler {
     }
 
     // Find project end date
-    DateTime projectEndDate = earlyFinish.values.first;
+    var projectEndDate = earlyFinish.values.first;
     for (final ef in earlyFinish.values) {
       if (ef.isAfter(projectEndDate)) {
         projectEndDate = ef;
@@ -340,7 +340,7 @@ class GanttScheduler {
       final totalFloat = ls.difference(es).inDays;
 
       // Calculate free float (time until next successor's early start)
-      int freeFloat = totalFloat;
+      var freeFloat = totalFloat;
       for (final succInfo in successors[task.id]!) {
         final succES = earlyStart[succInfo.taskId]!;
         int ff;
@@ -379,9 +379,7 @@ class GanttScheduler {
     }
 
     // Sort critical path by early start
-    criticalPath.sort((a, b) {
-      return schedules[a]!.earlyStart.compareTo(schedules[b]!.earlyStart);
-    });
+    criticalPath.sort((a, b) => schedules[a]!.earlyStart.compareTo(schedules[b]!.earlyStart));
 
     return GanttScheduleResult(
       schedules: schedules,
@@ -393,14 +391,10 @@ class GanttScheduler {
   }
 
   /// Gets the critical path from a schedule result.
-  static List<String> getCriticalPath(GanttScheduleResult result) {
-    return result.criticalPath;
-  }
+  static List<String> getCriticalPath(GanttScheduleResult result) => result.criticalPath;
 
   /// Checks if a task is on the critical path.
-  static bool isTaskCritical(String taskId, GanttScheduleResult result) {
-    return result.isTaskCritical(taskId);
-  }
+  static bool isTaskCritical(String taskId, GanttScheduleResult result) => result.isTaskCritical(taskId);
 
   /// Calculates resource utilization over time.
   static Map<String, List<_ResourceUtilization>> calculateResourceUtilization(
@@ -433,7 +427,7 @@ class GanttScheduler {
           allocated: totalAllocation,
           capacity: resource.capacity,
           overallocated: totalAllocation > resource.capacity,
-        ));
+        ),);
 
         currentDate = nextDate;
       }

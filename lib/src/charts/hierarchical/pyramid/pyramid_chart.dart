@@ -31,8 +31,7 @@ export 'pyramid_chart_data.dart';
 /// ```
 class PyramidChart extends StatefulWidget {
   const PyramidChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -117,7 +116,7 @@ class _PyramidChartState extends State<PyramidChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -252,14 +251,12 @@ class _PyramidChartPainter extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left,
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -278,9 +275,7 @@ class _PyramidChartPainter extends ChartPainter {
       sectionHeights = List.filled(sectionCount, equalHeight);
     } else {
       final totalValue = data.totalValue;
-      sectionHeights = data.sections.map((s) {
-        return totalValue > 0 ? (s.value / totalValue) * availableHeight : availableHeight / sectionCount;
-      }).toList();
+      sectionHeights = data.sections.map((s) => totalValue > 0 ? (s.value / totalValue) * availableHeight : availableHeight / sectionCount).toList();
     }
 
     final centerX = chartArea.center.dx;
@@ -348,7 +343,7 @@ class _PyramidChartPainter extends ChartPainter {
   void _drawSection(Canvas canvas, Path path, Color color, bool isHovered) {
     var fillColor = color;
     if (isHovered) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withValues(alpha: 1);
     }
 
     final fillPaint = Paint()

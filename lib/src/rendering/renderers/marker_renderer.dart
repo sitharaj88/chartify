@@ -1,5 +1,4 @@
 import 'dart:math' as math;
-import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 
@@ -105,8 +104,7 @@ class MarkerConfig extends RendererConfig {
     double? elevation,
     Color? shadowColor,
     Path Function(Offset center, double size)? customPath,
-  }) {
-    return MarkerConfig(
+  }) => MarkerConfig(
       visible: visible ?? this.visible,
       shape: shape ?? this.shape,
       size: size ?? this.size,
@@ -117,7 +115,6 @@ class MarkerConfig extends RendererConfig {
       shadowColor: shadowColor ?? this.shadowColor,
       customPath: customPath ?? this.customPath,
     );
-  }
 }
 
 /// Renderer for data point markers.
@@ -255,15 +252,9 @@ class MarkerRenderer with RendererMixin<MarkerConfig> implements ChartRenderer<M
     }
   }
 
-  Path _buildCircle(Offset center, double size) {
-    return Path()..addOval(Rect.fromCircle(center: center, radius: size / 2));
-  }
+  Path _buildCircle(Offset center, double size) => Path()..addOval(Rect.fromCircle(center: center, radius: size / 2));
 
-  Path _buildSquare(Offset center, double size) {
-    final half = size / 2;
-    return Path()
-      ..addRect(Rect.fromCenter(center: center, width: size, height: size));
-  }
+  Path _buildSquare(Offset center, double size) => Path()..addRect(Rect.fromCenter(center: center, width: size, height: size));
 
   Path _buildDiamond(Offset center, double size) {
     final half = size / 2;
@@ -355,39 +346,29 @@ class MarkerRenderer with RendererMixin<MarkerConfig> implements ChartRenderer<M
       ..close();
   }
 
-  Path _buildDash(Offset center, double size) {
-    final halfWidth = size / 2;
-    final halfHeight = size / 6;
-    return Path()
+  Path _buildDash(Offset center, double size) => Path()
       ..addRect(Rect.fromCenter(
         center: center,
         width: size,
         height: size / 3,
-      ));
-  }
+      ),);
 
-  Path _buildVerticalLine(Offset center, double size) {
-    return Path()
+  Path _buildVerticalLine(Offset center, double size) => Path()
       ..addRect(Rect.fromCenter(
         center: center,
         width: size / 3,
         height: size,
-      ));
-  }
+      ),);
 
-  Path _buildPentagon(Offset center, double size) {
-    return _buildPolygon(center, size, 5);
-  }
+  Path _buildPentagon(Offset center, double size) => _buildPolygon(center, size, 5);
 
-  Path _buildHexagon(Offset center, double size) {
-    return _buildPolygon(center, size, 6);
-  }
+  Path _buildHexagon(Offset center, double size) => _buildPolygon(center, size, 6);
 
   Path _buildPolygon(Offset center, double size, int sides) {
     final path = Path();
     final radius = size / 2;
     final angleStep = 2 * math.pi / sides;
-    final startAngle = -math.pi / 2; // Start from top
+    const startAngle = -math.pi / 2; // Start from top
 
     for (var i = 0; i < sides; i++) {
       final angle = startAngle + i * angleStep;
@@ -478,27 +459,21 @@ class MarkerFactory {
   static MarkerConfig filledCircle({
     required Color color,
     double size = 8.0,
-  }) {
-    return MarkerConfig(
-      shape: MarkerShape.circle,
+  }) => MarkerConfig(
       fillColor: color,
       size: size,
     );
-  }
 
   /// Creates a hollow circle marker.
   static MarkerConfig hollowCircle({
     required Color color,
     double size = 8.0,
     double strokeWidth = 2.0,
-  }) {
-    return MarkerConfig(
-      shape: MarkerShape.circle,
+  }) => MarkerConfig(
       strokeColor: color,
       strokeWidth: strokeWidth,
       size: size,
     );
-  }
 
   /// Creates a marker with fill and stroke.
   static MarkerConfig filledWithStroke({
@@ -507,15 +482,13 @@ class MarkerFactory {
     MarkerShape shape = MarkerShape.circle,
     double size = 8.0,
     double strokeWidth = 2.0,
-  }) {
-    return MarkerConfig(
+  }) => MarkerConfig(
       shape: shape,
       fillColor: fillColor,
       strokeColor: strokeColor,
       strokeWidth: strokeWidth,
       size: size,
     );
-  }
 
   /// Creates a marker with shadow.
   static MarkerConfig withShadow({
@@ -523,20 +496,16 @@ class MarkerFactory {
     MarkerShape shape = MarkerShape.circle,
     double size = 10.0,
     double elevation = 4.0,
-  }) {
-    return MarkerConfig(
+  }) => MarkerConfig(
       shape: shape,
       fillColor: color,
       elevation: elevation,
       size: size,
     );
-  }
 
   /// Creates a hidden marker (for hit testing only).
-  static MarkerConfig hidden({double size = 20.0}) {
-    return MarkerConfig(
+  static MarkerConfig hidden({double size = 20.0}) => MarkerConfig(
       visible: false,
       size: size,
     );
-  }
 }

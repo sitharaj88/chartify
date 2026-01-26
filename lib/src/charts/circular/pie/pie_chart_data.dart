@@ -51,8 +51,7 @@ class PieSection {
     double? explodeOffset,
     Gradient? gradient,
     double? shadowElevation,
-  }) {
-    return PieSection(
+  }) => PieSection(
       value: value ?? this.value,
       label: label ?? this.label,
       color: color ?? this.color,
@@ -62,7 +61,6 @@ class PieSection {
       gradient: gradient ?? this.gradient,
       shadowElevation: shadowElevation ?? this.shadowElevation,
     );
-  }
 }
 
 /// Data configuration for a pie chart.
@@ -151,8 +149,7 @@ class PieChartData extends ChartData {
     bool? enableShadows,
     Duration? hoverDuration,
     PieLabelConnector? labelConnector,
-  }) {
-    return PieChartData(
+  }) => PieChartData(
       sections: sections ?? this.sections,
       startAngle: startAngle ?? this.startAngle,
       holeRadius: holeRadius ?? this.holeRadius,
@@ -168,7 +165,6 @@ class PieChartData extends ChartData {
       hoverDuration: hoverDuration ?? this.hoverDuration,
       labelConnector: labelConnector ?? this.labelConnector,
     );
-  }
 }
 
 /// Position of pie chart labels.

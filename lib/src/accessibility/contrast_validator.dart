@@ -115,8 +115,8 @@ class ContrastValidator {
 
     // Binary search for the right lightness
     final hsl = HSLColor.fromColor(foreground);
-    double low = shouldLighten ? hsl.lightness : 0.0;
-    double high = shouldLighten ? 1.0 : hsl.lightness;
+    var low = shouldLighten ? hsl.lightness : 0.0;
+    var high = shouldLighten ? 1.0 : hsl.lightness;
 
     for (var i = 0; i < 20; i++) {
       final mid = (low + high) / 2;
@@ -222,6 +222,6 @@ extension ColorContrastExtension on Color {
 
   /// Adjusts this color to meet contrast requirements against a background.
   Color adjustForContrast(Color background,
-          {ContrastLevel level = ContrastLevel.aa}) =>
+          {ContrastLevel level = ContrastLevel.aa,}) =>
       ContrastValidator.suggestAccessibleColor(this, background, level: level);
 }

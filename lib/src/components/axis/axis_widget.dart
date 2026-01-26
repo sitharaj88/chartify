@@ -11,8 +11,7 @@ import '../../theme/chart_theme_data.dart';
 /// appearance and automatic tick generation.
 class ChartAxis<T> extends StatelessWidget {
   const ChartAxis({
-    super.key,
-    required this.scale,
+    required this.scale, super.key,
     this.config,
     this.position = ChartPosition.bottom,
     this.title,
@@ -151,9 +150,7 @@ class _AxisPainter<T> extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _AxisPainter<T> oldDelegate) {
-    return scale != oldDelegate.scale || config != oldDelegate.config;
-  }
+  bool shouldRepaint(covariant _AxisPainter<T> oldDelegate) => scale != oldDelegate.scale || config != oldDelegate.config;
 }
 
 /// Configuration builder for axes.
@@ -170,9 +167,9 @@ class AxisBuilder<T> {
   TextStyle? _labelStyle;
   Color? _lineColor;
   Color? _tickColor;
-  double _lineWidth = 1.0;
-  double _tickLength = 5.0;
-  double _labelRotation = 0.0;
+  double _lineWidth = 1;
+  double _tickLength = 5;
+  double _labelRotation = 0;
   bool _showLine = true;
   bool _showTicks = true;
   bool _showLabels = true;
@@ -248,8 +245,7 @@ class AxisBuilder<T> {
   }
 
   /// Builds the axis configuration.
-  AxisConfig build() {
-    return AxisConfig(
+  AxisConfig build() => AxisConfig(
       position: position,
       title: _title,
       titleStyle: _titleStyle,
@@ -267,21 +263,16 @@ class AxisBuilder<T> {
           ? (dynamic v) => _labelFormatter!(v as T)
           : null,
     );
-  }
 
   /// Builds the axis widget.
-  ChartAxis<T> buildWidget() {
-    return ChartAxis<T>(
+  ChartAxis<T> buildWidget() => ChartAxis<T>(
       scale: scale,
       config: build(),
     );
-  }
 }
 
 /// Extension to create axis builders from scales.
 extension ScaleAxisExtension<T> on Scale<T> {
   /// Creates an axis builder for this scale.
-  AxisBuilder<T> axis({ChartPosition position = ChartPosition.bottom}) {
-    return AxisBuilder<T>(scale: this, position: position);
-  }
+  AxisBuilder<T> axis({ChartPosition position = ChartPosition.bottom}) => AxisBuilder<T>(scale: this, position: position);
 }

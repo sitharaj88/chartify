@@ -1,6 +1,5 @@
 import 'dart:ui' as ui;
 
-import 'package:flutter/foundation.dart';
 import 'package:flutter/rendering.dart';
 
 import '../../theme/chart_theme_data.dart';
@@ -23,8 +22,8 @@ abstract class ChartPainter extends CustomPainter {
   ChartPainter({
     required this.theme,
     this.animationValue = 1.0,
-    Listenable? repaint,
-  }) : super(repaint: repaint);
+    super.repaint,
+  });
 
   /// The theme data for styling.
   final ChartThemeData theme;
@@ -278,7 +277,7 @@ abstract class CartesianChartPainter extends ChartPainter {
     );
 
     // Paint horizontal lines
-    final horizontalCount = 5;
+    const horizontalCount = 5;
     for (var i = 0; i <= horizontalCount; i++) {
       final y = chartArea.top + (chartArea.height / horizontalCount) * i;
       final start = Offset(chartArea.left, y);
@@ -292,7 +291,7 @@ abstract class CartesianChartPainter extends ChartPainter {
     }
 
     // Paint vertical lines
-    final verticalCount = 5;
+    const verticalCount = 5;
     for (var i = 0; i <= verticalCount; i++) {
       final x = chartArea.left + (chartArea.width / verticalCount) * i;
       final start = Offset(x, chartArea.top);
@@ -390,9 +389,8 @@ abstract class PolarChartPainter extends ChartPainter {
   /// Creates a polar chart painter.
   PolarChartPainter({
     required super.theme,
-    super.animationValue,
+    required this.axisCount, super.animationValue,
     super.repaint,
-    required this.axisCount,
     this.tickCount = 5,
   });
 

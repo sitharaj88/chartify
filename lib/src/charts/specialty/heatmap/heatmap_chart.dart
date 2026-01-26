@@ -31,8 +31,7 @@ export 'heatmap_chart_data.dart';
 /// ```
 class HeatmapChart extends StatefulWidget {
   const HeatmapChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -117,7 +116,7 @@ class _HeatmapChartState extends State<HeatmapChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -255,14 +254,12 @@ class _HeatmapChartPainter extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left,
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -324,7 +321,7 @@ class _HeatmapChartPainter extends ChartPainter {
   void _drawCell(Canvas canvas, Rect rect, Color color, double value, bool isHovered) {
     var fillColor = color;
     if (isHovered) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withValues(alpha: 1);
     }
 
     // Animate opacity

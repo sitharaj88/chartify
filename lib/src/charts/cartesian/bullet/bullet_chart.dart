@@ -32,8 +32,7 @@ export 'bullet_chart_data.dart';
 /// ```
 class BulletChart extends StatefulWidget {
   const BulletChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -115,7 +114,7 @@ class _BulletChartState extends State<BulletChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -195,7 +194,7 @@ class _BulletChartState extends State<BulletChart>
   TooltipData _buildTooltipData(DataPointInfo info, ChartThemeData theme) {
     final idx = info.pointIndex;
     if (idx < 0 || idx >= widget.data.items.length) {
-      return TooltipData(position: info.position, entries: []);
+      return TooltipData(position: info.position, entries: const []);
     }
 
     final item = widget.data.items[idx];
@@ -215,9 +214,9 @@ class _BulletChartState extends State<BulletChart>
       entries.add(TooltipEntry(
         color: widget.data.targetColor ?? Colors.black,
         label: 'Target',
-        value: item.target!,
+        value: item.target,
         formattedValue: item.target!.toStringAsFixed(1),
-      ));
+      ),);
     }
 
     return TooltipData(
@@ -244,14 +243,12 @@ class _BulletChartPainter extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left,
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -428,7 +425,7 @@ class _BulletChartPainter extends ChartPainter {
 
     var fillColor = valueColor;
     if (isHovered) {
-      fillColor = valueColor.withValues(alpha: 1.0);
+      fillColor = valueColor.withValues(alpha: 1);
     }
 
     final paint = Paint()

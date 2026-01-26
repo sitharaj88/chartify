@@ -175,7 +175,7 @@ class HistogramChartData {
 
       case HistogramBinningMethod.freedmanDiaconis:
         final iqr = _interquartileRange(sortedValues);
-        if (iqr == 0) return (math.sqrt(n)).ceil();
+        if (iqr == 0) return math.sqrt(n).ceil();
         final h = 2 * iqr * math.pow(n, -1 / 3);
         final range = sortedValues.last - sortedValues.first;
         return (range / h).ceil().clamp(1, 100);

@@ -86,8 +86,7 @@ class BarSeriesConfig extends SeriesConfig {
     bool? showValues,
     TextStyle? valueStyle,
     String Function(double value)? valueFormatter,
-  }) {
-    return BarSeriesConfig(
+  }) => BarSeriesConfig(
       visible: visible ?? this.visible,
       animationProgress: animationProgress ?? this.animationProgress,
       color: color ?? this.color,
@@ -103,7 +102,6 @@ class BarSeriesConfig extends SeriesConfig {
       valueStyle: valueStyle ?? this.valueStyle,
       valueFormatter: valueFormatter ?? this.valueFormatter,
     );
-  }
 }
 
 /// Data for a single bar.
@@ -282,7 +280,7 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
           math.min(screenY, baseline),
           left + barWidth,
           math.max(screenY, baseline),
-        ));
+        ),);
       } else {
         final screenX = transform.dataToScreenX(animatedY);
         final screenY = transform.dataToScreenY(bar.x);
@@ -298,7 +296,7 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
           top,
           math.max(screenX, baseline),
           top + barWidth,
-        ));
+        ),);
       }
     }
 
@@ -328,7 +326,7 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
   }
 
   void _drawBar(
-      Canvas canvas, Rect chartArea, Rect rect, int originalIndex) {
+      Canvas canvas, Rect chartArea, Rect rect, int originalIndex,) {
     final color = _getBarColor(originalIndex);
     final barY = data[originalIndex].y;
 
@@ -485,21 +483,18 @@ class BarPainterFactory {
     required int seriesIndex,
     required List<BarData> data,
     required Color color,
-  }) {
-    return BarPainter(
+  }) => BarPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: BarSeriesConfig(color: color),
     );
-  }
 
   /// Creates a horizontal bar painter.
   static BarPainter horizontal({
     required int seriesIndex,
     required List<BarData> data,
     required Color color,
-  }) {
-    return BarPainter(
+  }) => BarPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: BarSeriesConfig(
@@ -507,7 +502,6 @@ class BarPainterFactory {
         orientation: BarOrientation.horizontal,
       ),
     );
-  }
 
   /// Creates a bar painter with rounded corners.
   static BarPainter rounded({
@@ -515,8 +509,7 @@ class BarPainterFactory {
     required List<BarData> data,
     required Color color,
     double cornerRadius = 4.0,
-  }) {
-    return BarPainter(
+  }) => BarPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: BarSeriesConfig(
@@ -524,15 +517,13 @@ class BarPainterFactory {
         cornerRadius: cornerRadius,
       ),
     );
-  }
 
   /// Creates a bar painter with gradient.
   static BarPainter gradient({
     required int seriesIndex,
     required List<BarData> data,
     required List<Color> colors,
-  }) {
-    return BarPainter(
+  }) => BarPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: BarSeriesConfig(
@@ -540,5 +531,4 @@ class BarPainterFactory {
         gradient: colors,
       ),
     );
-  }
 }

@@ -29,8 +29,7 @@ export 'lollipop_chart_data.dart';
 /// ```
 class LollipopChart extends StatefulWidget {
   const LollipopChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -112,7 +111,7 @@ class _LollipopChartState extends State<LollipopChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -346,7 +345,7 @@ class _LollipopChartPainter extends ChartPainter {
   }
 
   void _drawMarker(Canvas canvas, Offset center, double size,
-      LollipopMarkerShape shape, Paint paint) {
+      LollipopMarkerShape shape, Paint paint,) {
     final half = size / 2;
 
     switch (shape) {
@@ -376,7 +375,7 @@ class _LollipopChartPainter extends ChartPainter {
   }
 
   void _drawGrid(Canvas canvas, Rect chartArea, double minValue,
-      double maxValue, bool isHorizontal) {
+      double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..strokeWidth = 1;
@@ -402,7 +401,7 @@ class _LollipopChartPainter extends ChartPainter {
   }
 
   void _drawAxis(Canvas canvas, Rect chartArea, double minValue,
-      double maxValue, bool isHorizontal) {
+      double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.axisLineColor
       ..strokeWidth = 1;
@@ -457,14 +456,14 @@ class _LollipopChartPainter extends ChartPainter {
         textPainter.paint(
           canvas,
           Offset(chartArea.left - textPainter.width - 8,
-              y - textPainter.height / 2),
+              y - textPainter.height / 2,),
         );
       }
     }
   }
 
   void _drawLabel(Canvas canvas, LollipopItem item, Rect chartArea,
-      double itemCenter, bool isHorizontal) {
+      double itemCenter, bool isHorizontal,) {
     final textSpan = TextSpan(
       text: item.label,
       style: theme.labelStyle.copyWith(fontSize: 11),
@@ -494,7 +493,7 @@ class _LollipopChartPainter extends ChartPainter {
   }
 
   void _drawValue(
-      Canvas canvas, LollipopItem item, Offset markerPoint, bool isHorizontal) {
+      Canvas canvas, LollipopItem item, Offset markerPoint, bool isHorizontal,) {
     final textSpan = TextSpan(
       text: item.value.toStringAsFixed(0),
       style: theme.labelStyle.copyWith(

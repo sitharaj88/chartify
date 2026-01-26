@@ -1,4 +1,3 @@
-import 'dart:ui';
 
 import 'package:flutter/painting.dart';
 
@@ -77,8 +76,7 @@ class GridConfig extends RendererConfig {
     double? borderWidth,
     Color? fillColor,
     List<Color>? alternatingFillColors,
-  }) {
-    return GridConfig(
+  }) => GridConfig(
       visible: visible ?? this.visible,
       horizontalLines: horizontalLines ?? this.horizontalLines,
       verticalLines: verticalLines ?? this.verticalLines,
@@ -93,7 +91,6 @@ class GridConfig extends RendererConfig {
       fillColor: fillColor ?? this.fillColor,
       alternatingFillColors: alternatingFillColors ?? this.alternatingFillColors,
     );
-  }
 }
 
 /// Renderer for chart grid lines.
@@ -285,7 +282,7 @@ class GridRenderer<X, Y> with RendererMixin<GridConfig> implements ChartRenderer
 
     final dx = end.dx - start.dx;
     final dy = end.dy - start.dy;
-    final length = (dx * dx + dy * dy);
+    final length = dx * dx + dy * dy;
     final distance = length > 0 ? _sqrt(length) : 0.0;
 
     if (distance == 0) return;
@@ -357,60 +354,46 @@ class GridFactory {
   GridFactory._();
 
   /// Creates a standard grid with both horizontal and vertical lines.
-  static GridConfig standard({Color? color, double lineWidth = 1.0}) {
-    return GridConfig(
+  static GridConfig standard({Color? color, double lineWidth = 1.0}) => GridConfig(
       lineColor: color ?? const Color(0xFFE0E0E0),
       lineWidth: lineWidth,
     );
-  }
 
   /// Creates a grid with only horizontal lines.
-  static GridConfig horizontalOnly({Color? color, double lineWidth = 1.0}) {
-    return GridConfig(
-      horizontalLines: true,
+  static GridConfig horizontalOnly({Color? color, double lineWidth = 1.0}) => GridConfig(
       verticalLines: false,
       lineColor: color ?? const Color(0xFFE0E0E0),
       lineWidth: lineWidth,
     );
-  }
 
   /// Creates a grid with only vertical lines.
-  static GridConfig verticalOnly({Color? color, double lineWidth = 1.0}) {
-    return GridConfig(
+  static GridConfig verticalOnly({Color? color, double lineWidth = 1.0}) => GridConfig(
       horizontalLines: false,
-      verticalLines: true,
       lineColor: color ?? const Color(0xFFE0E0E0),
       lineWidth: lineWidth,
     );
-  }
 
   /// Creates a dashed grid.
   static GridConfig dashed({
     Color? color,
     double lineWidth = 1.0,
     List<double> dashPattern = const [5, 3],
-  }) {
-    return GridConfig(
+  }) => GridConfig(
       lineColor: color ?? const Color(0xFFE0E0E0),
       lineWidth: lineWidth,
       dashPattern: dashPattern,
     );
-  }
 
   /// Creates a grid with alternating colored bands.
   static GridConfig banded({
     required List<Color> colors,
     bool showLines = false,
-  }) {
-    return GridConfig(
+  }) => GridConfig(
       horizontalLines: showLines,
       verticalLines: false,
       alternatingFillColors: colors,
     );
-  }
 
   /// Creates an invisible grid (no visible elements).
-  static GridConfig hidden() {
-    return const GridConfig(visible: false);
-  }
+  static GridConfig hidden() => const GridConfig(visible: false);
 }

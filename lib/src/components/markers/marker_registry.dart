@@ -31,14 +31,10 @@ class MarkerRegistry {
   }
 
   /// Gets a custom marker path builder.
-  Path Function(Offset center, double size)? get(String name) {
-    return _customMarkers[name];
-  }
+  Path Function(Offset center, double size)? get(String name) => _customMarkers[name];
 
   /// Checks if a custom marker is registered.
-  bool has(String name) {
-    return _customMarkers.containsKey(name);
-  }
+  bool has(String name) => _customMarkers.containsKey(name);
 
   /// Gets all registered custom marker names.
   Iterable<String> get names => _customMarkers.keys;
@@ -205,17 +201,17 @@ class MarkerShapes {
       center: Offset(center.dx - w * 0.15, center.dy + h * 0.1),
       width: w * 0.5,
       height: h * 0.8,
-    ));
+    ),);
     path.addOval(Rect.fromCenter(
       center: Offset(center.dx + w * 0.15, center.dy + h * 0.1),
       width: w * 0.5,
       height: h * 0.8,
-    ));
+    ),);
     path.addOval(Rect.fromCenter(
       center: Offset(center.dx, center.dy - h * 0.1),
       width: w * 0.6,
       height: h * 0.9,
-    ));
+    ),);
 
     return path;
   }
@@ -245,7 +241,7 @@ class MarkerShapes {
     path.addOval(Rect.fromCircle(
       center: Offset(center.dx, center.dy - half * 0.3),
       radius: half * 0.5,
-    ));
+    ),);
 
     // Pin point
     path.moveTo(center.dx - half * 0.3, center.dy);
@@ -298,8 +294,12 @@ class MarkerShapes {
 
   // Trig helpers
   static double _sin(double x) {
-    while (x > 3.14159) x -= 6.28318;
-    while (x < -3.14159) x += 6.28318;
+    while (x > 3.14159) {
+      x -= 6.28318;
+    }
+    while (x < -3.14159) {
+      x += 6.28318;
+    }
     final x2 = x * x;
     return x * (1 - x2 / 6 + x2 * x2 / 120);
   }
@@ -313,21 +313,17 @@ class MarkerPresets {
 
   /// Small filled circle.
   static MarkerConfig smallDot(Color color) => MarkerConfig(
-        shape: MarkerShape.circle,
         size: 6,
         fillColor: color,
       );
 
   /// Medium filled circle.
   static MarkerConfig mediumDot(Color color) => MarkerConfig(
-        shape: MarkerShape.circle,
-        size: 8,
         fillColor: color,
       );
 
   /// Large filled circle.
   static MarkerConfig largeDot(Color color) => MarkerConfig(
-        shape: MarkerShape.circle,
         size: 12,
         fillColor: color,
       );
@@ -335,7 +331,6 @@ class MarkerPresets {
   /// Hollow circle with border.
   static MarkerConfig hollowCircle(Color color, {double strokeWidth = 2}) =>
       MarkerConfig(
-        shape: MarkerShape.circle,
         size: 10,
         strokeColor: color,
         strokeWidth: strokeWidth,
@@ -343,17 +338,14 @@ class MarkerPresets {
 
   /// Filled circle with white border.
   static MarkerConfig borderedDot(Color color) => MarkerConfig(
-        shape: MarkerShape.circle,
         size: 10,
         fillColor: color,
         strokeColor: const Color(0xFFFFFFFF),
-        strokeWidth: 2,
       );
 
   /// Square marker.
   static MarkerConfig square(Color color) => MarkerConfig(
         shape: MarkerShape.square,
-        size: 8,
         fillColor: color,
       );
 
@@ -394,10 +386,9 @@ class MarkerPresets {
 
     return List.generate(colors.length, (i) => MarkerConfig(
           shape: shapes[i % shapes.length],
-          size: 8,
           fillColor: colors[i],
           strokeColor: const Color(0xFFFFFFFF),
           strokeWidth: 1.5,
-        ));
+        ),);
   }
 }

@@ -29,12 +29,10 @@ class Bounds {
   }
 
   /// Creates bounds that include zero.
-  factory Bounds.includingZero(Bounds bounds) {
-    return Bounds(
+  factory Bounds.includingZero(Bounds bounds) => Bounds(
       min: math.min(bounds.min, 0),
       max: math.max(bounds.max, 0),
     );
-  }
 
   /// The minimum value.
   final double min;
@@ -61,12 +59,10 @@ class Bounds {
   }
 
   /// Returns bounds with overridden min/max if provided.
-  Bounds withOverrides({double? minOverride, double? maxOverride}) {
-    return Bounds(
+  Bounds withOverrides({double? minOverride, double? maxOverride}) => Bounds(
       min: minOverride ?? min,
       max: maxOverride ?? max,
     );
-  }
 
   /// Returns nice rounded bounds suitable for chart axes.
   Bounds nice({int tickCount = 10}) {
@@ -82,12 +78,10 @@ class Bounds {
   }
 
   /// Merges with another bounds.
-  Bounds merge(Bounds other) {
-    return Bounds(
+  Bounds merge(Bounds other) => Bounds(
       min: math.min(min, other.min),
       max: math.max(max, other.max),
     );
-  }
 
   /// Returns the union of multiple bounds.
   static Bounds union(Iterable<Bounds> bounds) {

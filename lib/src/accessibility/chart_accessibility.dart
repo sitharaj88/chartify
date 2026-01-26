@@ -9,17 +9,14 @@ import 'contrast_validator.dart';
 import 'high_contrast.dart';
 
 /// Converts a DataPointInfo from chart_controller to series_painter format.
-painter.DataPointInfo toSemanticDataPointInfo(controller.DataPointInfo info) {
-  return painter.DataPointInfo(
+painter.DataPointInfo toSemanticDataPointInfo(controller.DataPointInfo info) => painter.DataPointInfo(
     seriesIndex: info.seriesIndex,
     dataIndex: info.pointIndex,
     screenPosition: info.position,
     dataX: info.xValue,
     dataY: (info.yValue is num) ? (info.yValue as num).toDouble() : 0.0,
     label: info.label ?? info.seriesName,
-    color: null,
   );
-}
 
 /// Unified accessibility helper for charts.
 ///
@@ -279,9 +276,7 @@ class ChartAccessibility {
 /// with minimal boilerplate.
 class AccessibleChartBuilder extends StatefulWidget {
   const AccessibleChartBuilder({
-    super.key,
-    required this.chartType,
-    required this.builder,
+    required this.chartType, required this.builder, super.key,
     this.title,
     this.subtitle,
     this.xAxisLabel,
@@ -377,13 +372,11 @@ class _AccessibleChartBuilderState extends State<AccessibleChartBuilder> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return _accessibility.wrap(
+  Widget build(BuildContext context) => _accessibility.wrap(
       dataPoints: widget.dataPoints,
       seriesDescriptions: widget.seriesDescriptions,
       child: widget.builder(context, _accessibility),
     );
-  }
 }
 
 /// Extension for validating chart colors against a background.

@@ -34,8 +34,7 @@ export 'sunburst_chart_data.dart';
 /// ```
 class SunburstChart extends StatefulWidget {
   const SunburstChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -119,7 +118,7 @@ class _SunburstChartState extends State<SunburstChart>
     if (widget.data != oldWidget.data) {
       _arcCache = [];
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -153,13 +152,12 @@ class _SunburstChartState extends State<SunburstChart>
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
-      builder: (context, constraints) {
-        return ChartTooltipOverlay(
+      builder: (context, constraints) => ChartTooltipOverlay(
           controller: _controller,
           config: widget.tooltip,
           theme: theme,
           chartArea: Rect.fromLTWH(
-              0, 0, constraints.maxWidth, constraints.maxHeight),
+              0, 0, constraints.maxWidth, constraints.maxHeight,),
           tooltipDataBuilder: (info) => _buildTooltipData(info, theme),
           child: ChartGestureDetector(
             controller: _controller,
@@ -197,15 +195,14 @@ class _SunburstChartState extends State<SunburstChart>
               ),
             ),
           ),
-        );
-      },
+        ),
     );
   }
 
   TooltipData _buildTooltipData(DataPointInfo info, ChartThemeData theme) {
     final idx = info.pointIndex;
     if (idx < 0 || idx >= _arcCache.length) {
-      return TooltipData(position: info.position, entries: []);
+      return TooltipData(position: info.position, entries: const []);
     }
 
     final arc = _arcCache[idx];
@@ -385,7 +382,7 @@ class _SunburstChartPainter extends ChartPainter {
     // Draw fill
     var fillColor = color;
     if (isHovered) {
-      fillColor = color.withValues(alpha: 1.0);
+      fillColor = color.withValues(alpha: 1);
     }
 
     final fillPaint = Paint()

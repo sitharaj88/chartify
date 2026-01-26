@@ -29,8 +29,7 @@ export 'bump_chart_data.dart';
 /// ```
 class BumpChart extends StatefulWidget {
   const BumpChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -112,7 +111,7 @@ class _BumpChartState extends State<BumpChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -364,7 +363,7 @@ class _BumpChartPainter extends ChartPainter {
   }
 
   void _drawGrid(
-      Canvas canvas, Rect chartArea, int timePointCount, int maxRank) {
+      Canvas canvas, Rect chartArea, int timePointCount, int maxRank,) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..strokeWidth = 1;
@@ -391,7 +390,7 @@ class _BumpChartPainter extends ChartPainter {
       textPainter.paint(
         canvas,
         Offset(chartArea.left - textPainter.width - 8,
-            y - textPainter.height / 2),
+            y - textPainter.height / 2,),
       );
     }
 
@@ -407,7 +406,7 @@ class _BumpChartPainter extends ChartPainter {
   }
 
   void _drawLines(
-      Canvas canvas, List<Offset> points, Color color, bool isHovered) {
+      Canvas canvas, List<Offset> points, Color color, bool isHovered,) {
     if (points.length < 2) return;
 
     final paint = Paint()
@@ -438,7 +437,7 @@ class _BumpChartPainter extends ChartPainter {
   }
 
   void _drawMarker(Canvas canvas, Offset point, int rank, Color color,
-      bool isHovered) {
+      bool isHovered,) {
     final size = isHovered ? data.markerSize * 1.3 : data.markerSize;
 
     // Draw filled circle
@@ -473,13 +472,13 @@ class _BumpChartPainter extends ChartPainter {
       textPainter.paint(
         canvas,
         Offset(point.dx - textPainter.width / 2,
-            point.dy - textPainter.height / 2),
+            point.dy - textPainter.height / 2,),
       );
     }
   }
 
   void _drawSeriesLabel(Canvas canvas, BumpSeries series, Offset firstPoint,
-      Offset lastPoint, Color color, Rect chartArea) {
+      Offset lastPoint, Color color, Rect chartArea,) {
     final textSpan = TextSpan(
       text: series.label,
       style: theme.labelStyle.copyWith(

@@ -213,8 +213,7 @@ class GanttTask {
     DateTime? constraintDate,
     String? notes,
     int? priority,
-  }) {
-    return GanttTask(
+  }) => GanttTask(
       id: id ?? this.id,
       label: label ?? this.label,
       start: start ?? this.start,
@@ -237,7 +236,6 @@ class GanttTask {
       notes: notes ?? this.notes,
       priority: priority ?? this.priority,
     );
-  }
 }
 
 /// Resource definition for resource-based views.
@@ -375,7 +373,7 @@ class GanttChartData {
     if (startDate != null) return startDate!;
     if (tasks.isEmpty) return DateTime.now();
 
-    DateTime earliest = tasks.first.start;
+    var earliest = tasks.first.start;
     for (final task in tasks) {
       if (task.start.isBefore(earliest)) earliest = task.start;
       if (task.baselineStart != null &&
@@ -391,7 +389,7 @@ class GanttChartData {
     if (endDate != null) return endDate!;
     if (tasks.isEmpty) return DateTime.now().add(const Duration(days: 30));
 
-    DateTime latest = tasks.first.end;
+    var latest = tasks.first.end;
     for (final task in tasks) {
       if (task.end.isAfter(latest)) latest = task.end;
       if (task.baselineEnd != null && task.baselineEnd!.isAfter(latest)) {
@@ -414,8 +412,8 @@ class GanttChartData {
 
     for (final task in tasks) {
       // Check if any ancestor is collapsed
-      bool isHidden = false;
-      String? currentParentId = task.parentId;
+      var isHidden = false;
+      var currentParentId = task.parentId;
 
       while (currentParentId != null) {
         if (collapsedGroupIds.contains(currentParentId)) {
@@ -478,8 +476,7 @@ class GanttChartData {
     Color? todayLineColor,
     Color? baselineColor,
     Set<String>? collapsedGroupIds,
-  }) {
-    return GanttChartData(
+  }) => GanttChartData(
       tasks: tasks ?? this.tasks,
       barHeight: barHeight ?? this.barHeight,
       barSpacing: barSpacing ?? this.barSpacing,
@@ -505,5 +502,4 @@ class GanttChartData {
       baselineColor: baselineColor ?? this.baselineColor,
       collapsedGroupIds: collapsedGroupIds ?? this.collapsedGroupIds,
     );
-  }
 }

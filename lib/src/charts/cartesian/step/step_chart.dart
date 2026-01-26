@@ -33,8 +33,7 @@ export 'step_chart_data.dart';
 /// ```
 class StepChart<X, Y extends num> extends StatefulWidget {
   const StepChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -117,7 +116,7 @@ class _StepChartState<X, Y extends num> extends State<StepChart<X, Y>>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -209,7 +208,7 @@ class _StepChartState<X, Y extends num> extends State<StepChart<X, Y>>
         seriesIdx >= widget.data.series.length ||
         pointIdx < 0 ||
         pointIdx >= widget.data.series[seriesIdx].data.length) {
-      return TooltipData(position: info.position, entries: []);
+      return TooltipData(position: info.position, entries: const []);
     }
 
     final series = widget.data.series[seriesIdx];
@@ -247,14 +246,12 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left + 40, // Space for Y axis
       padding.top,
       size.width - padding.right,
       size.height - padding.bottom - 30, // Space for X axis
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -310,7 +307,7 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
       // Draw markers
       if (series.showMarkers) {
         _drawMarkers(
-            canvas, animatedPoints, seriesIndex, series, color, chartArea);
+            canvas, animatedPoints, seriesIndex, series, color, chartArea,);
       }
 
       // Register hit targets
@@ -465,19 +462,16 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
           // Horizontal first, then vertical
           path.lineTo(curr.dx, prev.dy);
           path.lineTo(curr.dx, curr.dy);
-          break;
         case StepType.after:
           // Vertical first, then horizontal
           path.lineTo(prev.dx, curr.dy);
           path.lineTo(curr.dx, curr.dy);
-          break;
         case StepType.middle:
           // Step at midpoint
           final midX = (prev.dx + curr.dx) / 2;
           path.lineTo(midX, prev.dy);
           path.lineTo(midX, curr.dy);
           path.lineTo(curr.dx, curr.dy);
-          break;
       }
     }
 
@@ -508,17 +502,14 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
         case StepType.before:
           path.lineTo(curr.dx, prev.dy);
           path.lineTo(curr.dx, curr.dy);
-          break;
         case StepType.after:
           path.lineTo(prev.dx, curr.dy);
           path.lineTo(curr.dx, curr.dy);
-          break;
         case StepType.middle:
           final midX = (prev.dx + curr.dx) / 2;
           path.lineTo(midX, prev.dy);
           path.lineTo(midX, curr.dy);
           path.lineTo(curr.dx, curr.dy);
-          break;
       }
     }
 

@@ -39,9 +39,7 @@ class CachedLayer {
   final DateTime createdAt;
 
   /// Whether this cached layer is valid for the given size and config hash.
-  bool isValid(Size currentSize, int currentConfigHash) {
-    return size == currentSize && configHash == currentConfigHash;
-  }
+  bool isValid(Size currentSize, int currentConfigHash) => size == currentSize && configHash == currentConfigHash;
 
   /// Disposes the picture.
   void dispose() {
@@ -284,7 +282,5 @@ mixin LayerCachingMixin {
 /// Extension for combining multiple config hashes.
 extension ConfigHashCombiner on int {
   /// Combines this hash with another value's hash.
-  int combineHash(Object? other) {
-    return 0x1fffffff & (this + ((0x0007ffff & this) << 10)) ^ (other.hashCode);
-  }
+  int combineHash(Object? other) => 0x1fffffff & (this + ((0x0007ffff & this) << 10)) ^ (other.hashCode);
 }

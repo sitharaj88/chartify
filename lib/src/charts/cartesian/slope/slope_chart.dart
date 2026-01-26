@@ -31,8 +31,7 @@ export 'slope_chart_data.dart';
 /// ```
 class SlopeChart extends StatefulWidget {
   const SlopeChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -114,7 +113,7 @@ class _SlopeChartState extends State<SlopeChart>
 
     if (widget.data != oldWidget.data) {
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -243,14 +242,12 @@ class _SlopeChartPainter extends ChartPainter {
   final EdgeInsets padding;
 
   @override
-  Rect getChartArea(Size size) {
-    return Rect.fromLTRB(
+  Rect getChartArea(Size size) => Rect.fromLTRB(
       padding.left + data.labelWidth,
       padding.top + 30, // Space for column headers
       size.width - padding.right - data.labelWidth,
       size.height - padding.bottom,
     );
-  }
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -405,7 +402,7 @@ class _SlopeChartPainter extends ChartPainter {
   }
 
   void _drawItemLabels(Canvas canvas, SlopeItem item, Offset startPoint,
-      Offset endPoint, Color color, Rect chartArea) {
+      Offset endPoint, Color color, Rect chartArea,) {
     // Start label (left side)
     final startSpan = TextSpan(
       text: item.label,
@@ -451,7 +448,7 @@ class _SlopeChartPainter extends ChartPainter {
   }
 
   void _drawValues(Canvas canvas, SlopeItem item, Offset startPoint,
-      Offset endPoint, Rect chartArea) {
+      Offset endPoint, Rect chartArea,) {
     // Start value
     final startValueSpan = TextSpan(
       text: item.startValue.toStringAsFixed(0),

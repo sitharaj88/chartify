@@ -47,8 +47,7 @@ export 'gantt_validator.dart';
 /// ```
 class GanttChart extends StatefulWidget {
   const GanttChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.controller,
     this.animation,
     this.interactions = const ChartInteractions(),
@@ -146,7 +145,7 @@ class _GanttChartState extends State<GanttChart>
     if (widget.data != oldWidget.data) {
       _calculateSchedule();
       if (_animationConfig.enabled && _animationConfig.animateOnDataChange) {
-        _animationController?.forward(from: 0.0);
+        _animationController?.forward(from: 0);
       }
     }
   }
@@ -246,11 +245,11 @@ class _GanttChartState extends State<GanttChart>
 
     if (widget.data.showProgress) {
       entries.add(TooltipEntry(
-        color: color.withOpacity(0.5),
+        color: color.withValues(alpha:0.5),
         label: 'Progress',
         value: task.progress * 100,
         formattedValue: '${(task.progress * 100).toStringAsFixed(0)}%',
-      ));
+      ),);
     }
 
     // Show variance if baseline is available
@@ -264,18 +263,18 @@ class _GanttChartState extends State<GanttChart>
         label: 'Variance',
         value: variance.toDouble(),
         formattedValue: '${variance > 0 ? "+" : ""}$variance days',
-      ));
+      ),);
     }
 
     // Show if critical
     if (widget.data.highlightCriticalPath &&
-        _scheduleResult?.isTaskCritical(task.id) == true) {
+        (_scheduleResult?.isTaskCritical(task.id) ?? false)) {
       entries.add(TooltipEntry(
         color: widget.data.criticalPathColor ?? Colors.red,
         label: 'Critical',
         value: 1,
         formattedValue: 'Yes',
-      ));
+      ),);
     }
 
     return TooltipData(
@@ -305,7 +304,7 @@ class _GanttChartPainter extends ChartPainter {
 
   static const _monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
   ];
 
   @override
@@ -357,7 +356,7 @@ class _GanttChartPainter extends ChartPainter {
 
       // Apply critical path color
       if (data.highlightCriticalPath &&
-          scheduleResult?.isTaskCritical(task.id) == true) {
+          (scheduleResult?.isTaskCritical(task.id) ?? false)) {
         color = data.criticalPathColor ?? Colors.red;
       }
 
@@ -446,7 +445,7 @@ class _GanttChartPainter extends ChartPainter {
     final x = chartArea.left + ratio * chartArea.width;
 
     final paint = Paint()
-      ..color = data.todayLineColor ?? Colors.red.withOpacity(0.7)
+      ..color = data.todayLineColor ?? Colors.red.withValues(alpha:0.7)
       ..strokeWidth = 2;
 
     // Draw dashed line
@@ -513,7 +512,7 @@ class _GanttChartPainter extends ChartPainter {
     );
 
     final paint = Paint()
-      ..color = data.baselineColor ?? Colors.grey.withOpacity(0.5)
+      ..color = data.baselineColor ?? Colors.grey.withValues(alpha:0.5)
       ..style = PaintingStyle.fill;
 
     canvas.drawRect(baselineRect, paint);
@@ -533,7 +532,7 @@ class _GanttChartPainter extends ChartPainter {
 
     // Draw main bar
     final paint = Paint()
-      ..color = isHovered ? color : color.withOpacity(0.8)
+      ..color = isHovered ? color : color.withValues(alpha:0.8)
       ..style = PaintingStyle.fill;
 
     final rect = Rect.fromLTWH(startX, topY, endX - startX, barHeight);
@@ -630,13 +629,13 @@ class _GanttChartPainter extends ChartPainter {
     int taskCount,
   ) {
     final paint = Paint()
-      ..color = theme.gridLineColor.withOpacity(0.2)
+      ..color = theme.gridLineColor.withValues(alpha:0.2)
       ..strokeWidth = 1;
 
     final totalDays = endDate.difference(startDate).inDays;
 
     // Vertical grid lines
-    int interval = totalDays <= 14 ? 1 : (totalDays <= 60 ? 7 : 30);
+    final interval = totalDays <= 14 ? 1 : (totalDays <= 60 ? 7 : 30);
     var current = startDate;
     while (current.isBefore(endDate)) {
       final ratio = current.difference(startDate).inMilliseconds /
@@ -673,7 +672,7 @@ class _GanttChartPainter extends ChartPainter {
     if (data.showHierarchy && task.isGroup) {
       final iconX = chartArea.left - data.labelWidth + indent;
       final iconY = y + data.barHeight / 2;
-      final iconSize = 10.0;
+      const iconSize = 10.0;
 
       final iconPaint = Paint()
         ..color = theme.labelStyle.color ?? Colors.black
@@ -735,7 +734,7 @@ class _GanttChartPainter extends ChartPainter {
   ) {
     // Background bar
     final bgPaint = Paint()
-      ..color = isHovered ? color.withOpacity(0.4) : color.withOpacity(0.3)
+      ..color = isHovered ? color.withValues(alpha:0.4) : color.withValues(alpha:0.3)
       ..style = PaintingStyle.fill;
 
     final rRect = RRect.fromRectAndRadius(
@@ -754,7 +753,7 @@ class _GanttChartPainter extends ChartPainter {
       );
 
       final progressPaint = Paint()
-        ..color = isHovered ? color : color.withOpacity(0.9)
+        ..color = isHovered ? color : color.withValues(alpha:0.9)
         ..style = PaintingStyle.fill;
 
       final progressRRect = RRect.fromRectAndRadius(
@@ -792,7 +791,7 @@ class _GanttChartPainter extends ChartPainter {
       ..close();
 
     final fillPaint = Paint()
-      ..color = isHovered ? color : color.withOpacity(0.8)
+      ..color = isHovered ? color : color.withValues(alpha:0.8)
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, fillPaint);
 
@@ -928,7 +927,7 @@ class _GanttChartPainter extends ChartPainter {
     final toY = chartArea.top + toIndex * rowHeight + data.barHeight / 2;
 
     // Draw connector line
-    final offset = 12.0;
+    const offset = 12.0;
     final path = Path();
 
     if (type == DependencyType.finishToStart ||
@@ -947,7 +946,7 @@ class _GanttChartPainter extends ChartPainter {
     canvas.drawPath(path, paint);
 
     // Draw arrowhead
-    final arrowSize = 6.0;
+    const arrowSize = 6.0;
     final arrowPath = Path();
 
     if (type == DependencyType.finishToStart ||

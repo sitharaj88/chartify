@@ -6,7 +6,6 @@ import '../../core/math/scales/scale.dart';
 import '../../rendering/renderers/axis_renderer.dart';
 import '../../rendering/renderers/grid_renderer.dart';
 import '../../rendering/renderers/renderer.dart';
-import '../../theme/chart_theme_data.dart';
 import 'chart_widget_mixin.dart';
 
 /// Base configuration for cartesian charts.
@@ -69,8 +68,7 @@ class CartesianChartConfig {
 abstract class CartesianChartPainter extends BaseChartPainter {
   CartesianChartPainter({
     required super.theme,
-    super.animationProgress,
-    required this.config,
+    required this.config, super.animationProgress,
     this.xBounds,
     this.yBounds,
   });
@@ -168,8 +166,8 @@ abstract class CartesianChartPainter extends BaseChartPainter {
 
   EdgeInsets _calculateInsets(Size size, Bounds xBounds, Bounds yBounds) {
     var left = config.padding.left;
-    var right = config.padding.right;
-    var top = config.padding.top;
+    final right = config.padding.right;
+    final top = config.padding.top;
     var bottom = config.padding.bottom;
 
     // Add space for Y axis
@@ -188,7 +186,7 @@ abstract class CartesianChartPainter extends BaseChartPainter {
 
     // Add space for X axis
     if (config.showXAxis) {
-      final xAxisConfig = config.xAxisConfig ?? const AxisConfig(position: ChartPosition.bottom);
+      final xAxisConfig = config.xAxisConfig ?? const AxisConfig();
       _xAxisRenderer = AxisRenderer<double>(
         config: xAxisConfig,
         scale: LinearScale(
@@ -243,11 +241,9 @@ abstract class CartesianChartPainter extends BaseChartPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CartesianChartPainter oldDelegate) {
-    return animationProgress != oldDelegate.animationProgress ||
+  bool shouldRepaint(covariant CartesianChartPainter oldDelegate) => animationProgress != oldDelegate.animationProgress ||
         xBounds != oldDelegate.xBounds ||
         yBounds != oldDelegate.yBounds;
-  }
 }
 
 /// Builder for cartesian chart configurations.
@@ -330,8 +326,7 @@ class CartesianChartBuilder {
   }
 
   /// Builds the configuration.
-  CartesianChartConfig build() {
-    return CartesianChartConfig(
+  CartesianChartConfig build() => CartesianChartConfig(
       padding: _padding,
       showXAxis: _showXAxis,
       showYAxis: _showYAxis,
@@ -345,5 +340,4 @@ class CartesianChartBuilder {
       yMax: _yMax,
       includeZero: _includeZero,
     );
-  }
 }

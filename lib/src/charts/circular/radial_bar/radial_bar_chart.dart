@@ -28,8 +28,7 @@ export 'radial_bar_chart_data.dart';
 /// ```
 class RadialBarChart extends StatefulWidget {
   const RadialBarChart({
-    super.key,
-    required this.data,
+    required this.data, super.key,
     this.animation = const ChartAnimation(),
     this.centerWidget,
     this.padding = const EdgeInsets.all(20),
@@ -100,11 +99,9 @@ class _RadialBarChartState extends State<RadialBarChart>
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
-      builder: (context, constraints) {
-        return AnimatedBuilder(
+      builder: (context, constraints) => AnimatedBuilder(
           animation: _animation,
-          builder: (context, child) {
-            return Stack(
+          builder: (context, child) => Stack(
               alignment: Alignment.center,
               children: [
                 CustomPaint(
@@ -118,10 +115,8 @@ class _RadialBarChartState extends State<RadialBarChart>
                 ),
                 if (widget.centerWidget != null) widget.centerWidget!,
               ],
-            );
-          },
-        );
-      },
+            ),
+        ),
     );
   }
 }
@@ -129,12 +124,10 @@ class _RadialBarChartState extends State<RadialBarChart>
 class _RadialBarChartPainter extends CircularChartPainter {
   _RadialBarChartPainter({
     required this.data,
-    required ChartThemeData theme,
+    required super.theme,
     required this.padding,
-    double animationValue = 1.0,
+    super.animationValue,
   }) : super(
-          theme: theme,
-          animationValue: animationValue,
           startAngle: data.startAngle,
         );
 
@@ -310,9 +303,7 @@ class _RadialBarChartPainter extends CircularChartPainter {
   }
 
   @override
-  bool shouldRepaint(covariant _RadialBarChartPainter oldDelegate) {
-    return super.shouldRepaint(oldDelegate) ||
+  bool shouldRepaint(covariant _RadialBarChartPainter oldDelegate) => super.shouldRepaint(oldDelegate) ||
         data != oldDelegate.data ||
         padding != oldDelegate.padding;
-  }
 }

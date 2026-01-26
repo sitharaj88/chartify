@@ -101,8 +101,7 @@ class ArcSeriesConfig extends SeriesConfig {
     ArcLabelPosition? labelPosition,
     bool? showValues,
     String Function(double value, double percentage)? valueFormatter,
-  }) {
-    return ArcSeriesConfig(
+  }) => ArcSeriesConfig(
       visible: visible ?? this.visible,
       animationProgress: animationProgress ?? this.animationProgress,
       colors: colors ?? this.colors,
@@ -121,7 +120,6 @@ class ArcSeriesConfig extends SeriesConfig {
       showValues: showValues ?? this.showValues,
       valueFormatter: valueFormatter ?? this.valueFormatter,
     );
-  }
 }
 
 /// Position for arc labels.
@@ -259,7 +257,7 @@ class ArcPainter extends SeriesPainter<ArcSeriesConfig>
     final segments = <_ComputedSegment>[];
 
     // Calculate total
-    final total = data.fold(0.0, (sum, item) => sum + item.value.abs());
+    final total = data.fold<double>(0, (sum, item) => sum + item.value.abs());
     if (total == 0) return segments;
 
     // Calculate total gap
@@ -313,7 +311,7 @@ class ArcPainter extends SeriesPainter<ArcSeriesConfig>
         labelPosition: labelPos,
         value: item.value,
         percentage: percentage * 100,
-      ));
+      ),);
 
       currentAngle += sweepAngle + config.gapAngle;
     }
@@ -561,8 +559,7 @@ class ArcPainterFactory {
     required int seriesIndex,
     required List<ArcData> data,
     List<Color>? colors,
-  }) {
-    return ArcPainter(
+  }) => ArcPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: ArcSeriesConfig(
@@ -575,7 +572,6 @@ class ArcPainterFactory {
         ],
       ),
     );
-  }
 
   /// Creates a donut chart painter.
   static ArcPainter donut({
@@ -583,8 +579,7 @@ class ArcPainterFactory {
     required List<ArcData> data,
     List<Color>? colors,
     double innerRadiusFraction = 0.5,
-  }) {
-    return ArcPainter(
+  }) => ArcPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: ArcSeriesConfig(
@@ -598,15 +593,13 @@ class ArcPainterFactory {
         innerRadiusFraction: innerRadiusFraction,
       ),
     );
-  }
 
   /// Creates a semi-circle (gauge) painter.
   static ArcPainter gauge({
     required int seriesIndex,
     required List<ArcData> data,
     List<Color>? colors,
-  }) {
-    return ArcPainter(
+  }) => ArcPainter(
       seriesIndex: seriesIndex,
       data: data,
       config: ArcSeriesConfig(
@@ -620,5 +613,4 @@ class ArcPainterFactory {
         innerRadiusFraction: 0.6,
       ),
     );
-  }
 }

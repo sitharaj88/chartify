@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/gestures.dart';
 import 'package:flutter/widgets.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 import '../plugin.dart';
 
@@ -54,10 +55,10 @@ class ZoomPlugin extends ChartPlugin {
   final bool constrainToBounds;
 
   // Current state
-  double _scale = 1.0;
+  double _scale = 1;
   Offset _offset = Offset.zero;
   Offset _focalPoint = Offset.zero;
-  double _baseScale = 1.0;
+  double _baseScale = 1;
   Rect _chartArea = Rect.zero;
   Size _chartSize = Size.zero;
 
@@ -80,18 +81,16 @@ class ZoomPlugin extends ChartPlugin {
   Offset get offset => _offset;
 
   /// Current viewport transform.
-  Matrix4 get transform {
-    return Matrix4.identity()
-      ..translate(_offset.dx, _offset.dy)
-      ..scale(_scale);
-  }
+  Matrix4 get transform => Matrix4.identity()
+      ..translateByVector3(Vector3(_offset.dx, _offset.dy, 0))
+      ..scaleByVector3(Vector3(_scale, _scale, 1));
 
   /// Inverse of the current viewport transform.
   Matrix4 get inverseTransform {
     final invScale = 1.0 / _scale;
     return Matrix4.identity()
-      ..scale(invScale)
-      ..translate(-_offset.dx * invScale, -_offset.dy * invScale);
+      ..scaleByVector3(Vector3(invScale, invScale, 1))
+      ..translateByVector3(Vector3(-_offset.dx * invScale, -_offset.dy * invScale, 0));
   }
 
   /// Adds a listener for zoom changes.
@@ -304,20 +303,16 @@ class ZoomPlugin extends ChartPlugin {
   }
 
   /// Transforms a screen point to data coordinates.
-  Offset screenToData(Offset screenPoint) {
-    return Offset(
+  Offset screenToData(Offset screenPoint) => Offset(
       (screenPoint.dx - _offset.dx) / _scale,
       (screenPoint.dy - _offset.dy) / _scale,
     );
-  }
 
   /// Transforms a data point to screen coordinates.
-  Offset dataToScreen(Offset dataPoint) {
-    return Offset(
+  Offset dataToScreen(Offset dataPoint) => Offset(
       dataPoint.dx * _scale + _offset.dx,
       dataPoint.dy * _scale + _offset.dy,
     );
-  }
 
   /// Gets the visible area in data coordinates.
   Rect get visibleArea {
@@ -393,8 +388,7 @@ class ZoomConfig {
     bool? animateZoom,
     Duration? animationDuration,
     Curve? animationCurve,
-  }) {
-    return ZoomConfig(
+  }) => ZoomConfig(
       minZoom: minZoom ?? this.minZoom,
       maxZoom: maxZoom ?? this.maxZoom,
       zoomSpeed: zoomSpeed ?? this.zoomSpeed,
@@ -406,19 +400,17 @@ class ZoomConfig {
       animationDuration: animationDuration ?? this.animationDuration,
       animationCurve: animationCurve ?? this.animationCurve,
     );
-  }
 }
 
 /// Widget that adds zoom controls to a chart.
 class ZoomControls extends StatelessWidget {
   const ZoomControls({
-    super.key,
-    required this.zoomPlugin,
+    required this.zoomPlugin, super.key,
     this.showResetButton = true,
     this.iconSize = 24.0,
     this.buttonSpacing = 8.0,
     this.alignment = Alignment.topRight,
-    this.padding = const EdgeInsets.all(8.0),
+    this.padding = const EdgeInsets.all(8),
   });
 
   /// The zoom plugin to control.
@@ -440,8 +432,7 @@ class ZoomControls extends StatelessWidget {
   final EdgeInsets padding;
 
   @override
-  Widget build(BuildContext context) {
-    return Align(
+  Widget build(BuildContext context) => Align(
       alignment: alignment,
       child: Padding(
         padding: padding,
@@ -471,7 +462,6 @@ class ZoomControls extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 class _ZoomButton extends StatelessWidget {
@@ -486,8 +476,7 @@ class _ZoomButton extends StatelessWidget {
   final double size;
 
   @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
+  Widget build(BuildContext context) => GestureDetector(
       onTap: onPressed,
       child: Container(
         width: size + 16,
@@ -514,13 +503,10 @@ class _ZoomButton extends StatelessWidget {
         ),
       ),
     );
-  }
 }
 
 /// Extension for easy zoom plugin access.
 extension ZoomExtension on BuildContext {
   /// Gets the zoom plugin if available.
-  ZoomPlugin? get zoomPlugin {
-    return PluginRegistry.instance.getByType<ZoomPlugin>();
-  }
+  ZoomPlugin? get zoomPlugin => PluginRegistry.instance.getByType<ZoomPlugin>();
 }

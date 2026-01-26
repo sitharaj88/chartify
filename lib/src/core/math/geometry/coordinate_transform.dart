@@ -46,9 +46,7 @@ class CoordinateTransform {
   double dataToScreenY(double y) => _yScale.scale(y);
 
   /// Converts data coordinates to screen coordinates.
-  Offset dataToScreen(double x, double y) {
-    return Offset(dataToScreenX(x), dataToScreenY(y));
-  }
+  Offset dataToScreen(double x, double y) => Offset(dataToScreenX(x), dataToScreenY(y));
 
   /// Converts a screen X coordinate to data X value.
   double screenToDataX(double x) => _xScale.invert(x);
@@ -57,50 +55,38 @@ class CoordinateTransform {
   double screenToDataY(double y) => _yScale.invert(y);
 
   /// Converts screen coordinates to data coordinates.
-  (double, double) screenToData(Offset screen) {
-    return (screenToDataX(screen.dx), screenToDataY(screen.dy));
-  }
+  (double, double) screenToData(Offset screen) => (screenToDataX(screen.dx), screenToDataY(screen.dy));
 
   /// Converts a list of data points to screen coordinates.
-  List<Offset> dataPointsToScreen(List<({double x, double y})> points) {
-    return points.map((p) => dataToScreen(p.x, p.y)).toList();
-  }
+  List<Offset> dataPointsToScreen(List<({double x, double y})> points) => points.map((p) => dataToScreen(p.x, p.y)).toList();
 
   /// Whether a screen point is within the chart area.
   bool containsScreen(Offset screen) => chartArea.contains(screen);
 
   /// Whether a data point is within the data bounds.
-  bool containsData(double x, double y) {
-    return xBounds.contains(x) && yBounds.contains(y);
-  }
+  bool containsData(double x, double y) => xBounds.contains(x) && yBounds.contains(y);
 
   /// Returns a clipped version of the screen point within chart area.
-  Offset clipToChartArea(Offset screen) {
-    return Offset(
+  Offset clipToChartArea(Offset screen) => Offset(
       screen.dx.clamp(chartArea.left, chartArea.right),
       screen.dy.clamp(chartArea.top, chartArea.bottom),
     );
-  }
 
   /// Creates a new transform with updated chart area.
-  CoordinateTransform withChartArea(Rect newChartArea) {
-    return CoordinateTransform(
+  CoordinateTransform withChartArea(Rect newChartArea) => CoordinateTransform(
       chartArea: newChartArea,
       xBounds: xBounds,
       yBounds: yBounds,
       invertY: invertY,
     );
-  }
 
   /// Creates a new transform with updated bounds.
-  CoordinateTransform withBounds({Bounds? newXBounds, Bounds? newYBounds}) {
-    return CoordinateTransform(
+  CoordinateTransform withBounds({Bounds? newXBounds, Bounds? newYBounds}) => CoordinateTransform(
       chartArea: chartArea,
       xBounds: newXBounds ?? xBounds,
       yBounds: newYBounds ?? yBounds,
       invertY: invertY,
     );
-  }
 
   /// Gets the pixel width per data unit.
   double get pixelsPerUnitX => chartArea.width / xBounds.range;
@@ -155,7 +141,7 @@ class PolarCoordinateTransform {
     final dx = screen.dx - center.dx;
     final dy = screen.dy - center.dy;
 
-    final distance = (dx * dx + dy * dy);
+    final distance = dx * dx + dy * dy;
     final sqrtDistance = distance > 0 ? _sqrt(distance) : 0.0;
 
     // Calculate radius fraction
@@ -178,9 +164,7 @@ class PolarCoordinateTransform {
   }
 
   /// Gets a point on the arc at the given angle and radius fraction.
-  Offset arcPoint(double angle, {double r = 1.0}) {
-    return polarToScreen(angle, r);
-  }
+  Offset arcPoint(double angle, {double r = 1.0}) => polarToScreen(angle, r);
 
   /// Creates an arc path from startAngle to endAngle.
   Path createArc(

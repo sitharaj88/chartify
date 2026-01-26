@@ -106,7 +106,7 @@ class SankeyChartData {
   final ChartAnimation? animation;
 
   /// Total value of all links.
-  double get totalValue => links.fold(0.0, (sum, link) => sum + link.value);
+  double get totalValue => links.fold(0, (sum, link) => sum + link.value);
 }
 
 /// Computed position for a Sankey node.
