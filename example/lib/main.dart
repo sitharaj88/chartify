@@ -3,6 +3,8 @@ import 'dart:math' as math;
 import 'package:chartify/chartify.dart';
 import 'package:flutter/material.dart';
 
+import 'url_helper.dart' if (dart.library.js_interop) 'url_helper_web.dart';
+
 void main() {
   runApp(const ChartifyExampleApp());
 }
@@ -16,6 +18,13 @@ class ChartifyExampleApp extends StatefulWidget {
 
 class _ChartifyExampleAppState extends State<ChartifyExampleApp> {
   bool _isDarkMode = true;
+  String? _chartId;
+
+  @override
+  void initState() {
+    super.initState();
+    _chartId = getChartIdFromUrl();
+  }
 
   void _toggleTheme() {
     setState(() {
@@ -50,9 +59,95 @@ class _ChartifyExampleAppState extends State<ChartifyExampleApp> {
         ],
       ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
-      home: ChartGallery(
-        isDarkMode: _isDarkMode,
-        onThemeToggle: _toggleTheme,
+      home: _chartId != null
+          ? StandaloneChartView(
+              chartId: _chartId!,
+              isDarkMode: _isDarkMode,
+              onThemeToggle: _toggleTheme,
+            )
+          : ChartGallery(
+              isDarkMode: _isDarkMode,
+              onThemeToggle: _toggleTheme,
+            ),
+    );
+  }
+}
+
+/// Standalone view for a single chart, used for documentation embeds
+class StandaloneChartView extends StatelessWidget {
+  const StandaloneChartView({
+    super.key,
+    required this.chartId,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  });
+
+  final String chartId;
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  /// Map URL chart IDs to chart builders
+  static final Map<String, Widget Function(BuildContext)> chartBuilders = {
+    'line': (context) => const SimpleLineChartExample(),
+    'multi-series': (context) => const MultiSeriesLineChartExample(),
+    'area': (context) => const AreaChartExample(),
+    'bar': (context) => const BarChartExample(),
+    'pie': (context) => const PieChartExample(),
+    'scatter': (context) => const ScatterChartExample(),
+    'radar': (context) => const RadarChartExample(),
+    'gauge': (context) => const GaugeChartExample(),
+    'sparkline': (context) => const SparklineChartExample(),
+    'bubble': (context) => const BubbleChartExample(),
+    'radial-bar': (context) => const RadialBarChartExample(),
+    'candlestick': (context) => const CandlestickChartExample(),
+    'histogram': (context) => const HistogramChartExample(),
+    'waterfall': (context) => const WaterfallChartExample(),
+    'box-plot': (context) => const BoxPlotChartExample(),
+    'funnel': (context) => const FunnelChartExample(),
+    'pyramid': (context) => const PyramidChartExample(),
+    'heatmap': (context) => const HeatmapChartExample(),
+    'treemap': (context) => const TreemapChartExample(),
+    'sunburst': (context) => const SunburstChartExample(),
+    'bullet': (context) => const BulletChartExample(),
+    'step': (context) => const StepChartExample(),
+    'range': (context) => const RangeChartExample(),
+    'lollipop': (context) => const LollipopChartExample(),
+    'dumbbell': (context) => const DumbbellChartExample(),
+    'slope': (context) => const SlopeChartExample(),
+    'rose': (context) => const RoseChartExample(),
+    'bump': (context) => const BumpChartExample(),
+    'calendar': (context) => const CalendarHeatmapExample(),
+    'gantt': (context) => const GanttChartExample(),
+    'sankey': (context) => const SankeyChartExample(),
+    'interactive': (context) => const InteractiveChartExample(),
+    'animated': (context) => const AnimatedLineChartExample(),
+  };
+
+  @override
+  Widget build(BuildContext context) {
+    final builder = chartBuilders[chartId];
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    if (builder == null) {
+      return Scaffold(
+        backgroundColor: isDark ? const Color(0xFF0F0F1A) : theme.colorScheme.surface,
+        body: Center(
+          child: Text(
+            'Chart "$chartId" not found',
+            style: TextStyle(color: theme.colorScheme.error),
+          ),
+        ),
+      );
+    }
+
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F0F1A) : theme.colorScheme.surface,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: builder(context),
+        ),
       ),
     );
   }
