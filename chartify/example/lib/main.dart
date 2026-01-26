@@ -13,27 +13,37 @@ class ChartifyExampleApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Chartify Example',
+      title: 'Chartify',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(seedColor: Colors.indigo),
+        colorScheme: ColorScheme.fromSeed(
+          seedColor: const Color(0xFF6366F1),
+          brightness: Brightness.light,
+        ),
         useMaterial3: true,
-        extensions: [ChartThemeData.fromSeed(Colors.indigo)],
+        fontFamily: 'SF Pro Display',
+        extensions: [ChartThemeData.fromSeed(const Color(0xFF6366F1))],
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.indigo,
+          seedColor: const Color(0xFF6366F1),
           brightness: Brightness.dark,
         ),
         useMaterial3: true,
+        fontFamily: 'SF Pro Display',
+        scaffoldBackgroundColor: const Color(0xFF0F0F1A),
         extensions: [
-          ChartThemeData.fromSeed(Colors.indigo, brightness: Brightness.dark),
+          ChartThemeData.fromSeed(const Color(0xFF6366F1), brightness: Brightness.dark),
         ],
       ),
+      themeMode: ThemeMode.dark,
       home: const ChartGallery(),
     );
   }
 }
+
+// Chart categories for filtering
+enum ChartCategory { all, basic, advanced, statistical, hierarchical, specialty }
 
 class ChartGallery extends StatefulWidget {
   const ChartGallery({super.key});
@@ -42,378 +52,944 @@ class ChartGallery extends StatefulWidget {
   State<ChartGallery> createState() => _ChartGalleryState();
 }
 
-class _ChartGalleryState extends State<ChartGallery> {
+class _ChartGalleryState extends State<ChartGallery> with TickerProviderStateMixin {
   int _selectedIndex = 0;
+  ChartCategory _selectedCategory = ChartCategory.all;
+  late PageController _pageController;
+  late AnimationController _fabAnimationController;
 
   final List<ChartExample> _examples = [
+    // Basic Charts
     ChartExample(
-      name: 'Interactive Chart',
-      description: 'Hover/tap to see tooltips and crosshair',
-      icon: Icons.touch_app,
+      name: 'Interactive',
+      description: 'Touch to explore data points',
+      icon: Icons.touch_app_rounded,
+      color: const Color(0xFF6366F1),
+      category: ChartCategory.basic,
       builder: (context) => const InteractiveChartExample(),
     ),
     ChartExample(
-      name: 'Simple Line Chart',
-      description: 'Basic line chart with markers',
-      icon: Icons.show_chart,
+      name: 'Line Chart',
+      description: 'Track trends over time',
+      icon: Icons.show_chart_rounded,
+      color: const Color(0xFF10B981),
+      category: ChartCategory.basic,
       builder: (context) => const SimpleLineChartExample(),
     ),
     ChartExample(
-      name: 'Multi-Series Line',
-      description: 'Compare multiple data series',
-      icon: Icons.stacked_line_chart,
+      name: 'Multi-Series',
+      description: 'Compare multiple datasets',
+      icon: Icons.stacked_line_chart_rounded,
+      color: const Color(0xFF3B82F6),
+      category: ChartCategory.basic,
       builder: (context) => const MultiSeriesLineChartExample(),
     ),
     ChartExample(
       name: 'Area Chart',
-      description: 'Filled area with gradient',
-      icon: Icons.area_chart,
+      description: 'Visualize volume over time',
+      icon: Icons.area_chart_rounded,
+      color: const Color(0xFF8B5CF6),
+      category: ChartCategory.basic,
       builder: (context) => const AreaChartExample(),
     ),
     ChartExample(
-      name: 'Animated Chart',
-      description: 'Dynamic data with animations',
-      icon: Icons.animation,
+      name: 'Animated',
+      description: 'Dynamic live data',
+      icon: Icons.animation_rounded,
+      color: const Color(0xFFF59E0B),
+      category: ChartCategory.basic,
       builder: (context) => const AnimatedLineChartExample(),
     ),
     ChartExample(
       name: 'Bar Chart',
-      description: 'Grouped and stacked bars',
-      icon: Icons.bar_chart,
+      description: 'Compare categories',
+      icon: Icons.bar_chart_rounded,
+      color: const Color(0xFFEF4444),
+      category: ChartCategory.basic,
       builder: (context) => const BarChartExample(),
     ),
     ChartExample(
       name: 'Pie Chart',
-      description: 'Circular data visualization',
-      icon: Icons.pie_chart,
+      description: 'Show proportions',
+      icon: Icons.pie_chart_rounded,
+      color: const Color(0xFFEC4899),
+      category: ChartCategory.basic,
       builder: (context) => const PieChartExample(),
     ),
+    // Advanced Charts
     ChartExample(
-      name: 'Scatter Chart',
-      description: 'Point distribution plot',
-      icon: Icons.scatter_plot,
+      name: 'Scatter',
+      description: 'Plot data distribution',
+      icon: Icons.scatter_plot_rounded,
+      color: const Color(0xFF14B8A6),
+      category: ChartCategory.advanced,
       builder: (context) => const ScatterChartExample(),
     ),
     ChartExample(
-      name: 'Radar Chart',
-      description: 'Multi-axis comparison',
-      icon: Icons.radar,
+      name: 'Radar',
+      description: 'Multi-dimensional comparison',
+      icon: Icons.radar_rounded,
+      color: const Color(0xFF8B5CF6),
+      category: ChartCategory.advanced,
       builder: (context) => const RadarChartExample(),
     ),
     ChartExample(
-      name: 'Gauge Chart',
-      description: 'Single metric display',
-      icon: Icons.speed,
+      name: 'Gauge',
+      description: 'Display single metrics',
+      icon: Icons.speed_rounded,
+      color: const Color(0xFF22C55E),
+      category: ChartCategory.advanced,
       builder: (context) => const GaugeChartExample(),
     ),
     ChartExample(
-      name: 'Sparkline Chart',
+      name: 'Sparkline',
       description: 'Compact inline charts',
-      icon: Icons.show_chart,
+      icon: Icons.insights_rounded,
+      color: const Color(0xFF06B6D4),
+      category: ChartCategory.advanced,
       builder: (context) => const SparklineChartExample(),
     ),
     ChartExample(
-      name: 'Bubble Chart',
-      description: 'Scatter with size dimension',
-      icon: Icons.bubble_chart,
+      name: 'Bubble',
+      description: '3D data visualization',
+      icon: Icons.bubble_chart_rounded,
+      color: const Color(0xFFA855F7),
+      category: ChartCategory.advanced,
       builder: (context) => const BubbleChartExample(),
     ),
     ChartExample(
-      name: 'Radial Bar Chart',
-      description: 'Circular progress bars',
-      icon: Icons.donut_large,
+      name: 'Radial Bar',
+      description: 'Circular progress display',
+      icon: Icons.donut_large_rounded,
+      color: const Color(0xFFD946EF),
+      category: ChartCategory.advanced,
       builder: (context) => const RadialBarChartExample(),
     ),
+    // Statistical Charts
     ChartExample(
-      name: 'Candlestick Chart',
+      name: 'Candlestick',
       description: 'Financial OHLC data',
-      icon: Icons.candlestick_chart,
+      icon: Icons.candlestick_chart_rounded,
+      color: const Color(0xFF22C55E),
+      category: ChartCategory.statistical,
       builder: (context) => const CandlestickChartExample(),
     ),
     ChartExample(
-      name: 'Histogram Chart',
-      description: 'Distribution visualization',
-      icon: Icons.bar_chart,
+      name: 'Histogram',
+      description: 'Data distribution',
+      icon: Icons.equalizer_rounded,
+      color: const Color(0xFF6366F1),
+      category: ChartCategory.statistical,
       builder: (context) => const HistogramChartExample(),
     ),
     ChartExample(
-      name: 'Waterfall Chart',
-      description: 'Running total changes',
-      icon: Icons.waterfall_chart,
+      name: 'Waterfall',
+      description: 'Cumulative effect',
+      icon: Icons.waterfall_chart_rounded,
+      color: const Color(0xFF0EA5E9),
+      category: ChartCategory.statistical,
       builder: (context) => const WaterfallChartExample(),
     ),
     ChartExample(
-      name: 'Box Plot Chart',
-      description: 'Statistical distribution',
-      icon: Icons.candlestick_chart,
+      name: 'Box Plot',
+      description: 'Statistical summary',
+      icon: Icons.candlestick_chart_rounded,
+      color: const Color(0xFFF97316),
+      category: ChartCategory.statistical,
       builder: (context) => const BoxPlotChartExample(),
     ),
+    // Hierarchical Charts
     ChartExample(
-      name: 'Funnel Chart',
-      description: 'Conversion funnel',
-      icon: Icons.filter_alt,
+      name: 'Funnel',
+      description: 'Conversion pipeline',
+      icon: Icons.filter_alt_rounded,
+      color: const Color(0xFF8B5CF6),
+      category: ChartCategory.hierarchical,
       builder: (context) => const FunnelChartExample(),
     ),
     ChartExample(
-      name: 'Pyramid Chart',
+      name: 'Pyramid',
       description: 'Hierarchical layers',
-      icon: Icons.change_history,
+      icon: Icons.change_history_rounded,
+      color: const Color(0xFFF59E0B),
+      category: ChartCategory.hierarchical,
       builder: (context) => const PyramidChartExample(),
     ),
     ChartExample(
-      name: 'Heatmap Chart',
-      description: 'Grid color intensity',
-      icon: Icons.grid_on,
+      name: 'Heatmap',
+      description: 'Intensity matrix',
+      icon: Icons.grid_on_rounded,
+      color: const Color(0xFFEF4444),
+      category: ChartCategory.hierarchical,
       builder: (context) => const HeatmapChartExample(),
     ),
     ChartExample(
-      name: 'Treemap Chart',
-      description: 'Hierarchical rectangles',
-      icon: Icons.dashboard,
+      name: 'Treemap',
+      description: 'Nested rectangles',
+      icon: Icons.dashboard_rounded,
+      color: const Color(0xFF22C55E),
+      category: ChartCategory.hierarchical,
       builder: (context) => const TreemapChartExample(),
     ),
     ChartExample(
-      name: 'Sunburst Chart',
-      description: 'Hierarchical rings',
-      icon: Icons.wb_sunny,
+      name: 'Sunburst',
+      description: 'Radial hierarchy',
+      icon: Icons.wb_sunny_rounded,
+      color: const Color(0xFFFBBF24),
+      category: ChartCategory.hierarchical,
       builder: (context) => const SunburstChartExample(),
     ),
+    // Specialty Charts
     ChartExample(
-      name: 'Bullet Chart',
-      description: 'KPI performance indicators',
-      icon: Icons.linear_scale,
+      name: 'Bullet',
+      description: 'KPI indicators',
+      icon: Icons.linear_scale_rounded,
+      color: const Color(0xFF64748B),
+      category: ChartCategory.specialty,
       builder: (context) => const BulletChartExample(),
     ),
     ChartExample(
-      name: 'Step Chart',
-      description: 'Step-wise line visualization',
-      icon: Icons.stairs,
+      name: 'Step',
+      description: 'Discrete changes',
+      icon: Icons.stairs_rounded,
+      color: const Color(0xFF0891B2),
+      category: ChartCategory.specialty,
       builder: (context) => const StepChartExample(),
     ),
     ChartExample(
-      name: 'Range Chart',
-      description: 'Min/max range bars',
-      icon: Icons.swap_vert,
+      name: 'Range',
+      description: 'Min/max values',
+      icon: Icons.swap_vert_rounded,
+      color: const Color(0xFF7C3AED),
+      category: ChartCategory.specialty,
       builder: (context) => const RangeChartExample(),
     ),
     ChartExample(
-      name: 'Lollipop Chart',
-      description: 'Bars with circle markers',
-      icon: Icons.radio_button_checked,
+      name: 'Lollipop',
+      description: 'Values with markers',
+      icon: Icons.radio_button_checked_rounded,
+      color: const Color(0xFFDB2777),
+      category: ChartCategory.specialty,
       builder: (context) => const LollipopChartExample(),
     ),
     ChartExample(
-      name: 'Dumbbell Chart',
-      description: 'Before/after comparisons',
-      icon: Icons.compare_arrows,
+      name: 'Dumbbell',
+      description: 'Before & after',
+      icon: Icons.compare_arrows_rounded,
+      color: const Color(0xFF059669),
+      category: ChartCategory.specialty,
       builder: (context) => const DumbbellChartExample(),
     ),
     ChartExample(
-      name: 'Slope Chart',
-      description: 'Value changes over time',
-      icon: Icons.trending_up,
+      name: 'Slope',
+      description: 'Trend changes',
+      icon: Icons.trending_up_rounded,
+      color: const Color(0xFF2563EB),
+      category: ChartCategory.specialty,
       builder: (context) => const SlopeChartExample(),
     ),
     ChartExample(
-      name: 'Rose Chart',
-      description: 'Circular bar chart',
-      icon: Icons.donut_small,
+      name: 'Rose',
+      description: 'Polar bar chart',
+      icon: Icons.donut_small_rounded,
+      color: const Color(0xFFE11D48),
+      category: ChartCategory.specialty,
       builder: (context) => const RoseChartExample(),
     ),
     ChartExample(
-      name: 'Bump Chart',
+      name: 'Bump',
       description: 'Ranking over time',
-      icon: Icons.leaderboard,
+      icon: Icons.leaderboard_rounded,
+      color: const Color(0xFF9333EA),
+      category: ChartCategory.specialty,
       builder: (context) => const BumpChartExample(),
     ),
     ChartExample(
-      name: 'Calendar Heatmap',
-      description: 'GitHub-style contributions',
-      icon: Icons.calendar_month,
+      name: 'Calendar',
+      description: 'GitHub-style heatmap',
+      icon: Icons.calendar_month_rounded,
+      color: const Color(0xFF16A34A),
+      category: ChartCategory.specialty,
       builder: (context) => const CalendarHeatmapExample(),
     ),
     ChartExample(
-      name: 'Gantt Chart',
+      name: 'Gantt',
       description: 'Project timeline',
-      icon: Icons.view_timeline,
+      icon: Icons.view_timeline_rounded,
+      color: const Color(0xFF0284C7),
+      category: ChartCategory.specialty,
       builder: (context) => const GanttChartExample(),
     ),
     ChartExample(
-      name: 'Sankey Chart',
-      description: 'Flow diagram',
-      icon: Icons.account_tree,
+      name: 'Sankey',
+      description: 'Flow visualization',
+      icon: Icons.account_tree_rounded,
+      color: const Color(0xFFC026D3),
+      category: ChartCategory.specialty,
       builder: (context) => const SankeyChartExample(),
     ),
   ];
+
+  List<ChartExample> get _filteredExamples {
+    if (_selectedCategory == ChartCategory.all) return _examples;
+    return _examples.where((e) => e.category == _selectedCategory).toList();
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(viewportFraction: 1.0);
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    _fabAnimationController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
     final isWideScreen = screenWidth > 900;
     final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
 
-    // Responsive padding based on screen size
-    final chartPadding = isWideScreen ? 24.0 : 12.0;
-    final chartInnerPadding = isWideScreen ? 20.0 : 12.0;
+    if (isWideScreen) {
+      return _buildDesktopLayout(theme, isDark);
+    }
+    return _buildMobileLayout(theme, isDark);
+  }
+
+  Widget _buildMobileLayout(ThemeData theme, bool isDark) {
+    final filteredExamples = _filteredExamples;
+    final safeSelectedIndex = _selectedIndex.clamp(0, filteredExamples.length - 1);
+    final currentExample = filteredExamples[safeSelectedIndex];
 
     return Scaffold(
-      backgroundColor: theme.colorScheme.surface,
-      body: Row(
+      backgroundColor: isDark ? const Color(0xFF0F0F1A) : theme.colorScheme.surface,
+      body: SafeArea(
+        child: Column(
+          children: [
+            // Header with gradient
+            _buildMobileHeader(theme, isDark, currentExample),
+            // Category chips
+            _buildCategoryChips(theme, isDark),
+            // Chart area
+            Expanded(
+              child: _buildMobileChartArea(theme, isDark, filteredExamples, safeSelectedIndex),
+            ),
+            // Bottom navigation dots
+            _buildPageIndicator(theme, isDark, filteredExamples, safeSelectedIndex),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileHeader(ThemeData theme, bool isDark, ChartExample currentExample) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: isDark
+              ? [const Color(0xFF1A1A2E), const Color(0xFF16213E)]
+              : [theme.colorScheme.primaryContainer, theme.colorScheme.secondaryContainer],
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          if (isWideScreen)
-            Container(
-              width: 280,
-              decoration: BoxDecoration(
-                color: theme.colorScheme.surfaceContainerLow,
-                border: Border(
-                  right: BorderSide(
-                    color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [currentExample.color, currentExample.color.withValues(alpha: 0.7)],
+                  ),
+                  borderRadius: BorderRadius.circular(14),
+                  boxShadow: [
+                    BoxShadow(
+                      color: currentExample.color.withValues(alpha: 0.4),
+                      blurRadius: 12,
+                      offset: const Offset(0, 4),
+                    ),
+                  ],
+                ),
+                child: Icon(
+                  currentExample.icon,
+                  color: Colors.white,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Chartify',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                        letterSpacing: -0.5,
+                      ),
+                    ),
+                    Text(
+                      '${_examples.length} Chart Types',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: isDark ? Colors.white60 : theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton(
+                onPressed: () => _showChartPicker(context),
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                ),
+                icon: Icon(
+                  Icons.apps_rounded,
+                  color: isDark ? Colors.white70 : theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryChips(ThemeData theme, bool isDark) {
+    final categories = [
+      (ChartCategory.all, 'All', Icons.grid_view_rounded),
+      (ChartCategory.basic, 'Basic', Icons.show_chart_rounded),
+      (ChartCategory.advanced, 'Advanced', Icons.auto_graph_rounded),
+      (ChartCategory.statistical, 'Stats', Icons.analytics_rounded),
+      (ChartCategory.hierarchical, 'Hierarchy', Icons.account_tree_rounded),
+      (ChartCategory.specialty, 'Specialty', Icons.star_rounded),
+    ];
+
+    return Container(
+      height: 50,
+      margin: const EdgeInsets.only(top: 8),
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: categories.length,
+        itemBuilder: (context, index) {
+          final (category, label, icon) = categories[index];
+          final isSelected = _selectedCategory == category;
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: FilterChip(
+              selected: isSelected,
+              showCheckmark: false,
+              avatar: Icon(
+                icon,
+                size: 16,
+                color: isSelected
+                    ? Colors.white
+                    : (isDark ? Colors.white60 : theme.colorScheme.onSurfaceVariant),
+              ),
+              label: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDark ? Colors.white70 : theme.colorScheme.onSurface),
+                ),
+              ),
+              backgroundColor: isDark ? const Color(0xFF1E1E2D) : theme.colorScheme.surfaceContainerHighest,
+              selectedColor: theme.colorScheme.primary,
+              side: BorderSide.none,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              onSelected: (_) {
+                setState(() {
+                  _selectedCategory = category;
+                  _selectedIndex = 0;
+                  _pageController.jumpToPage(0);
+                });
+              },
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildMobileChartArea(ThemeData theme, bool isDark, List<ChartExample> examples, int selectedIndex) {
+    return PageView.builder(
+      controller: _pageController,
+      itemCount: examples.length,
+      onPageChanged: (index) {
+        setState(() => _selectedIndex = index);
+      },
+      itemBuilder: (context, index) {
+        final example = examples[index];
+        return Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
+          child: Column(
+            children: [
+              // Chart title card
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: isDark ? const Color(0xFF1E1E2D) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: example.color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(example.icon, color: example.color, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            example.name,
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            example.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white54 : theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: example.color.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        '${index + 1}/${examples.length}',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: example.color,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 12),
+              // Chart container
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1E1E2D) : Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(
+                      color: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: example.color.withValues(alpha: isDark ? 0.1 : 0.05),
+                        blurRadius: 20,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: example.builder(context),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPageIndicator(ThemeData theme, bool isDark, List<ChartExample> examples, int selectedIndex) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 16),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Previous button
+          IconButton(
+            onPressed: selectedIndex > 0
+                ? () => _pageController.previousPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                    )
+                : null,
+            icon: Icon(
+              Icons.chevron_left_rounded,
+              color: selectedIndex > 0
+                  ? (isDark ? Colors.white70 : theme.colorScheme.primary)
+                  : (isDark ? Colors.white24 : theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+            ),
+          ),
+          // Dots
+          SizedBox(
+            height: 8,
+            child: ListView.builder(
+              shrinkWrap: true,
+              scrollDirection: Axis.horizontal,
+              itemCount: math.min(examples.length, 7),
+              itemBuilder: (context, index) {
+                final dotIndex = _getDotIndex(index, selectedIndex, examples.length);
+                final isSelected = dotIndex == selectedIndex;
+                final distance = (dotIndex - selectedIndex).abs();
+                final scale = distance == 0 ? 1.0 : (distance == 1 ? 0.7 : 0.5);
+
+                return AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  margin: const EdgeInsets.symmetric(horizontal: 3),
+                  width: isSelected ? 24 : 8 * scale,
+                  height: 8 * scale,
+                  decoration: BoxDecoration(
+                    color: isSelected
+                        ? examples[selectedIndex].color
+                        : (isDark ? Colors.white24 : theme.colorScheme.outline.withValues(alpha: 0.3)),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                );
+              },
+            ),
+          ),
+          // Next button
+          IconButton(
+            onPressed: selectedIndex < examples.length - 1
+                ? () => _pageController.nextPage(
+                      duration: const Duration(milliseconds: 300),
+                      curve: Curves.easeOutCubic,
+                    )
+                : null,
+            icon: Icon(
+              Icons.chevron_right_rounded,
+              color: selectedIndex < examples.length - 1
+                  ? (isDark ? Colors.white70 : theme.colorScheme.primary)
+                  : (isDark ? Colors.white24 : theme.colorScheme.onSurface.withValues(alpha: 0.3)),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  int _getDotIndex(int displayIndex, int selectedIndex, int total) {
+    if (total <= 7) return displayIndex;
+    final start = (selectedIndex - 3).clamp(0, total - 7);
+    return start + displayIndex;
+  }
+
+  void _showChartPicker(BuildContext context) {
+    final theme = Theme.of(context);
+    final isDark = theme.brightness == Brightness.dark;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => DraggableScrollableSheet(
+        initialChildSize: 0.7,
+        minChildSize: 0.5,
+        maxChildSize: 0.9,
+        builder: (context, scrollController) => Container(
+          decoration: BoxDecoration(
+            color: isDark ? const Color(0xFF1E1E2D) : Colors.white,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            children: [
+              // Handle
+              Container(
+                margin: const EdgeInsets.only(top: 12),
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: isDark ? Colors.white24 : Colors.black12,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+              ),
+              // Title
+              Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'All Charts',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: isDark ? Colors.white : theme.colorScheme.onSurface,
                   ),
                 ),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(24),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primary,
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: Icon(
-                            Icons.bar_chart_rounded,
-                            color: theme.colorScheme.onPrimary,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Chartify',
-                          style: theme.textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
+              // Grid
+              Expanded(
+                child: GridView.builder(
+                  controller: scrollController,
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 24),
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 3,
+                    childAspectRatio: 0.9,
+                    crossAxisSpacing: 12,
+                    mainAxisSpacing: 12,
                   ),
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
-                      itemCount: _examples.length,
-                      itemBuilder: (context, index) {
-                        final example = _examples[index];
-                        final isSelected = index == _selectedIndex;
-                        return Padding(
-                          padding: const EdgeInsets.only(bottom: 4),
-                          child: ListTile(
-                            leading: Icon(
-                              example.icon,
-                              color: isSelected
-                                  ? theme.colorScheme.primary
-                                  : theme.colorScheme.onSurfaceVariant,
+                  itemCount: _examples.length,
+                  itemBuilder: (context, index) {
+                    final example = _examples[index];
+                    final isSelected = index == _selectedIndex && _selectedCategory == ChartCategory.all;
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          _selectedCategory = ChartCategory.all;
+                          _selectedIndex = index;
+                          _pageController.jumpToPage(index);
+                        });
+                        Navigator.pop(context);
+                      },
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? example.color.withValues(alpha: 0.2)
+                              : (isDark ? const Color(0xFF252538) : theme.colorScheme.surfaceContainerHighest),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(
+                            color: isSelected ? example.color : Colors.transparent,
+                            width: 2,
+                          ),
+                        ),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: example.color.withValues(alpha: 0.15),
+                                shape: BoxShape.circle,
+                              ),
+                              child: Icon(example.icon, color: example.color, size: 24),
                             ),
-                            title: Text(
+                            const SizedBox(height: 8),
+                            Text(
                               example.name,
                               style: TextStyle(
-                                fontWeight: isSelected
-                                    ? FontWeight.w600
-                                    : FontWeight.normal,
-                                color: isSelected
-                                    ? theme.colorScheme.primary
-                                    : null,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: isDark ? Colors.white : theme.colorScheme.onSurface,
                               ),
-                            ),
-                            subtitle: Text(
-                              example.description,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            selected: isSelected,
-                            selectedTileColor:
-                                theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            onTap: () => setState(() => _selectedIndex = index),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          Expanded(
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.surface,
-                    border: Border(
-                      bottom: BorderSide(
-                        color: theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
-                      ),
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      if (!isWideScreen) ...[
-                        IconButton(
-                          icon: const Icon(Icons.menu),
-                          onPressed: () {
-                            showModalBottomSheet(
-                              context: context,
-                              builder: (context) => _buildMobileNav(context),
-                            );
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                      ],
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              _examples[_selectedIndex].name,
-                              style: theme.textTheme.titleLarge?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              _examples[_selectedIndex].description,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
+                              textAlign: TextAlign.center,
                             ),
                           ],
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDesktopLayout(ThemeData theme, bool isDark) {
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F0F1A) : theme.colorScheme.surface,
+      body: Row(
+        children: [
+          // Sidebar
+          Container(
+            width: 280,
+            decoration: BoxDecoration(
+              color: isDark ? const Color(0xFF1A1A2E) : theme.colorScheme.surfaceContainerLow,
+              border: Border(
+                right: BorderSide(
+                  color: isDark ? Colors.white10 : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                // Logo
+                Container(
+                  padding: const EdgeInsets.all(24),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [theme.colorScheme.primary, theme.colorScheme.secondary],
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(Icons.bar_chart_rounded, color: Colors.white),
+                      ),
+                      const SizedBox(width: 12),
+                      Text(
+                        'Chartify',
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w700,
+                          color: isDark ? Colors.white : theme.colorScheme.onSurface,
                         ),
                       ),
                     ],
                   ),
                 ),
+                // List
                 Expanded(
-                  child: Container(
-                    padding: EdgeInsets.all(chartPadding),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerLowest,
-                        borderRadius: BorderRadius.circular(16),
-                        border: Border.all(
-                          color: theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                  child: ListView.builder(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    itemCount: _examples.length,
+                    itemBuilder: (context, index) {
+                      final example = _examples[index];
+                      final isSelected = index == _selectedIndex;
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: ListTile(
+                          leading: Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: isSelected ? example.color : example.color.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(
+                              example.icon,
+                              size: 18,
+                              color: isSelected ? Colors.white : example.color,
+                            ),
+                          ),
+                          title: Text(
+                            example.name,
+                            style: TextStyle(
+                              fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+                              color: isSelected
+                                  ? (isDark ? Colors.white : theme.colorScheme.primary)
+                                  : (isDark ? Colors.white70 : null),
+                            ),
+                          ),
+                          subtitle: Text(
+                            example.description,
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: isDark ? Colors.white38 : theme.colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          selected: isSelected,
+                          selectedTileColor: isDark
+                              ? Colors.white.withValues(alpha: 0.05)
+                              : theme.colorScheme.primaryContainer.withValues(alpha: 0.5),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                          onTap: () => setState(() => _selectedIndex = index),
                         ),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Main content
+          Expanded(
+            child: Column(
+              children: [
+                // Header
+                Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: isDark ? const Color(0xFF1A1A2E) : theme.colorScheme.surface,
+                    border: Border(
+                      bottom: BorderSide(
+                        color: isDark ? Colors.white10 : theme.colorScheme.outlineVariant.withValues(alpha: 0.5),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: _examples[_selectedIndex].color.withValues(alpha: 0.15),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Icon(
+                          _examples[_selectedIndex].icon,
+                          color: _examples[_selectedIndex].color,
+                        ),
+                      ),
+                      const SizedBox(width: 16),
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            _examples[_selectedIndex].name,
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700,
+                              color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                            ),
+                          ),
+                          Text(
+                            _examples[_selectedIndex].description,
+                            style: TextStyle(
+                              color: isDark ? Colors.white54 : theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),
-                      padding: EdgeInsets.all(chartInnerPadding),
+                    ],
+                  ),
+                ),
+                // Chart
+                Expanded(
+                  child: Padding(
+                    padding: const EdgeInsets.all(24),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF1E1E2D) : Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: isDark ? Colors.white10 : theme.colorScheme.outlineVariant.withValues(alpha: 0.3),
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: isDark ? 0.3 : 0.05),
+                            blurRadius: 20,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      padding: const EdgeInsets.all(24),
                       child: _examples[_selectedIndex].builder(context),
                     ),
                   ),
@@ -425,26 +1001,6 @@ class _ChartGalleryState extends State<ChartGallery> {
       ),
     );
   }
-
-  Widget _buildMobileNav(BuildContext context) {
-    return ListView.builder(
-      shrinkWrap: true,
-      itemCount: _examples.length,
-      itemBuilder: (context, index) {
-        final example = _examples[index];
-        return ListTile(
-          leading: Icon(example.icon),
-          title: Text(example.name),
-          subtitle: Text(example.description),
-          selected: index == _selectedIndex,
-          onTap: () {
-            setState(() => _selectedIndex = index);
-            Navigator.pop(context);
-          },
-        );
-      },
-    );
-  }
 }
 
 class ChartExample {
@@ -453,12 +1009,16 @@ class ChartExample {
     required this.description,
     required this.icon,
     required this.builder,
+    required this.color,
+    this.category = ChartCategory.basic,
   });
 
   final String name;
   final String description;
   final IconData icon;
   final Widget Function(BuildContext context) builder;
+  final Color color;
+  final ChartCategory category;
 }
 
 // ============== Chart Examples ==============
