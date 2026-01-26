@@ -7,8 +7,21 @@ void main() {
   runApp(const ChartifyExampleApp());
 }
 
-class ChartifyExampleApp extends StatelessWidget {
+class ChartifyExampleApp extends StatefulWidget {
   const ChartifyExampleApp({super.key});
+
+  @override
+  State<ChartifyExampleApp> createState() => _ChartifyExampleAppState();
+}
+
+class _ChartifyExampleAppState extends State<ChartifyExampleApp> {
+  bool _isDarkMode = true;
+
+  void _toggleTheme() {
+    setState(() {
+      _isDarkMode = !_isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,8 +49,11 @@ class ChartifyExampleApp extends StatelessWidget {
           ChartThemeData.fromSeed(const Color(0xFF6366F1), brightness: Brightness.dark),
         ],
       ),
-      themeMode: ThemeMode.dark,
-      home: const ChartGallery(),
+      themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+      home: ChartGallery(
+        isDarkMode: _isDarkMode,
+        onThemeToggle: _toggleTheme,
+      ),
     );
   }
 }
@@ -46,7 +62,14 @@ class ChartifyExampleApp extends StatelessWidget {
 enum ChartCategory { all, basic, advanced, statistical, hierarchical, specialty }
 
 class ChartGallery extends StatefulWidget {
-  const ChartGallery({super.key});
+  const ChartGallery({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  });
+
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
 
   @override
   State<ChartGallery> createState() => _ChartGalleryState();
@@ -454,6 +477,27 @@ class _ChartGalleryState extends State<ChartGallery> with TickerProviderStateMix
                 ),
               ),
               IconButton(
+                onPressed: widget.onThemeToggle,
+                style: IconButton.styleFrom(
+                  backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                ),
+                icon: AnimatedSwitcher(
+                  duration: const Duration(milliseconds: 300),
+                  transitionBuilder: (child, animation) {
+                    return RotationTransition(
+                      turns: Tween(begin: 0.75, end: 1.0).animate(animation),
+                      child: FadeTransition(opacity: animation, child: child),
+                    );
+                  },
+                  child: Icon(
+                    isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                    key: ValueKey(isDark),
+                    color: isDark ? Colors.amber : theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 4),
+              IconButton(
                 onPressed: () => _showChartPicker(context),
                 style: IconButton.styleFrom(
                   backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
@@ -839,7 +883,7 @@ class _ChartGalleryState extends State<ChartGallery> with TickerProviderStateMix
             ),
             child: Column(
               children: [
-                // Logo
+                // Logo and theme toggle
                 Container(
                   padding: const EdgeInsets.all(24),
                   child: Row(
@@ -855,12 +899,35 @@ class _ChartGalleryState extends State<ChartGallery> with TickerProviderStateMix
                         child: const Icon(Icons.bar_chart_rounded, color: Colors.white),
                       ),
                       const SizedBox(width: 12),
-                      Text(
-                        'Chartify',
-                        style: TextStyle(
-                          fontSize: 22,
-                          fontWeight: FontWeight.w700,
-                          color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                      Expanded(
+                        child: Text(
+                          'Chartify',
+                          style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w700,
+                            color: isDark ? Colors.white : theme.colorScheme.onSurface,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: widget.onThemeToggle,
+                        tooltip: isDark ? 'Switch to Light Mode' : 'Switch to Dark Mode',
+                        style: IconButton.styleFrom(
+                          backgroundColor: isDark ? Colors.white10 : Colors.black.withValues(alpha: 0.05),
+                        ),
+                        icon: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 300),
+                          transitionBuilder: (child, animation) {
+                            return RotationTransition(
+                              turns: Tween(begin: 0.75, end: 1.0).animate(animation),
+                              child: FadeTransition(opacity: animation, child: child),
+                            );
+                          },
+                          child: Icon(
+                            isDark ? Icons.light_mode_rounded : Icons.dark_mode_rounded,
+                            key: ValueKey(isDark),
+                            color: isDark ? Colors.amber : theme.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ),
                     ],
