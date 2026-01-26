@@ -137,12 +137,11 @@ abstract class CartesianChartPainter extends BaseChartPainter {
 
   /// Calculates effective X bounds.
   Bounds _calculateEffectiveXBounds() {
-    var bounds = xBounds ?? calculateXBounds();
-    bounds = bounds.withOverrides(
+    final bounds = xBounds ?? calculateXBounds();
+    return bounds.withOverrides(
       minOverride: config.xMin,
       maxOverride: config.xMax,
     );
-    return bounds;
   }
 
   /// Calculates effective Y bounds.

@@ -1,6 +1,8 @@
+import 'dart:async' show unawaited;
 import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
+import 'package:vector_math/vector_math_64.dart' show Vector3;
 
 /// Modern easing curves inspired by Material Design 3.
 ///
@@ -363,7 +365,7 @@ class StaggeredAnimationController {
       if (i > 0) {
         await Future<void>.delayed(_staggerDelay);
       }
-      _controllers[i].forward();
+      unawaited(_controllers[i].forward());
     }
   }
 
@@ -562,22 +564,14 @@ class HoverEffectPainter {
   static Matrix4 createScaleTransform(
     double scale,
     Offset center,
-  ) {
-    // ignore: deprecated_member_use
-    return Matrix4.identity()
-      // ignore: deprecated_member_use
-      ..translate(center.dx, center.dy)
-      // ignore: deprecated_member_use
-      ..scale(scale)
-      // ignore: deprecated_member_use
-      ..translate(-center.dx, -center.dy);
-  }
+  ) => Matrix4.identity()
+      ..translateByVector3(Vector3(center.dx, center.dy, 0))
+      ..scaleByVector3(Vector3(scale, scale, 1))
+      ..translateByVector3(Vector3(-center.dx, -center.dy, 0));
 
   /// Applies lift transform (Y offset) for hover effect.
-  // ignore: deprecated_member_use
   static Matrix4 createLiftTransform(double lift) =>
-      // ignore: deprecated_member_use
-      Matrix4.identity()..translate(0.0, -lift);
+      Matrix4.identity()..translateByVector3(Vector3(0, -lift, 0));
 
   /// Combines scale and lift transforms for full hover effect.
   static Matrix4 createHoverTransform(
@@ -585,12 +579,9 @@ class HoverEffectPainter {
     double lift,
     Offset center,
   ) => Matrix4.identity()
-      // ignore: deprecated_member_use
-      ..translate(center.dx, center.dy - lift)
-      // ignore: deprecated_member_use
-      ..scale(scale)
-      // ignore: deprecated_member_use
-      ..translate(-center.dx, -center.dy);
+      ..translateByVector3(Vector3(center.dx, center.dy - lift, 0))
+      ..scaleByVector3(Vector3(scale, scale, 1))
+      ..translateByVector3(Vector3(-center.dx, -center.dy, 0));
 }
 
 /// Preset animation configurations for common use cases.

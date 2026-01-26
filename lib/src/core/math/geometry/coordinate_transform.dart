@@ -229,9 +229,7 @@ class PolarCoordinateTransform {
     return x - x3 / 6 + x5 / 120 - x7 / 5040;
   }
 
-  static double _cos(double x) {
-    return _sin(x + 1.5707963267948966); // cos(x) = sin(x + π/2)
-  }
+  static double _cos(double x) => _sin(x + 1.5707963267948966); // cos(x) = sin(x + π/2)
 
   static double _sqrt(double x) {
     if (x <= 0) return 0;

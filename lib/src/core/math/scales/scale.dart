@@ -419,16 +419,14 @@ class BandScale<T> extends Scale<T> {
   String Function(T) tickFormatter({int? precision}) => (value) => value.toString();
 
   @override
-  Scale<T> copyWithDomain(T min, T max) {
-    // For band scales, this replaces the entire domain
-    return BandScale<T>(
+  // For band scales, this replaces the entire domain
+  Scale<T> copyWithDomain(T min, T max) => BandScale<T>(
       domain: [min, max],
       range: _range,
       paddingInner: paddingInner,
       paddingOuter: paddingOuter,
       align: align,
     );
-  }
 
   @override
   Scale<T> copyWithRange(double start, double end) => BandScale<T>(

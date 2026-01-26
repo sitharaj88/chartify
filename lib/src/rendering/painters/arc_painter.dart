@@ -544,10 +544,9 @@ class ArcPainter extends SeriesPainter<ArcSeriesConfig>
   }
 
   @override
-  (Bounds, Bounds) calculateBounds() {
-    // Arc charts don't use traditional bounds
-    return (const Bounds(min: 0, max: 1), const Bounds(min: 0, max: 1));
-  }
+  // Arc charts don't use traditional bounds
+  (Bounds, Bounds) calculateBounds() =>
+      (const Bounds(min: 0, max: 1), const Bounds(min: 0, max: 1));
 }
 
 /// Factory for creating arc painters.

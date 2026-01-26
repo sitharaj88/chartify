@@ -338,10 +338,8 @@ class GridRenderer<X, Y> with RendererMixin<GridConfig> implements ChartRenderer
   }
 
   @override
-  EdgeInsets calculateInsets(Size availableSize) {
-    // Grid doesn't require any insets
-    return EdgeInsets.zero;
-  }
+  // Grid doesn't require any insets
+  EdgeInsets calculateInsets(Size availableSize) => EdgeInsets.zero;
 
   @override
   void dispose() {

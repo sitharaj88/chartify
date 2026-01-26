@@ -9,6 +9,11 @@ analyzer:
     missing_required_param: error
     missing_return: error
     must_be_immutable: error
+    # Ignore info-level stylistic rules that conflict with design patterns
+    overridden_fields: ignore  # Intentional in some inheritance patterns
+    library_private_types_in_public_api: ignore  # Would require API changes
+    use_setters_to_change_properties: ignore  # Method names are clearer
+    prefer_int_literals: ignore  # Double literals needed for type safety
   exclude:
     - "**/*.g.dart"
     - "**/*.freezed.dart"
@@ -99,9 +104,9 @@ linter:
     - null_check_on_nullable_type_parameter
     - null_closures
     - omit_local_variable_types
-    - one_member_abstracts
+    # - one_member_abstracts  # Sometimes single-method interfaces are clearer
     - only_throw_errors
-    - overridden_fields
+    # - overridden_fields  # Intentional in some inheritance patterns
     # - package_api_docs  # Removed in Dart 3.7.0
     - package_names
     - package_prefixed_library_names
@@ -115,7 +120,7 @@ linter:
     - prefer_const_constructors_in_immutables
     - prefer_const_declarations
     - prefer_const_literals_to_create_immutables
-    - prefer_constructors_over_static_methods
+    # - prefer_constructors_over_static_methods  # Static factory methods are valid pattern
     - prefer_contains
     - prefer_expression_function_bodies
     - prefer_final_fields

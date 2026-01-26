@@ -498,7 +498,8 @@ class _BarChartPainter extends CustomPainter {
         }
 
         // Calculate bar position
-        double barStart, barEnd;
+        double barStart;
+        double barEnd;
         final yRange = yBounds!.max - yBounds!.min;
         final normalizedValue = (value - yBounds!.min) / yRange;
         final zeroPosition = -yBounds!.min / yRange;
