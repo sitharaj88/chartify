@@ -29,10 +29,13 @@ class ChartController extends ChangeNotifier {
   /// Creates a chart controller.
   ChartController({
     ChartViewport? initialViewport,
-  }) : _viewport = initialViewport ?? const ChartViewport();
+    Set<int>? hiddenSeriesIndices,
+  })  : _viewport = initialViewport ?? const ChartViewport(),
+        _hiddenSeriesIndices = hiddenSeriesIndices?.toSet() ?? {};
 
   ChartViewport _viewport;
   final Set<DataPointIndex> _selectedIndices = {};
+  final Set<int> _hiddenSeriesIndices;
   DataPointInfo? _hoveredPoint;
   DataPointInfo? _tooltipPoint;
   bool _isInteracting = false;
@@ -224,9 +227,82 @@ class ChartController extends ChangeNotifier {
     selectPoint(current.seriesIndex, prevIndex);
   }
 
+  // ============== Series Visibility ==============
+
+  /// The indices of hidden series.
+  Set<int> get hiddenSeriesIndices => Set.unmodifiable(_hiddenSeriesIndices);
+
+  /// Whether any series are hidden.
+  bool get hasHiddenSeries => _hiddenSeriesIndices.isNotEmpty;
+
+  /// Checks if a series is visible.
+  bool isSeriesVisible(int seriesIndex) =>
+      !_hiddenSeriesIndices.contains(seriesIndex);
+
+  /// Checks if a series is hidden.
+  bool isSeriesHidden(int seriesIndex) =>
+      _hiddenSeriesIndices.contains(seriesIndex);
+
+  /// Hides a series.
+  void hideSeries(int seriesIndex) {
+    if (_hiddenSeriesIndices.add(seriesIndex)) {
+      notifyListeners();
+    }
+  }
+
+  /// Shows a previously hidden series.
+  void showSeries(int seriesIndex) {
+    if (_hiddenSeriesIndices.remove(seriesIndex)) {
+      notifyListeners();
+    }
+  }
+
+  /// Toggles the visibility of a series.
+  void toggleSeriesVisibility(int seriesIndex) {
+    if (_hiddenSeriesIndices.contains(seriesIndex)) {
+      _hiddenSeriesIndices.remove(seriesIndex);
+    } else {
+      _hiddenSeriesIndices.add(seriesIndex);
+    }
+    notifyListeners();
+  }
+
+  /// Shows all series.
+  void showAllSeries() {
+    if (_hiddenSeriesIndices.isNotEmpty) {
+      _hiddenSeriesIndices.clear();
+      notifyListeners();
+    }
+  }
+
+  /// Hides all series except the one at the given index.
+  ///
+  /// Useful for "isolate" functionality (double-click to focus on one series).
+  void isolateSeries(int seriesIndex, int totalSeriesCount) {
+    _hiddenSeriesIndices.clear();
+    for (var i = 0; i < totalSeriesCount; i++) {
+      if (i != seriesIndex) {
+        _hiddenSeriesIndices.add(i);
+      }
+    }
+    notifyListeners();
+  }
+
+  /// Returns the visible series indices given the total count.
+  List<int> getVisibleSeriesIndices(int totalSeriesCount) {
+    final visible = <int>[];
+    for (var i = 0; i < totalSeriesCount; i++) {
+      if (!_hiddenSeriesIndices.contains(i)) {
+        visible.add(i);
+      }
+    }
+    return visible;
+  }
+
   @override
   void dispose() {
     _selectedIndices.clear();
+    _hiddenSeriesIndices.clear();
     _hoveredPoint = null;
     _tooltipPoint = null;
     super.dispose();

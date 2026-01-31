@@ -129,6 +129,7 @@ export 'src/charts/specialty/sparkline/sparkline_chart.dart';
 // Components - Axis
 export 'src/components/axis/axis_widget.dart';
 // Components - Legend
+export 'src/components/legend/filterable_legend.dart';
 export 'src/components/legend/legend_widget.dart';
 // Components - Markers
 export 'src/components/markers/marker_registry.dart';
@@ -143,6 +144,8 @@ export 'src/core/base/series.dart' hide FunnelSection, GaugeRange, PieSection;
 export 'src/core/data/data_point.dart';
 // Core - Error Handling
 export 'src/core/errors/chart_error_boundary.dart';
+export 'src/core/errors/chart_logger.dart';
+export 'src/core/errors/error_reporter.dart';
 // Gestures
 export 'src/core/gestures/gesture_detector.dart';
 export 'src/core/gestures/spatial_index.dart';
@@ -156,6 +159,7 @@ export 'src/core/utils/cache_manager.dart';
 export 'src/core/utils/data_decimator.dart';
 export 'src/core/utils/data_validator.dart';
 export 'src/core/utils/object_pool.dart';
+export 'src/plugins/built_in/data_export/data_export_service.dart';
 export 'src/plugins/built_in/export_plugin.dart';
 export 'src/plugins/built_in/zoom_plugin.dart';
 // Plugins
