@@ -14,19 +14,28 @@ class ChartInteractions {
   const ChartInteractions({
     this.enablePan = true,
     this.enableZoom = true,
+    this.enablePinchZoom = true,
+    this.enableScrollWheelZoom = true,
     this.enableTap = true,
     this.enableDoubleTap = true,
+    this.enableDoubleTapZoom = true,
     this.enableLongPress = false,
     this.enableHover = true,
     this.enableTooltip = true,
     this.enableCrosshair = false,
     this.enableSelection = true,
     this.multiSelect = false,
+    this.enableMomentum = true,
+    this.constrainPanToBounds = false,
     this.panAxis = PanAxis.both,
+    this.zoomAxis = ZoomAxis.both,
     this.minZoom = 0.5,
-    this.maxZoom = 5.0,
+    this.maxZoom = 10.0,
     this.zoomSensitivity = 1.0,
+    this.scrollWheelZoomFactor = 1.15,
+    this.doubleTapZoomScale = 2.0,
     this.panSensitivity = 1.0,
+    this.momentumDecay = 0.95,
     this.tooltipBehavior = TooltipBehavior.onTap,
     this.hitTestRadius = 20.0,
   });
@@ -35,33 +44,51 @@ class ChartInteractions {
   const ChartInteractions.none()
       : enablePan = false,
         enableZoom = false,
+        enablePinchZoom = false,
+        enableScrollWheelZoom = false,
         enableTap = false,
         enableDoubleTap = false,
+        enableDoubleTapZoom = false,
         enableLongPress = false,
         enableHover = false,
         enableTooltip = false,
         enableCrosshair = false,
         enableSelection = false,
         multiSelect = false,
+        enableMomentum = false,
+        constrainPanToBounds = false,
         panAxis = PanAxis.both,
+        zoomAxis = ZoomAxis.both,
         minZoom = 1.0,
         maxZoom = 1.0,
         zoomSensitivity = 1.0,
+        scrollWheelZoomFactor = 1.15,
+        doubleTapZoomScale = 2.0,
         panSensitivity = 1.0,
+        momentumDecay = 0.95,
         tooltipBehavior = TooltipBehavior.onTap,
         hitTestRadius = 20.0;
 
   /// Whether panning is enabled.
   final bool enablePan;
 
-  /// Whether zooming is enabled.
+  /// Whether zooming is enabled (master toggle).
   final bool enableZoom;
+
+  /// Whether pinch zoom is enabled (touch devices).
+  final bool enablePinchZoom;
+
+  /// Whether scroll wheel zoom is enabled (desktop).
+  final bool enableScrollWheelZoom;
 
   /// Whether tap interactions are enabled.
   final bool enableTap;
 
-  /// Whether double-tap to zoom is enabled.
+  /// Whether double-tap interactions are enabled.
   final bool enableDoubleTap;
+
+  /// Whether double-tap to zoom is enabled.
+  final bool enableDoubleTapZoom;
 
   /// Whether long press interactions are enabled.
   final bool enableLongPress;
@@ -81,8 +108,17 @@ class ChartInteractions {
   /// Whether multiple selection is allowed.
   final bool multiSelect;
 
+  /// Whether momentum/inertia is applied after pan gestures.
+  final bool enableMomentum;
+
+  /// Whether to constrain panning to data bounds.
+  final bool constrainPanToBounds;
+
   /// The axis along which panning is allowed.
   final PanAxis panAxis;
+
+  /// The axis along which zooming is allowed.
+  final ZoomAxis zoomAxis;
 
   /// Minimum zoom level.
   final double minZoom;
@@ -90,11 +126,20 @@ class ChartInteractions {
   /// Maximum zoom level.
   final double maxZoom;
 
-  /// Zoom sensitivity multiplier.
+  /// Zoom sensitivity multiplier for pinch gestures.
   final double zoomSensitivity;
+
+  /// Zoom factor for scroll wheel (e.g., 1.15 = 15% per scroll).
+  final double scrollWheelZoomFactor;
+
+  /// Scale factor for double-tap zoom.
+  final double doubleTapZoomScale;
 
   /// Pan sensitivity multiplier.
   final double panSensitivity;
+
+  /// Momentum decay factor (0-1, higher = longer momentum).
+  final double momentumDecay;
 
   /// When tooltips are shown.
   final TooltipBehavior tooltipBehavior;
@@ -106,38 +151,56 @@ class ChartInteractions {
   ChartInteractions copyWith({
     bool? enablePan,
     bool? enableZoom,
+    bool? enablePinchZoom,
+    bool? enableScrollWheelZoom,
     bool? enableTap,
     bool? enableDoubleTap,
+    bool? enableDoubleTapZoom,
     bool? enableLongPress,
     bool? enableHover,
     bool? enableTooltip,
     bool? enableCrosshair,
     bool? enableSelection,
     bool? multiSelect,
+    bool? enableMomentum,
+    bool? constrainPanToBounds,
     PanAxis? panAxis,
+    ZoomAxis? zoomAxis,
     double? minZoom,
     double? maxZoom,
     double? zoomSensitivity,
+    double? scrollWheelZoomFactor,
+    double? doubleTapZoomScale,
     double? panSensitivity,
+    double? momentumDecay,
     TooltipBehavior? tooltipBehavior,
     double? hitTestRadius,
   }) =>
       ChartInteractions(
         enablePan: enablePan ?? this.enablePan,
         enableZoom: enableZoom ?? this.enableZoom,
+        enablePinchZoom: enablePinchZoom ?? this.enablePinchZoom,
+        enableScrollWheelZoom: enableScrollWheelZoom ?? this.enableScrollWheelZoom,
         enableTap: enableTap ?? this.enableTap,
         enableDoubleTap: enableDoubleTap ?? this.enableDoubleTap,
+        enableDoubleTapZoom: enableDoubleTapZoom ?? this.enableDoubleTapZoom,
         enableLongPress: enableLongPress ?? this.enableLongPress,
         enableHover: enableHover ?? this.enableHover,
         enableTooltip: enableTooltip ?? this.enableTooltip,
         enableCrosshair: enableCrosshair ?? this.enableCrosshair,
         enableSelection: enableSelection ?? this.enableSelection,
         multiSelect: multiSelect ?? this.multiSelect,
+        enableMomentum: enableMomentum ?? this.enableMomentum,
+        constrainPanToBounds: constrainPanToBounds ?? this.constrainPanToBounds,
         panAxis: panAxis ?? this.panAxis,
+        zoomAxis: zoomAxis ?? this.zoomAxis,
         minZoom: minZoom ?? this.minZoom,
         maxZoom: maxZoom ?? this.maxZoom,
         zoomSensitivity: zoomSensitivity ?? this.zoomSensitivity,
+        scrollWheelZoomFactor: scrollWheelZoomFactor ?? this.scrollWheelZoomFactor,
+        doubleTapZoomScale: doubleTapZoomScale ?? this.doubleTapZoomScale,
         panSensitivity: panSensitivity ?? this.panSensitivity,
+        momentumDecay: momentumDecay ?? this.momentumDecay,
         tooltipBehavior: tooltipBehavior ?? this.tooltipBehavior,
         hitTestRadius: hitTestRadius ?? this.hitTestRadius,
       );
@@ -149,42 +212,60 @@ class ChartInteractions {
           runtimeType == other.runtimeType &&
           enablePan == other.enablePan &&
           enableZoom == other.enableZoom &&
+          enablePinchZoom == other.enablePinchZoom &&
+          enableScrollWheelZoom == other.enableScrollWheelZoom &&
           enableTap == other.enableTap &&
           enableDoubleTap == other.enableDoubleTap &&
+          enableDoubleTapZoom == other.enableDoubleTapZoom &&
           enableLongPress == other.enableLongPress &&
           enableHover == other.enableHover &&
           enableTooltip == other.enableTooltip &&
           enableCrosshair == other.enableCrosshair &&
           enableSelection == other.enableSelection &&
           multiSelect == other.multiSelect &&
+          enableMomentum == other.enableMomentum &&
+          constrainPanToBounds == other.constrainPanToBounds &&
           panAxis == other.panAxis &&
+          zoomAxis == other.zoomAxis &&
           minZoom == other.minZoom &&
           maxZoom == other.maxZoom &&
           zoomSensitivity == other.zoomSensitivity &&
+          scrollWheelZoomFactor == other.scrollWheelZoomFactor &&
+          doubleTapZoomScale == other.doubleTapZoomScale &&
           panSensitivity == other.panSensitivity &&
+          momentumDecay == other.momentumDecay &&
           tooltipBehavior == other.tooltipBehavior &&
           hitTestRadius == other.hitTestRadius;
 
   @override
-  int get hashCode => Object.hash(
+  int get hashCode => Object.hashAll([
         enablePan,
         enableZoom,
+        enablePinchZoom,
+        enableScrollWheelZoom,
         enableTap,
         enableDoubleTap,
+        enableDoubleTapZoom,
         enableLongPress,
         enableHover,
         enableTooltip,
         enableCrosshair,
         enableSelection,
         multiSelect,
+        enableMomentum,
+        constrainPanToBounds,
         panAxis,
+        zoomAxis,
         minZoom,
         maxZoom,
         zoomSensitivity,
+        scrollWheelZoomFactor,
+        doubleTapZoomScale,
         panSensitivity,
+        momentumDecay,
         tooltipBehavior,
         hitTestRadius,
-      );
+      ]);
 }
 
 /// Axes along which panning can occur.
@@ -196,6 +277,18 @@ enum PanAxis {
   horizontal,
 
   /// Pan only vertically.
+  vertical,
+}
+
+/// Axes along which zooming can occur.
+enum ZoomAxis {
+  /// Zoom along both axes.
+  both,
+
+  /// Zoom only horizontally (time series charts).
+  horizontal,
+
+  /// Zoom only vertically.
   vertical,
 }
 
@@ -288,10 +381,13 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   double _lastScale = 1;
   bool _isTouching = false;
   Timer? _tooltipHideTimer;
+  Timer? _momentumTimer;
+  Offset _velocity = Offset.zero;
 
   @override
   void dispose() {
     _tooltipHideTimer?.cancel();
+    _momentumTimer?.cancel();
     super.dispose();
   }
 
@@ -306,6 +402,15 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
       child = MouseRegion(
         onHover: _handleHover,
         onExit: _handleExit,
+        child: child,
+      );
+    }
+
+    // Add scroll wheel zoom support for desktop
+    if (widget.interactions.enableZoom &&
+        widget.interactions.enableScrollWheelZoom) {
+      child = Listener(
+        onPointerSignal: _handlePointerSignal,
         child: child,
       );
     }
@@ -342,6 +447,40 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
               : null,
       child: child,
     );
+  }
+
+  // ============== Scroll Wheel Zoom ==============
+
+  void _handlePointerSignal(PointerSignalEvent event) {
+    if (event is PointerScrollEvent) {
+      final scrollDelta = event.scrollDelta.dy;
+      if (scrollDelta == 0) return;
+
+      final zoomFactor = widget.interactions.scrollWheelZoomFactor;
+      final scale = scrollDelta < 0 ? zoomFactor : 1 / zoomFactor;
+
+      // Apply zoom based on zoom axis configuration
+      switch (widget.interactions.zoomAxis) {
+        case ZoomAxis.both:
+          widget.controller.zoom(scale, event.localPosition);
+        case ZoomAxis.horizontal:
+          final viewport = widget.controller.viewport;
+          widget.controller.viewport = viewport.zoomX(
+            scale,
+            event.localPosition.dx,
+            min: widget.interactions.minZoom,
+            max: widget.interactions.maxZoom,
+          );
+        case ZoomAxis.vertical:
+          final viewport = widget.controller.viewport;
+          widget.controller.viewport = viewport.zoomY(
+            scale,
+            event.localPosition.dy,
+            min: widget.interactions.minZoom,
+            max: widget.interactions.maxZoom,
+          );
+      }
+    }
   }
 
   // ============== Instant Touch Tooltip (no long press needed) ==============
@@ -433,9 +572,18 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   void _handleDoubleTap(TapDownDetails details) {
     widget.onDoubleTap?.call(details);
 
-    // Reset zoom on double-tap
-    if (widget.interactions.enableZoom) {
-      widget.controller.resetViewport();
+    if (widget.interactions.enableZoom && widget.interactions.enableDoubleTapZoom) {
+      final viewport = widget.controller.viewport;
+
+      // If already zoomed, reset. Otherwise, zoom in.
+      if (viewport.scaleX > 1.5 || viewport.scaleY > 1.5) {
+        widget.controller.animateReset();
+      } else {
+        widget.controller.animateZoom(
+          widget.interactions.doubleTapZoomScale,
+          details.localPosition,
+        );
+      }
     }
   }
 
@@ -444,25 +592,49 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
   }
 
   void _handleScaleStart(ScaleStartDetails details) {
+    _momentumTimer?.cancel();
     _lastFocalPoint = details.focalPoint;
     _lastScale = 1.0;
+    _velocity = Offset.zero;
     widget.controller.startInteraction();
     widget.onScaleStart?.call(details);
   }
 
   void _handleScaleUpdate(ScaleUpdateDetails details) {
-    // Handle zooming
-    if (widget.interactions.enableZoom && details.scale != 1.0) {
+    // Handle pinch zooming
+    if (widget.interactions.enableZoom &&
+        widget.interactions.enablePinchZoom &&
+        details.scale != 1.0) {
       final scaleChange = details.scale / _lastScale;
-      final clampedScale = scaleChange.clamp(
-        widget.interactions.minZoom / widget.controller.viewport.scaleX,
-        widget.interactions.maxZoom / widget.controller.viewport.scaleX,
-      );
 
-      widget.controller.zoom(
-        clampedScale * widget.interactions.zoomSensitivity,
-        details.focalPoint,
-      );
+      // Apply zoom based on zoom axis configuration
+      switch (widget.interactions.zoomAxis) {
+        case ZoomAxis.both:
+          final clampedScale = scaleChange.clamp(
+            widget.interactions.minZoom / widget.controller.viewport.scaleX,
+            widget.interactions.maxZoom / widget.controller.viewport.scaleX,
+          );
+          widget.controller.zoom(
+            clampedScale * widget.interactions.zoomSensitivity,
+            details.focalPoint,
+          );
+        case ZoomAxis.horizontal:
+          final viewport = widget.controller.viewport;
+          widget.controller.viewport = viewport.zoomX(
+            scaleChange * widget.interactions.zoomSensitivity,
+            details.focalPoint.dx,
+            min: widget.interactions.minZoom,
+            max: widget.interactions.maxZoom,
+          );
+        case ZoomAxis.vertical:
+          final viewport = widget.controller.viewport;
+          widget.controller.viewport = viewport.zoomY(
+            scaleChange * widget.interactions.zoomSensitivity,
+            details.focalPoint.dy,
+            min: widget.interactions.minZoom,
+            max: widget.interactions.maxZoom,
+          );
+      }
 
       _lastScale = details.scale;
     }
@@ -470,6 +642,10 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
     // Handle panning
     if (widget.interactions.enablePan && _lastFocalPoint != null) {
       var delta = details.focalPoint - _lastFocalPoint!;
+
+      // Track velocity for momentum
+      _velocity = delta;
+
       delta = delta * widget.interactions.panSensitivity;
 
       switch (widget.interactions.panAxis) {
@@ -493,6 +669,39 @@ class _ChartGestureDetectorState extends State<ChartGestureDetector> {
     _lastScale = 1.0;
     widget.controller.endInteraction();
     widget.onScaleEnd?.call(details);
+
+    // Apply momentum if enabled and velocity is significant
+    if (widget.interactions.enableMomentum && _velocity.distance > 5) {
+      _startMomentum();
+    }
+  }
+
+  void _startMomentum() {
+    _momentumTimer?.cancel();
+
+    var currentVelocity = _velocity * widget.interactions.panSensitivity;
+    final decay = widget.interactions.momentumDecay;
+
+    _momentumTimer = Timer.periodic(const Duration(milliseconds: 16), (timer) {
+      if (!mounted || currentVelocity.distance < 0.5) {
+        timer.cancel();
+        return;
+      }
+
+      var delta = currentVelocity;
+
+      switch (widget.interactions.panAxis) {
+        case PanAxis.horizontal:
+          delta = Offset(delta.dx, 0);
+        case PanAxis.vertical:
+          delta = Offset(0, delta.dy);
+        case PanAxis.both:
+          break;
+      }
+
+      widget.controller.pan(delta);
+      currentVelocity = currentVelocity * decay;
+    });
   }
 
   void _handleHover(PointerHoverEvent event) {

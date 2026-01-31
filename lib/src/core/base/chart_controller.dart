@@ -1,11 +1,16 @@
+import 'dart:async';
 import 'dart:ui';
 
+import 'package:flutter/animation.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/scheduler.dart';
 
 /// Controller for managing chart state.
 ///
 /// Provides functionality for:
 /// - Viewport control (pan, zoom)
+/// - Animated zoom and pan
+/// - Zoom constraints
 /// - Data point selection
 /// - Hover state tracking
 ///
@@ -22,6 +27,9 @@ import 'package:flutter/foundation.dart';
 /// controller.zoom(1.5, Offset(100, 100));
 /// controller.pan(Offset(10, 0));
 ///
+/// // Animated zoom
+/// controller.animateZoom(2.0, Offset(100, 100));
+///
 /// // Select data points
 /// controller.selectPoint(0, 5);
 /// ```
@@ -30,15 +38,48 @@ class ChartController extends ChangeNotifier {
   ChartController({
     ChartViewport? initialViewport,
     Set<int>? hiddenSeriesIndices,
+    this.minZoomX = 0.5,
+    this.maxZoomX = 20.0,
+    this.minZoomY = 0.5,
+    this.maxZoomY = 20.0,
+    this.enableMomentum = true,
+    this.constrainPanToBounds = true,
   })  : _viewport = initialViewport ?? const ChartViewport(),
+        _initialViewport = initialViewport ?? const ChartViewport(),
         _hiddenSeriesIndices = hiddenSeriesIndices?.toSet() ?? {};
 
   ChartViewport _viewport;
+  final ChartViewport _initialViewport;
   final Set<DataPointIndex> _selectedIndices = {};
   final Set<int> _hiddenSeriesIndices;
   DataPointInfo? _hoveredPoint;
   DataPointInfo? _tooltipPoint;
   bool _isInteracting = false;
+
+  // Zoom constraints
+  /// Minimum zoom level for X axis.
+  final double minZoomX;
+
+  /// Maximum zoom level for X axis.
+  final double maxZoomX;
+
+  /// Minimum zoom level for Y axis.
+  final double minZoomY;
+
+  /// Maximum zoom level for Y axis.
+  final double maxZoomY;
+
+  /// Whether to apply momentum after pan gestures.
+  final bool enableMomentum;
+
+  /// Whether to constrain panning to data bounds.
+  final bool constrainPanToBounds;
+
+  // Animation state
+  _ViewportAnimation? _currentAnimation;
+
+  // Data bounds for constraining pan operations
+  Rect? _dataBounds;
 
   // ============== Viewport Control ==============
 
@@ -61,14 +102,179 @@ class ChartController extends ChangeNotifier {
 
   /// Zooms the viewport by the given scale around the focal point.
   void zoom(double scale, Offset focalPoint) {
-    _viewport = _viewport.zoom(scale, focalPoint);
+    _viewport = _viewport.zoomConstrained(
+      scale,
+      focalPoint,
+      minScaleX: minZoomX,
+      maxScaleX: maxZoomX,
+      minScaleY: minZoomY,
+      maxScaleY: maxZoomY,
+    );
     notifyListeners();
+  }
+
+  /// Zooms to a specific scale level with animation.
+  ///
+  /// Returns a Future that completes when the animation is done.
+  Future<void> animateZoom(
+    double targetScale,
+    Offset focalPoint, {
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeOutCubic,
+  }) async {
+    final startViewport = _viewport;
+    final endViewport = _viewport.zoomConstrained(
+      targetScale / _viewport.scaleX,
+      focalPoint,
+      minScaleX: minZoomX,
+      maxScaleX: maxZoomX,
+      minScaleY: minZoomY,
+      maxScaleY: maxZoomY,
+    );
+
+    await _animateViewport(startViewport, endViewport, duration, curve);
+  }
+
+  /// Zooms to fit the specified data range.
+  ///
+  /// Returns a Future that completes when the animation is done.
+  Future<void> zoomToRange({
+    required double xMin,
+    required double xMax,
+    double? yMin,
+    double? yMax,
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeOutCubic,
+    bool animate = true,
+  }) async {
+    final endViewport = _viewport.copyWith(
+      xMin: xMin,
+      xMax: xMax,
+      yMin: yMin,
+      yMax: yMax,
+      scaleX: 1.0,
+      scaleY: 1.0,
+      translateX: 0.0,
+      translateY: 0.0,
+    );
+
+    if (animate) {
+      await _animateViewport(_viewport, endViewport, duration, curve);
+    } else {
+      _viewport = endViewport;
+      notifyListeners();
+    }
   }
 
   /// Resets the viewport to its initial state.
   void resetViewport() {
-    _viewport = const ChartViewport();
+    _stopAnimation();
+    _viewport = _initialViewport;
     notifyListeners();
+  }
+
+  /// Resets the viewport with animation.
+  Future<void> animateReset({
+    Duration duration = const Duration(milliseconds: 300),
+    Curve curve = Curves.easeOutCubic,
+  }) async {
+    await _animateViewport(_viewport, _initialViewport, duration, curve);
+  }
+
+  /// Handles pinch zoom gesture.
+  ///
+  /// Call this with the two focal points and the scale delta.
+  void handlePinchZoom({
+    required Offset focal1,
+    required Offset focal2,
+    required double scale,
+    required double previousScale,
+  }) {
+    final center = Offset(
+      (focal1.dx + focal2.dx) / 2,
+      (focal1.dy + focal2.dy) / 2,
+    );
+    final scaleDelta = scale / previousScale;
+    zoom(scaleDelta, center);
+  }
+
+  /// Handles scroll wheel zoom.
+  ///
+  /// [scrollDelta] is typically event.scrollDelta.dy from a PointerScrollEvent.
+  /// [focalPoint] is the mouse position.
+  void handleScrollWheelZoom({
+    required double scrollDelta,
+    required Offset focalPoint,
+    double zoomFactor = 1.1,
+  }) {
+    final scale = scrollDelta < 0 ? zoomFactor : 1 / zoomFactor;
+    zoom(scale, focalPoint);
+  }
+
+  /// Sets the data bounds for constraining pan operations.
+  void setDataBounds(Rect bounds) {
+    _dataBounds = bounds;
+  }
+
+  /// Internal animation helper.
+  Future<void> _animateViewport(
+    ChartViewport start,
+    ChartViewport end,
+    Duration duration,
+    Curve curve,
+  ) async {
+    _stopAnimation();
+
+    final completer = Completer<void>();
+    final startTime = DateTime.now();
+
+    void tick() {
+      final elapsed = DateTime.now().difference(startTime);
+      final t = (elapsed.inMicroseconds / duration.inMicroseconds).clamp(0.0, 1.0);
+      final curvedT = curve.transform(t);
+
+      _viewport = ChartViewport(
+        xMin: _lerpNullable(start.xMin, end.xMin, curvedT),
+        xMax: _lerpNullable(start.xMax, end.xMax, curvedT),
+        yMin: _lerpNullable(start.yMin, end.yMin, curvedT),
+        yMax: _lerpNullable(start.yMax, end.yMax, curvedT),
+        scaleX: _lerp(start.scaleX, end.scaleX, curvedT),
+        scaleY: _lerp(start.scaleY, end.scaleY, curvedT),
+        translateX: _lerp(start.translateX, end.translateX, curvedT),
+        translateY: _lerp(start.translateY, end.translateY, curvedT),
+      );
+      notifyListeners();
+
+      if (t >= 1.0) {
+        _currentAnimation = null;
+        completer.complete();
+      } else {
+        _currentAnimation = _ViewportAnimation(tick, completer);
+        SchedulerBinding.instance.scheduleFrameCallback((_) {
+          if (_currentAnimation?.tick == tick) {
+            tick();
+          }
+        });
+      }
+    }
+
+    _currentAnimation = _ViewportAnimation(tick, completer);
+    tick();
+
+    return completer.future;
+  }
+
+  void _stopAnimation() {
+    _currentAnimation = null;
+  }
+
+  double _lerp(double a, double b, double t) => a + (b - a) * t;
+
+  double? _lerpNullable(double? a, double? b, double t) {
+    if (a == null && b == null) return null;
+    if (a == null) return b;
+    if (b == null) return a;
+    return _lerp(a, b, t);
   }
 
   /// Sets the visible range for the X axis.
@@ -382,6 +588,58 @@ class ChartViewport {
     );
   }
 
+  /// Creates a zoomed version with constraints.
+  ChartViewport zoomConstrained(
+    double scale,
+    Offset focalPoint, {
+    double minScaleX = 0.5,
+    double maxScaleX = 20.0,
+    double minScaleY = 0.5,
+    double maxScaleY = 20.0,
+  }) {
+    final newScaleX = (scaleX * scale).clamp(minScaleX, maxScaleX);
+    final newScaleY = (scaleY * scale).clamp(minScaleY, maxScaleY);
+
+    // Calculate the actual scale change after clamping
+    final actualScaleX = newScaleX / scaleX;
+    final actualScaleY = newScaleY / scaleY;
+
+    // Adjust translation to keep the focal point stationary
+    final newTranslateX = translateX - focalPoint.dx * (actualScaleX - 1.0);
+    final newTranslateY = translateY - focalPoint.dy * (actualScaleY - 1.0);
+
+    return copyWith(
+      scaleX: newScaleX,
+      scaleY: newScaleY,
+      translateX: newTranslateX,
+      translateY: newTranslateY,
+    );
+  }
+
+  /// Zooms only in the X direction.
+  ChartViewport zoomX(double scale, double focalX, {double min = 0.5, double max = 20.0}) {
+    final newScaleX = (scaleX * scale).clamp(min, max);
+    final actualScale = newScaleX / scaleX;
+    final newTranslateX = translateX - focalX * (actualScale - 1.0);
+
+    return copyWith(
+      scaleX: newScaleX,
+      translateX: newTranslateX,
+    );
+  }
+
+  /// Zooms only in the Y direction.
+  ChartViewport zoomY(double scale, double focalY, {double min = 0.5, double max = 20.0}) {
+    final newScaleY = (scaleY * scale).clamp(min, max);
+    final actualScale = newScaleY / scaleY;
+    final newTranslateY = translateY - focalY * (actualScale - 1.0);
+
+    return copyWith(
+      scaleY: newScaleY,
+      translateY: newTranslateY,
+    );
+  }
+
   /// Creates a copy with the given values replaced.
   ChartViewport copyWith({
     double? xMin,
@@ -537,4 +795,106 @@ class DataPointInfo {
   @override
   String toString() =>
       'DataPointInfo(series: $seriesIndex, point: $pointIndex, pos: $position)';
+}
+
+/// Internal class for tracking viewport animations.
+class _ViewportAnimation {
+  _ViewportAnimation(this.tick, this.completer);
+
+  final void Function() tick;
+  final Completer<void> completer;
+}
+
+/// Configuration for zoom behavior.
+@immutable
+class ZoomConfig {
+  /// Creates a zoom configuration.
+  const ZoomConfig({
+    this.minZoomX = 0.5,
+    this.maxZoomX = 20.0,
+    this.minZoomY = 0.5,
+    this.maxZoomY = 20.0,
+    this.enablePinchZoom = true,
+    this.enableScrollWheelZoom = true,
+    this.enableDoubleTapZoom = true,
+    this.scrollWheelZoomFactor = 1.1,
+    this.doubleTapZoomFactor = 2.0,
+    this.animationDuration = const Duration(milliseconds: 300),
+    this.animationCurve = Curves.easeOutCubic,
+  });
+
+  /// Standard zoom configuration.
+  static const standard = ZoomConfig();
+
+  /// Configuration for financial charts (more zoom range).
+  static const financial = ZoomConfig(
+    maxZoomX: 50.0,
+    maxZoomY: 10.0,
+  );
+
+  /// Configuration for touch-only devices.
+  static const touchOnly = ZoomConfig(
+    enableScrollWheelZoom: false,
+  );
+
+  /// Minimum zoom level for X axis.
+  final double minZoomX;
+
+  /// Maximum zoom level for X axis.
+  final double maxZoomX;
+
+  /// Minimum zoom level for Y axis.
+  final double minZoomY;
+
+  /// Maximum zoom level for Y axis.
+  final double maxZoomY;
+
+  /// Whether pinch zoom is enabled.
+  final bool enablePinchZoom;
+
+  /// Whether scroll wheel zoom is enabled.
+  final bool enableScrollWheelZoom;
+
+  /// Whether double tap zoom is enabled.
+  final bool enableDoubleTapZoom;
+
+  /// Zoom factor for scroll wheel.
+  final double scrollWheelZoomFactor;
+
+  /// Zoom factor for double tap.
+  final double doubleTapZoomFactor;
+
+  /// Duration of zoom animations.
+  final Duration animationDuration;
+
+  /// Curve for zoom animations.
+  final Curve animationCurve;
+
+  /// Creates a copy with the given values replaced.
+  ZoomConfig copyWith({
+    double? minZoomX,
+    double? maxZoomX,
+    double? minZoomY,
+    double? maxZoomY,
+    bool? enablePinchZoom,
+    bool? enableScrollWheelZoom,
+    bool? enableDoubleTapZoom,
+    double? scrollWheelZoomFactor,
+    double? doubleTapZoomFactor,
+    Duration? animationDuration,
+    Curve? animationCurve,
+  }) =>
+      ZoomConfig(
+        minZoomX: minZoomX ?? this.minZoomX,
+        maxZoomX: maxZoomX ?? this.maxZoomX,
+        minZoomY: minZoomY ?? this.minZoomY,
+        maxZoomY: maxZoomY ?? this.maxZoomY,
+        enablePinchZoom: enablePinchZoom ?? this.enablePinchZoom,
+        enableScrollWheelZoom: enableScrollWheelZoom ?? this.enableScrollWheelZoom,
+        enableDoubleTapZoom: enableDoubleTapZoom ?? this.enableDoubleTapZoom,
+        scrollWheelZoomFactor: scrollWheelZoomFactor ?? this.scrollWheelZoomFactor,
+        doubleTapZoomFactor: doubleTapZoomFactor ?? this.doubleTapZoomFactor,
+        animationDuration: animationDuration ?? this.animationDuration,
+        animationCurve: animationCurve ?? this.animationCurve,
+      );
 }

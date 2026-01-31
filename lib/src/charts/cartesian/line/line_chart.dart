@@ -6,11 +6,14 @@ import 'package:flutter/material.dart';
 import '../../../animation/chart_animation.dart';
 import '../../../components/tooltip/chart_tooltip.dart';
 import '../../../core/base/chart_controller.dart';
+import '../../../core/data/data_pipeline.dart';
+import '../../../core/data/data_point.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../core/gestures/spatial_index.dart';
 import '../../../core/math/geometry/bounds_calculator.dart';
 import '../../../core/math/geometry/coordinate_transform.dart';
 import '../../../core/math/scales/scale.dart';
+import '../../../core/utils/data_decimation_advanced.dart';
 import '../../../rendering/renderers/axis_renderer.dart';
 import '../../../rendering/renderers/grid_renderer.dart';
 import '../../../rendering/renderers/renderer.dart';
@@ -60,6 +63,8 @@ class LineChart extends StatefulWidget {
     this.onDataPointTap,
     this.onDataPointHover,
     this.padding = const EdgeInsets.fromLTRB(56, 24, 24, 48),
+    this.decimationConfig,
+    this.enableLargeDatasetOptimization = true,
   });
 
   /// The chart data.
@@ -92,6 +97,18 @@ class LineChart extends StatefulWidget {
   /// Padding around the chart area.
   final EdgeInsets padding;
 
+  /// Configuration for data decimation (for large datasets).
+  ///
+  /// When null, uses [DecimationConfig.standard] if large dataset optimization
+  /// is enabled and data exceeds 5000 points.
+  final DecimationConfig? decimationConfig;
+
+  /// Whether to automatically optimize rendering for large datasets.
+  ///
+  /// When enabled, applies LTTB decimation to series with more than 5000 points
+  /// to maintain smooth performance. Defaults to true.
+  final bool enableLargeDatasetOptimization;
+
   @override
   State<LineChart> createState() => _LineChartState();
 }
@@ -112,8 +129,53 @@ class _LineChartState extends State<LineChart>
   Bounds? _xBounds;
   Bounds? _yBounds;
 
+  // Data pipelines for large dataset support
+  Map<int, DataPipeline<num, num>>? _dataPipelines;
+
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
+
+  /// Returns the effective decimation config.
+  DecimationConfig get _decimationConfig =>
+      widget.decimationConfig ?? DecimationConfig.standard;
+
+  /// Returns true if any series has enough data points to require decimation.
+  bool get _needsDecimation {
+    if (!widget.enableLargeDatasetOptimization) return false;
+    final threshold = _decimationConfig.threshold;
+    return widget.data.series.any((s) => s.data.length > threshold);
+  }
+
+  /// Gets decimated data for a series if needed.
+  List<DataPoint<dynamic, num>> _getSeriesData(LineSeries<dynamic, num> series, int seriesIndex) {
+    if (!widget.enableLargeDatasetOptimization) return series.data;
+    if (series.data.length <= _decimationConfig.threshold) return series.data;
+
+    // Initialize pipeline for this series if needed
+    _dataPipelines ??= {};
+    if (!_dataPipelines!.containsKey(seriesIndex)) {
+      // Convert series data to DataPoint<num, num> for decimation
+      final numericData = series.data.map((p) => DataPoint<num, num>(
+        x: _toDouble(p.x),
+        y: p.y.toDouble(),
+      )).toList();
+
+      _dataPipelines![seriesIndex] = DataPipeline<num, num>(
+        rawData: numericData,
+        decimationConfig: _decimationConfig,
+      );
+    }
+
+    // Get decimated data from pipeline
+    final pipeline = _dataPipelines![seriesIndex]!;
+    final decimatedNumeric = pipeline.getAllData();
+
+    // Convert back to original data point type
+    return decimatedNumeric.map((p) => DataPoint<dynamic, num>(
+      x: p.x,
+      y: p.y,
+    )).toList();
+  }
 
   @override
   void initState() {
@@ -352,6 +414,7 @@ class _LineChartState extends State<LineChart>
                     _xBounds = x;
                     _yBounds = y;
                   },
+                  getSeriesData: _needsDecimation ? _getSeriesData : null,
                 ),
                 size: Size.infinite,
               ),
@@ -410,6 +473,12 @@ class _LineChartState extends State<LineChart>
   }
 }
 
+/// Type for getting decimated series data.
+typedef SeriesDataGetter = List<DataPoint<dynamic, num>> Function(
+  LineSeries<dynamic, num> series,
+  int seriesIndex,
+);
+
 /// Painter for line charts using the new rendering infrastructure.
 class _LineChartPainter extends CustomPainter {
   _LineChartPainter({
@@ -424,6 +493,7 @@ class _LineChartPainter extends CustomPainter {
     this.xBounds,
     this.yBounds,
     this.onBoundsCalculated,
+    this.getSeriesData,
   }) : super(repaint: controller);
 
   final LineChartData data;
@@ -437,6 +507,9 @@ class _LineChartPainter extends CustomPainter {
   Bounds? xBounds;
   Bounds? yBounds;
   final void Function(Bounds x, Bounds y)? onBoundsCalculated;
+
+  /// Optional function to get decimated series data for large datasets.
+  final SeriesDataGetter? getSeriesData;
 
   // Renderers (lazily initialized)
   AxisRenderer<double>? _yAxisRenderer;
@@ -679,6 +752,17 @@ class _LineChartPainter extends CustomPainter {
     );
   }
 
+  /// Gets the data points for a series, using decimation if available.
+  List<DataPoint<dynamic, num>> _getDataForSeries(
+    LineSeries<dynamic, num> series,
+    int seriesIndex,
+  ) {
+    if (getSeriesData != null) {
+      return getSeriesData!(series, seriesIndex);
+    }
+    return series.data;
+  }
+
   void _drawSeries(Canvas canvas) {
     // Draw each series
     for (var seriesIndex = 0; seriesIndex < data.series.length; seriesIndex++) {
@@ -687,9 +771,12 @@ class _LineChartPainter extends CustomPainter {
 
       final seriesColor = series.color ?? theme.getSeriesColor(seriesIndex);
 
+      // Get data (potentially decimated for large datasets)
+      final seriesData = _getDataForSeries(series, seriesIndex);
+
       // Convert data to screen coordinates
       final positions = <Offset>[];
-      for (final point in series.data) {
+      for (final point in seriesData) {
         positions.add(_transform.dataToScreen(_toDouble(point.x), point.y.toDouble()));
       }
 
@@ -704,7 +791,7 @@ class _LineChartPainter extends CustomPainter {
       }
 
       // Register hit targets
-      _registerHitTargets(positions, series, seriesIndex);
+      _registerHitTargetsWithData(positions, seriesData, series, seriesIndex);
     }
 
     // Draw markers on top
@@ -713,8 +800,10 @@ class _LineChartPainter extends CustomPainter {
       if (!series.visible || series.isEmpty || !series.showMarkers) continue;
 
       final seriesColor = series.color ?? theme.getSeriesColor(seriesIndex);
+      final seriesData = _getDataForSeries(series, seriesIndex);
+
       final positions = <Offset>[];
-      for (final point in series.data) {
+      for (final point in seriesData) {
         positions.add(_transform.dataToScreen(_toDouble(point.x), point.y.toDouble()));
       }
 
@@ -891,14 +980,15 @@ class _LineChartPainter extends CustomPainter {
     }
   }
 
-  void _registerHitTargets(
+  void _registerHitTargetsWithData(
     List<Offset> positions,
+    List<DataPoint<dynamic, num>> dataPoints,
     LineSeries<dynamic, num> series,
     int seriesIndex,
   ) {
     for (var pointIndex = 0; pointIndex < positions.length; pointIndex++) {
       final position = positions[pointIndex];
-      final dataPoint = series.data[pointIndex];
+      final dataPoint = dataPoints[pointIndex];
 
       hitTester.addCircle(
         center: position,

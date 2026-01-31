@@ -128,6 +128,8 @@ export 'src/charts/specialty/sankey/sankey_chart.dart';
 export 'src/charts/specialty/sparkline/sparkline_chart.dart';
 // Components - Axis
 export 'src/components/axis/axis_widget.dart';
+// Components - Controls
+export 'src/components/controls/zoom_controls.dart';
 // Components - Legend
 export 'src/components/legend/filterable_legend.dart';
 export 'src/components/legend/legend_widget.dart';
@@ -141,6 +143,7 @@ export 'src/core/base/chart_painter.dart';
 // Core - Base
 export 'src/core/base/series.dart' hide FunnelSection, GaugeRange, PieSection;
 // Core - Data
+export 'src/core/data/data_pipeline.dart';
 export 'src/core/data/data_point.dart';
 // Core - Error Handling
 export 'src/core/errors/chart_error_boundary.dart';
@@ -157,14 +160,17 @@ export 'src/core/math/scales/scale.dart';
 // Core - Utilities
 export 'src/core/utils/cache_manager.dart';
 export 'src/core/utils/data_decimator.dart';
+export 'src/core/utils/data_decimation_advanced.dart';
 export 'src/core/utils/data_validator.dart';
 export 'src/core/utils/object_pool.dart';
 export 'src/plugins/built_in/data_export/data_export_service.dart';
 export 'src/plugins/built_in/export_plugin.dart';
-export 'src/plugins/built_in/zoom_plugin.dart';
+export 'src/plugins/built_in/zoom_plugin.dart' hide ZoomConfig;
 // Plugins
 export 'src/plugins/plugin.dart';
 export 'src/rendering/cache/canvas_layer_cache.dart' hide RenderLayer;
+export 'src/rendering/dirty_region_tracker.dart' hide RenderLayer;
+export 'src/rendering/gpu_hints.dart' hide PaintCache;
 // Rendering - Cache (hide duplicates from core)
 export 'src/rendering/cache/path_cache.dart' hide PathCache;
 export 'src/rendering/cache/text_cache.dart';
