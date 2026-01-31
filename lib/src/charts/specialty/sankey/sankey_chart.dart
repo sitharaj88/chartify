@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'sankey_chart_data.dart';
 
 export 'sankey_chart_data.dart';
@@ -58,7 +59,7 @@ class SankeyChart extends StatefulWidget {
 }
 
 class _SankeyChartState extends State<SankeyChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -147,11 +148,15 @@ class _SankeyChartState extends State<SankeyChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        // Note: hitRadius not used - Sankey charts use rect-based hit testing for nodes/links
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -192,7 +197,8 @@ class _SankeyChartState extends State<SankeyChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -277,12 +283,14 @@ class _SankeyChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
   }) : super(repaint: controller);
 
   final SankeyChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
 
   @override
   Rect getChartArea(Size size) => Rect.fromLTRB(
@@ -615,7 +623,7 @@ class _SankeyChartPainter extends ChartPainter {
 
     final textSpan = TextSpan(
       text: pos.node.label,
-      style: theme.labelStyle.copyWith(fontSize: 11),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize),
     );
     final textPainter = TextPainter(
       text: textSpan,

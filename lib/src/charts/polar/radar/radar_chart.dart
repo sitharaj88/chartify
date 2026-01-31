@@ -9,6 +9,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 
 /// A single data series for the radar chart.
 @immutable
@@ -119,7 +120,7 @@ class RadarChart extends StatefulWidget {
 }
 
 class _RadarChartState extends State<RadarChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   late AnimationController _animationController;
   late Animation<double> _animation;
@@ -189,11 +190,15 @@ class _RadarChartState extends State<RadarChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTWH(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.horizontal,
-          constraints.maxHeight - widget.padding.vertical,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.horizontal,
+          constraints.maxHeight - responsivePadding.vertical,
         );
 
         return ChartTooltipOverlay(
@@ -214,7 +219,9 @@ class _RadarChartState extends State<RadarChart>
                     theme: theme,
                     animationValue: _animation.value,
                     controller: _controller,
-                    padding: widget.padding,
+                    padding: responsivePadding,
+                    labelFontSize: labelFontSize,
+                    hitRadius: hitRadius,
                   ),
                 ),
             ),
@@ -240,6 +247,8 @@ class _RadarChartPainter extends PolarChartPainter {
     required super.theme,
     required this.controller,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
     super.animationValue,
   }) : super(
           axisCount: data.axes.length,
@@ -250,6 +259,8 @@ class _RadarChartPainter extends PolarChartPainter {
   final RadarChartData data;
   final ChartController controller;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
   final ChartHitTester _hitTester = ChartHitTester();
 
   double get _maxValue {
@@ -296,7 +307,7 @@ class _RadarChartPainter extends PolarChartPainter {
         // Add hit target for each point
         _hitTester.addCircle(
           center: point,
-          radius: 20,
+          radius: hitRadius,
           info: DataPointInfo(
             seriesIndex: seriesIndex,
             pointIndex: i,
@@ -442,7 +453,7 @@ class _RadarChartPainter extends PolarChartPainter {
         canvas,
         data.axes[i],
         labelPos,
-        style: theme.labelStyle,
+        style: theme.labelStyle.copyWith(fontSize: labelFontSize),
       );
     }
   }
@@ -461,7 +472,9 @@ class _RadarChartPainter extends PolarChartPainter {
   @override
   bool shouldRepaint(covariant _RadarChartPainter oldDelegate) => super.shouldRepaint(oldDelegate) ||
         data != oldDelegate.data ||
-        padding != oldDelegate.padding;
+        padding != oldDelegate.padding ||
+        labelFontSize != oldDelegate.labelFontSize ||
+        hitRadius != oldDelegate.hitRadius;
 
   @override
   bool? hitTest(Offset position) {

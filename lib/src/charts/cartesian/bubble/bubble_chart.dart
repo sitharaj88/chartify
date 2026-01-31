@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'bubble_chart_data.dart';
 
 export 'bubble_chart_data.dart';
@@ -60,7 +61,7 @@ class BubbleChart extends StatefulWidget {
 }
 
 class _BubbleChartState extends State<BubbleChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -135,31 +136,21 @@ class _BubbleChartState extends State<BubbleChart>
     super.dispose();
   }
 
-  void _handleHover(PointerEvent event) {
-    final hitInfo = _hitTester.hitTest(
-      event.localPosition,
-      radius: widget.interactions.hitTestRadius,
-    );
-    if (hitInfo != null) {
-      _controller.setHoveredPoint(hitInfo);
-      widget.onDataPointHover?.call(hitInfo);
-    } else {
-      _controller.clearHoveredPoint();
-      widget.onDataPointHover?.call(null);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -175,13 +166,25 @@ class _BubbleChartState extends State<BubbleChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onDataPointTap != null) {
                 widget.onDataPointTap!(hitInfo);
               }
             },
-            onHover: _handleHover,
+            onHover: (event) {
+              final hitInfo = _hitTester.hitTest(
+                event.localPosition,
+                radius: hitRadius,
+              );
+              if (hitInfo != null) {
+                _controller.setHoveredPoint(hitInfo);
+                widget.onDataPointHover?.call(hitInfo);
+              } else {
+                _controller.clearHoveredPoint();
+                widget.onDataPointHover?.call(null);
+              }
+            },
             onExit: (_) {
               _controller.clearHoveredPoint();
               widget.onDataPointHover?.call(null);
@@ -194,7 +197,8 @@ class _BubbleChartState extends State<BubbleChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -241,6 +245,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required super.padding,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller) {
     _calculateBounds();
   }
@@ -248,6 +253,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
   final BubbleChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double labelFontSize;
 
   double _xMin = 0;
   double _xMax = 1;
@@ -484,7 +490,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
   void _drawLabel(Canvas canvas, _BubbleInfo bubble, double radius) {
     final label = bubble.point.label!;
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 10,
+      fontSize: labelFontSize,
       color: data.labelPosition == BubbleLabelPosition.inside
           ? Colors.white
           : theme.labelStyle.color,
@@ -533,7 +539,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
     final range = _yMax - _yMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -563,7 +569,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
     final range = _xMax - _xMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 

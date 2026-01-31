@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'range_chart_data.dart';
 
 export 'range_chart_data.dart';
@@ -51,7 +52,7 @@ class RangeChart extends StatefulWidget {
 }
 
 class _RangeChartState extends State<RangeChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -125,26 +126,21 @@ class _RangeChartState extends State<RangeChart>
     super.dispose();
   }
 
-  void _handleHover(PointerEvent event) {
-    final hitInfo = _hitTester.hitTest(event.localPosition, radius: 0);
-    if (hitInfo != null) {
-      _controller.setHoveredPoint(hitInfo);
-    } else {
-      _controller.clearHoveredPoint();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -159,7 +155,7 @@ class _RangeChartState extends State<RangeChart>
             hitTester: _hitTester,
             onTap: (details) {
               final hitInfo =
-                  _hitTester.hitTest(details.localPosition, radius: 0);
+                  _hitTester.hitTest(details.localPosition, radius: hitRadius);
               if (hitInfo != null && widget.onItemTap != null) {
                 final idx = hitInfo.pointIndex;
                 if (idx >= 0 && idx < widget.data.items.length) {
@@ -167,7 +163,14 @@ class _RangeChartState extends State<RangeChart>
                 }
               }
             },
-            onHover: _handleHover,
+            onHover: (event) {
+              final hitInfo = _hitTester.hitTest(event.localPosition, radius: hitRadius);
+              if (hitInfo != null) {
+                _controller.setHoveredPoint(hitInfo);
+              } else {
+                _controller.clearHoveredPoint();
+              }
+            },
             onExit: (_) => _controller.clearHoveredPoint(),
             child: RepaintBoundary(
               child: CustomPaint(
@@ -177,7 +180,8 @@ class _RangeChartState extends State<RangeChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -237,12 +241,14 @@ class _RangeChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller);
 
   final RangeChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
 
   @override
   Rect getChartArea(Size size) {
@@ -435,7 +441,7 @@ class _RangeChartPainter extends ChartPainter {
 
         final textSpan = TextSpan(
           text: value.toStringAsFixed(0),
-          style: theme.labelStyle.copyWith(fontSize: 10),
+          style: theme.labelStyle.copyWith(fontSize: labelFontSize),
         );
         final textPainter = TextPainter(
           text: textSpan,
@@ -462,7 +468,7 @@ class _RangeChartPainter extends ChartPainter {
 
         final textSpan = TextSpan(
           text: value.toStringAsFixed(0),
-          style: theme.labelStyle.copyWith(fontSize: 10),
+          style: theme.labelStyle.copyWith(fontSize: labelFontSize),
         );
         final textPainter = TextPainter(
           text: textSpan,
@@ -482,7 +488,7 @@ class _RangeChartPainter extends ChartPainter {
       bool isHorizontal, Rect chartArea,) {
     final textSpan = TextSpan(
       text: item.label,
-      style: theme.labelStyle.copyWith(fontSize: 11),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize),
     );
     final textPainter = TextPainter(
       text: textSpan,

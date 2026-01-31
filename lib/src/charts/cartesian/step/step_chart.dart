@@ -7,6 +7,7 @@ import '../../../core/base/chart_painter.dart';
 import '../../../core/data/data_point.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'step_chart_data.dart';
 
 export 'step_chart_data.dart';
@@ -56,7 +57,7 @@ class StepChart<X, Y extends num> extends StatefulWidget {
 }
 
 class _StepChartState<X, Y extends num> extends State<StepChart<X, Y>>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -145,11 +146,15 @@ class _StepChartState<X, Y extends num> extends State<StepChart<X, Y>>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -189,7 +194,9 @@ class _StepChartState<X, Y extends num> extends State<StepChart<X, Y>>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
+                  hitRadius: hitRadius,
                 ),
                 size: Size.infinite,
               ),
@@ -238,12 +245,16 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
   }) : super(repaint: controller);
 
   final StepChartData<X, Y> data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
 
   @override
   Rect getChartArea(Size size) => Rect.fromLTRB(
@@ -314,7 +325,7 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
       for (var i = 0; i < animatedPoints.length; i++) {
         hitTester.addCircle(
           center: animatedPoints[i],
-          radius: series.markerRadius,
+          radius: hitRadius,
           info: DataPointInfo(
             seriesIndex: seriesIndex,
             pointIndex: i,
@@ -386,7 +397,7 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
 
       final textSpan = TextSpan(
         text: value.toStringAsFixed(0),
-        style: theme.labelStyle.copyWith(fontSize: 10),
+        style: theme.labelStyle.copyWith(fontSize: labelFontSize),
       );
       final textPainter = TextPainter(
         text: textSpan,
@@ -420,7 +431,7 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
 
         final textSpan = TextSpan(
           text: point.x.toString(),
-          style: theme.labelStyle.copyWith(fontSize: 10),
+          style: theme.labelStyle.copyWith(fontSize: labelFontSize),
         );
         final textPainter = TextPainter(
           text: textSpan,
@@ -562,5 +573,7 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
   bool shouldRepaint(covariant _StepChartPainter<X, Y> oldDelegate) =>
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
-      controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
+      controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
+      labelFontSize != oldDelegate.labelFontSize ||
+      hitRadius != oldDelegate.hitRadius;
 }

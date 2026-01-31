@@ -12,6 +12,7 @@ import '../../../core/math/geometry/bounds_calculator.dart';
 import '../../../core/math/scales/scale.dart';
 import '../../../rendering/renderers/grid_renderer.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'bar_chart_data.dart';
 import 'bar_series.dart';
 
@@ -65,7 +66,7 @@ class BarChart extends StatefulWidget {
 }
 
 class _BarChartState extends State<BarChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -184,11 +185,24 @@ class _BarChartState extends State<BarChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Get responsive padding based on screen size
+        final responsivePadding = getResponsivePadding(
+          context,
+          constraints,
+          override: widget.padding,
+        );
+
+        // Get responsive font size for labels
+        final labelFontSize = getScaledFontSize(context, 11.0);
+
+        // Get WCAG-compliant hit test radius
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         // Reset spatial index when layout changes
@@ -207,7 +221,7 @@ class _BarChartState extends State<BarChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onDataPointTap != null) {
                 widget.onDataPointTap!(hitInfo);
@@ -223,10 +237,11 @@ class _BarChartState extends State<BarChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
                   yBounds: _yBounds,
                   onBoundsCalculated: (y) => _yBounds = y,
                   onSpatialIndexBuilt: (index) => _spatialIndex = index,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -270,6 +285,7 @@ class _BarChartPainter extends CustomPainter {
     this.yBounds,
     this.onBoundsCalculated,
     this.onSpatialIndexBuilt,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller);
 
   final BarChartData data;
@@ -281,6 +297,9 @@ class _BarChartPainter extends CustomPainter {
   Bounds? yBounds;
   final void Function(Bounds y)? onBoundsCalculated;
   final void Function(QuadTree<DataPointInfo> index)? onSpatialIndexBuilt;
+
+  /// Font size for axis labels (responsive).
+  final double labelFontSize;
 
   // Renderers
   GridRenderer<double, double>? _gridRenderer;
@@ -683,7 +702,7 @@ class _BarChartPainter extends CustomPainter {
     final yTicks = _yScale.ticks(count: tickCount);
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withAlpha(180),
     );
 
@@ -726,7 +745,7 @@ class _BarChartPainter extends CustomPainter {
 
   void _drawXAxisLabels(Canvas canvas) {
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withAlpha(180),
     );
 

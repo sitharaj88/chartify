@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'histogram_chart_data.dart';
 
 export 'histogram_chart_data.dart';
@@ -52,7 +53,7 @@ class HistogramChart extends StatefulWidget {
 }
 
 class _HistogramChartState extends State<HistogramChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -150,11 +151,15 @@ class _HistogramChartState extends State<HistogramChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -170,7 +175,7 @@ class _HistogramChartState extends State<HistogramChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onBinTap != null) {
                 widget.onBinTap!(_bins[hitInfo.pointIndex], hitInfo.pointIndex);
@@ -190,7 +195,8 @@ class _HistogramChartState extends State<HistogramChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -252,6 +258,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required super.padding,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller) {
     _calculateBounds();
   }
@@ -260,6 +267,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
   final List<HistogramBin> bins;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double labelFontSize;
 
   double _xMin = 0;
   double _xMax = 1;
@@ -446,7 +454,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
     const labelCount = 5;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -485,7 +493,7 @@ class _HistogramChartPainter extends CartesianChartPainter {
     final range = _xMax - _xMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -515,5 +523,6 @@ class _HistogramChartPainter extends CartesianChartPainter {
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
       bins != oldDelegate.bins ||
+      labelFontSize != oldDelegate.labelFontSize ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
 }

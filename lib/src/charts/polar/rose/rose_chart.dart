@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'rose_chart_data.dart';
 
 export 'rose_chart_data.dart';
@@ -58,7 +59,7 @@ class RoseChart extends StatefulWidget {
 }
 
 class _RoseChartState extends State<RoseChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -132,26 +133,21 @@ class _RoseChartState extends State<RoseChart>
     super.dispose();
   }
 
-  void _handleHover(PointerEvent event) {
-    final hitInfo = _hitTester.hitTest(event.localPosition, radius: 0);
-    if (hitInfo != null) {
-      _controller.setHoveredPoint(hitInfo);
-    } else {
-      _controller.clearHoveredPoint();
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -166,7 +162,7 @@ class _RoseChartState extends State<RoseChart>
             hitTester: _hitTester,
             onTap: (details) {
               final hitInfo =
-                  _hitTester.hitTest(details.localPosition, radius: 0);
+                  _hitTester.hitTest(details.localPosition, radius: hitRadius);
               if (hitInfo != null && widget.onSegmentTap != null) {
                 final idx = hitInfo.pointIndex;
                 if (idx >= 0 && idx < widget.data.segments.length) {
@@ -174,7 +170,14 @@ class _RoseChartState extends State<RoseChart>
                 }
               }
             },
-            onHover: _handleHover,
+            onHover: (event) {
+              final hitInfo = _hitTester.hitTest(event.localPosition, radius: hitRadius);
+              if (hitInfo != null) {
+                _controller.setHoveredPoint(hitInfo);
+              } else {
+                _controller.clearHoveredPoint();
+              }
+            },
             onExit: (_) => _controller.clearHoveredPoint(),
             child: RepaintBoundary(
               child: CustomPaint(
@@ -184,7 +187,8 @@ class _RoseChartState extends State<RoseChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -226,12 +230,14 @@ class _RoseChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
   }) : super(repaint: controller);
 
   final RoseChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
 
   @override
   Rect getChartArea(Size size) => Rect.fromLTRB(
@@ -423,7 +429,7 @@ class _RoseChartPainter extends ChartPainter {
 
     final textSpan = TextSpan(
       text: segment.label,
-      style: theme.labelStyle.copyWith(fontSize: 11),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize),
     );
     final textPainter = TextPainter(
       text: textSpan,
@@ -450,7 +456,7 @@ class _RoseChartPainter extends ChartPainter {
     final textSpan = TextSpan(
       text: segment.value.toStringAsFixed(0),
       style: theme.labelStyle.copyWith(
-        fontSize: 10,
+        fontSize: labelFontSize * 10 / 11,
         fontWeight: FontWeight.bold,
         color: Colors.white,
       ),

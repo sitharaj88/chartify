@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'gantt_chart_data.dart';
 import 'gantt_scheduler.dart';
 
@@ -73,7 +74,7 @@ class GanttChart extends StatefulWidget {
 }
 
 class _GanttChartState extends State<GanttChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -174,11 +175,15 @@ class _GanttChartState extends State<GanttChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -212,8 +217,10 @@ class _GanttChartState extends State<GanttChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
                   scheduleResult: _scheduleResult,
+                  labelFontSize: labelFontSize,
+                  hitRadius: hitRadius,
                 ),
                 size: Size.infinite,
               ),
@@ -293,6 +300,8 @@ class _GanttChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
     this.scheduleResult,
   }) : super(repaint: controller);
 
@@ -301,6 +310,8 @@ class _GanttChartPainter extends ChartPainter {
   final ChartHitTester hitTester;
   final EdgeInsets padding;
   final GanttScheduleResult? scheduleResult;
+  final double labelFontSize;
+  final double hitRadius;
 
   static const _monthNames = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
@@ -467,7 +478,7 @@ class _GanttChartPainter extends ChartPainter {
     final textSpan = TextSpan(
       text: 'Today',
       style: theme.labelStyle.copyWith(
-        fontSize: 9,
+        fontSize: labelFontSize * 0.82,
         color: data.todayLineColor ?? Colors.red,
         fontWeight: FontWeight.bold,
       ),
@@ -602,7 +613,7 @@ class _GanttChartPainter extends ChartPainter {
 
       final textSpan = TextSpan(
         text: label,
-        style: theme.labelStyle.copyWith(fontSize: 10),
+        style: theme.labelStyle.copyWith(fontSize: labelFontSize * 0.91),
       );
       final textPainter = TextPainter(
         text: textSpan,
@@ -705,7 +716,7 @@ class _GanttChartPainter extends ChartPainter {
     final textSpan = TextSpan(
       text: task.label,
       style: theme.labelStyle.copyWith(
-        fontSize: 11,
+        fontSize: labelFontSize,
         fontWeight: task.isGroup ? FontWeight.bold : FontWeight.normal,
       ),
     );
@@ -977,5 +988,7 @@ class _GanttChartPainter extends ChartPainter {
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
-      scheduleResult != oldDelegate.scheduleResult;
+      scheduleResult != oldDelegate.scheduleResult ||
+      labelFontSize != oldDelegate.labelFontSize ||
+      hitRadius != oldDelegate.hitRadius;
 }

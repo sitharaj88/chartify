@@ -48,11 +48,14 @@ library chartify;
 export 'src/accessibility/chart_accessibility.dart';
 export 'src/accessibility/chart_semantics.dart' hide ChartType;
 export 'src/accessibility/contrast_validator.dart';
+export 'src/accessibility/focus_indicator.dart';
 export 'src/accessibility/high_contrast.dart';
+export 'src/accessibility/live_region.dart';
 // Animation
 export 'src/animation/chart_animation.dart';
 export 'src/charts/_base/cartesian_chart_base.dart' hide CartesianChartPainter;
 // Charts - Base (hide duplicates from core)
+export 'src/charts/_base/chart_responsive_mixin.dart';
 export 'src/charts/_base/chart_widget_mixin.dart';
 export 'src/charts/_base/circular_chart_base.dart' hide CircularChartPainter;
 // Charts - Cartesian - Area
@@ -152,6 +155,13 @@ export 'src/core/errors/error_reporter.dart';
 // Gestures
 export 'src/core/gestures/gesture_detector.dart';
 export 'src/core/gestures/spatial_index.dart';
+// Responsive
+export 'src/core/responsive/density_config.dart';
+export 'src/core/responsive/orientation_config.dart';
+export 'src/core/responsive/responsive_config.dart' hide LegendPosition;
+export 'src/core/responsive/responsive_theme.dart';
+export 'src/core/responsive/responsive_wrapper.dart';
+export 'src/core/responsive/text_scaling.dart';
 export 'src/core/math/geometry/bounds_calculator.dart';
 export 'src/core/math/geometry/coordinate_transform.dart';
 export 'src/core/math/interpolation/interpolator.dart';

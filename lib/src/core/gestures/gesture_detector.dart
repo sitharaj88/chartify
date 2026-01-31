@@ -11,6 +11,9 @@ import 'spatial_index.dart';
 @immutable
 class ChartInteractions {
   /// Creates a chart interactions configuration.
+  ///
+  /// The default [hitTestRadius] is 24.0, which meets WCAG 2.1 AA accessibility
+  /// requirements (minimum 48dp touch target diameter / 2 = 24dp radius).
   const ChartInteractions({
     this.enablePan = true,
     this.enableZoom = true,
@@ -37,7 +40,8 @@ class ChartInteractions {
     this.panSensitivity = 1.0,
     this.momentumDecay = 0.95,
     this.tooltipBehavior = TooltipBehavior.onTap,
-    this.hitTestRadius = 20.0,
+    this.hitTestRadius = 24.0,
+    this.touchTargetConfig = TouchTargetConfig.standard,
   });
 
   /// Creates an interactions configuration with all interactions disabled.
@@ -67,7 +71,8 @@ class ChartInteractions {
         panSensitivity = 1.0,
         momentumDecay = 0.95,
         tooltipBehavior = TooltipBehavior.onTap,
-        hitTestRadius = 20.0;
+        hitTestRadius = 24.0,
+        touchTargetConfig = TouchTargetConfig.standard;
 
   /// Whether panning is enabled.
   final bool enablePan;
@@ -145,7 +150,24 @@ class ChartInteractions {
   final TooltipBehavior tooltipBehavior;
 
   /// Radius for hit testing (how close to a point counts as a hit).
+  ///
+  /// Default is 24.0 to meet WCAG 2.1 AA minimum touch target size.
   final double hitTestRadius;
+
+  /// Configuration for touch target sizing to meet accessibility requirements.
+  ///
+  /// Used to calculate effective hit test radius based on input type (touch vs mouse).
+  final TouchTargetConfig touchTargetConfig;
+
+  /// Gets the effective hit test radius for the given input type.
+  ///
+  /// For touch input, ensures minimum WCAG-compliant target size (48dp).
+  /// For mouse input, uses smaller minimum for precision.
+  double getEffectiveHitTestRadius({required bool isTouch}) =>
+      touchTargetConfig.getHitTestRadius(
+        baseRadius: hitTestRadius,
+        isTouch: isTouch,
+      );
 
   /// Creates a copy with the given values replaced.
   ChartInteractions copyWith({
@@ -175,6 +197,7 @@ class ChartInteractions {
     double? momentumDecay,
     TooltipBehavior? tooltipBehavior,
     double? hitTestRadius,
+    TouchTargetConfig? touchTargetConfig,
   }) =>
       ChartInteractions(
         enablePan: enablePan ?? this.enablePan,
@@ -203,6 +226,7 @@ class ChartInteractions {
         momentumDecay: momentumDecay ?? this.momentumDecay,
         tooltipBehavior: tooltipBehavior ?? this.tooltipBehavior,
         hitTestRadius: hitTestRadius ?? this.hitTestRadius,
+        touchTargetConfig: touchTargetConfig ?? this.touchTargetConfig,
       );
 
   @override
@@ -235,7 +259,8 @@ class ChartInteractions {
           panSensitivity == other.panSensitivity &&
           momentumDecay == other.momentumDecay &&
           tooltipBehavior == other.tooltipBehavior &&
-          hitTestRadius == other.hitTestRadius;
+          hitTestRadius == other.hitTestRadius &&
+          touchTargetConfig == other.touchTargetConfig;
 
   @override
   int get hashCode => Object.hashAll([
@@ -265,6 +290,7 @@ class ChartInteractions {
         momentumDecay,
         tooltipBehavior,
         hitTestRadius,
+        touchTargetConfig,
       ]);
 }
 
@@ -305,6 +331,117 @@ enum TooltipBehavior {
 
   /// Never show tooltip automatically.
   manual,
+}
+
+/// Configuration for touch target sizing to meet accessibility requirements.
+///
+/// Provides WCAG 2.1 compliant touch target calculations that ensure
+/// interactive elements are large enough for users with motor impairments.
+///
+/// Example:
+/// ```dart
+/// final config = TouchTargetConfig();
+/// final radius = config.getHitTestRadius(
+///   baseRadius: 10.0,
+///   isTouch: true,
+/// );
+/// // Returns at least 24.0 (48dp diameter / 2) for touch input
+/// ```
+class TouchTargetConfig {
+  const TouchTargetConfig({
+    this.minTouchTargetSize = 48.0,
+    this.minMouseTargetSize = 24.0,
+    this.scaleFactor = 1.0,
+  });
+
+  /// Minimum touch target size in logical pixels (WCAG 2.1 AA: 44px, Material: 48px).
+  final double minTouchTargetSize;
+
+  /// Minimum mouse target size in logical pixels.
+  final double minMouseTargetSize;
+
+  /// Scale factor to apply to all target sizes.
+  final double scaleFactor;
+
+  /// Default configuration meeting WCAG 2.1 and Material Design guidelines.
+  static const TouchTargetConfig standard = TouchTargetConfig();
+
+  /// Compact configuration for dense layouts (still meets minimum accessibility).
+  static const TouchTargetConfig compact = TouchTargetConfig(
+    minTouchTargetSize: 44.0, // WCAG 2.1 minimum
+    minMouseTargetSize: 20.0,
+  );
+
+  /// Large configuration for improved accessibility.
+  static const TouchTargetConfig large = TouchTargetConfig(
+    minTouchTargetSize: 56.0,
+    minMouseTargetSize: 32.0,
+  );
+
+  /// Calculates the appropriate hit test radius based on input type.
+  ///
+  /// For touch input, ensures the radius meets minimum touch target requirements.
+  /// For mouse input, uses the smaller minimum for precision.
+  double getHitTestRadius({
+    required double baseRadius,
+    required bool isTouch,
+  }) {
+    final minSize = isTouch ? minTouchTargetSize : minMouseTargetSize;
+    final minRadius = (minSize / 2) * scaleFactor;
+    return baseRadius > minRadius ? baseRadius : minRadius;
+  }
+
+  /// Calculates hit test radius from a [ChartInteractions] configuration.
+  double getHitTestRadiusFromInteractions(
+    ChartInteractions interactions, {
+    required bool isTouch,
+  }) =>
+      getHitTestRadius(
+        baseRadius: interactions.hitTestRadius,
+        isTouch: isTouch,
+      );
+
+  /// Returns the minimum target size for the given input type.
+  double getMinTargetSize({required bool isTouch}) =>
+      (isTouch ? minTouchTargetSize : minMouseTargetSize) * scaleFactor;
+
+  /// Returns the padding needed to expand an element to minimum target size.
+  double getTargetPadding({
+    required double elementSize,
+    required bool isTouch,
+  }) {
+    final minSize = getMinTargetSize(isTouch: isTouch);
+    if (elementSize >= minSize) return 0.0;
+    return (minSize - elementSize) / 2;
+  }
+
+  /// Creates a copy with updated values.
+  TouchTargetConfig copyWith({
+    double? minTouchTargetSize,
+    double? minMouseTargetSize,
+    double? scaleFactor,
+  }) =>
+      TouchTargetConfig(
+        minTouchTargetSize: minTouchTargetSize ?? this.minTouchTargetSize,
+        minMouseTargetSize: minMouseTargetSize ?? this.minMouseTargetSize,
+        scaleFactor: scaleFactor ?? this.scaleFactor,
+      );
+
+  @override
+  bool operator ==(Object other) {
+    if (identical(this, other)) return true;
+    return other is TouchTargetConfig &&
+        other.minTouchTargetSize == minTouchTargetSize &&
+        other.minMouseTargetSize == minMouseTargetSize &&
+        other.scaleFactor == scaleFactor;
+  }
+
+  @override
+  int get hashCode => Object.hash(
+        minTouchTargetSize,
+        minMouseTargetSize,
+        scaleFactor,
+      );
 }
 
 /// Widget that handles chart gesture detection.

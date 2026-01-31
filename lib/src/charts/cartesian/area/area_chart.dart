@@ -11,6 +11,7 @@ import '../../../core/base/chart_painter.dart';
 import '../../../core/data/data_point.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 
 /// A data series for area charts.
 class AreaSeries<X, Y extends num> {
@@ -92,7 +93,7 @@ class AreaChart extends StatefulWidget {
 }
 
 class _AreaChartState extends State<AreaChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -334,11 +335,24 @@ class _AreaChartState extends State<AreaChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Get responsive padding based on screen size
+        final responsivePadding = getResponsivePadding(
+          context,
+          constraints,
+          override: widget.padding,
+        );
+
+        // Get responsive font size for labels
+        final labelFontSize = getScaledFontSize(context, 11.0);
+
+        // Get WCAG-compliant hit test radius
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -354,7 +368,7 @@ class _AreaChartState extends State<AreaChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onDataPointTap != null) {
                 widget.onDataPointTap!(hitInfo);
@@ -370,7 +384,8 @@ class _AreaChartState extends State<AreaChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -419,6 +434,7 @@ class _AreaChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required super.padding,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller) {
     _calculateBounds();
   }
@@ -426,6 +442,9 @@ class _AreaChartPainter extends CartesianChartPainter {
   final AreaChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+
+  /// Font size for axis labels (responsive).
+  final double labelFontSize;
 
   double _xMin = 0;
   double _xMax = 1;
@@ -736,7 +755,7 @@ class _AreaChartPainter extends CartesianChartPainter {
     final range = _yMax - _yMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -768,7 +787,7 @@ class _AreaChartPainter extends CartesianChartPainter {
     if (firstSeries.isEmpty) return;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 

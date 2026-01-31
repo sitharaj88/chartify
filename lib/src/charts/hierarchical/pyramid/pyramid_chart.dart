@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'pyramid_chart_data.dart';
 
 export 'pyramid_chart_data.dart';
@@ -55,13 +56,14 @@ class PyramidChart extends StatefulWidget {
 }
 
 class _PyramidChartState extends State<PyramidChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
   Animation<double>? _animation;
   final ChartHitTester _hitTester = ChartHitTester();
   Rect _chartArea = Rect.zero;
+  double _hitRadius = 8.0;
 
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
@@ -133,7 +135,7 @@ class _PyramidChartState extends State<PyramidChart>
   void _handleHover(PointerEvent event) {
     final hitInfo = _hitTester.hitTest(
       event.localPosition,
-      radius: widget.interactions.hitTestRadius,
+      radius: _hitRadius,
     );
     if (hitInfo != null) {
       _controller.setHoveredPoint(hitInfo);
@@ -150,11 +152,16 @@ class _PyramidChartState extends State<PyramidChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+        _hitRadius = hitRadius;
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -170,7 +177,7 @@ class _PyramidChartState extends State<PyramidChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onSectionTap != null) {
                 widget.onSectionTap!(widget.data.sections[hitInfo.pointIndex], hitInfo.pointIndex);
@@ -189,7 +196,8 @@ class _PyramidChartState extends State<PyramidChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -243,12 +251,14 @@ class _PyramidChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
   }) : super(repaint: controller);
 
   final PyramidChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
 
   @override
   Rect getChartArea(Size size) => Rect.fromLTRB(
@@ -382,7 +392,7 @@ class _PyramidChartPainter extends ChartPainter {
         : section.label;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 12,
+      fontSize: labelFontSize,
       fontWeight: FontWeight.w500,
     );
 
@@ -432,5 +442,6 @@ class _PyramidChartPainter extends ChartPainter {
   bool shouldRepaint(covariant _PyramidChartPainter oldDelegate) =>
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
+      labelFontSize != oldDelegate.labelFontSize ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
 }

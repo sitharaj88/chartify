@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
@@ -7,6 +9,7 @@ import '../rendering/painters/series_painter.dart' as painter;
 import 'chart_semantics.dart';
 import 'contrast_validator.dart';
 import 'high_contrast.dart';
+import 'live_region.dart';
 
 /// Converts a DataPointInfo from chart_controller to series_painter format.
 painter.DataPointInfo toSemanticDataPointInfo(controller.DataPointInfo info) => painter.DataPointInfo(
@@ -66,8 +69,15 @@ class ChartAccessibility {
     this.valueFormatter,
     this.onPointSelected,
     this.onNavigate,
+    this.onSeriesFocus,
+    this.onZoomIn,
+    this.onZoomOut,
+    this.onZoomReset,
+    this.jumpSize = 10,
+    this.enableZoomKeys = true,
   }) {
     _focusNode = FocusNode(debugLabel: 'ChartAccessibility');
+    _liveRegion = LiveRegionController();
   }
 
   /// The type of chart.
@@ -94,9 +104,30 @@ class ChartAccessibility {
   /// Called when navigation occurs.
   final void Function(int index)? onNavigate;
 
+  /// Called when a series is focused via number keys (1-9).
+  final void Function(int seriesIndex)? onSeriesFocus;
+
+  /// Called when zoom in is requested (+/= key).
+  final VoidCallback? onZoomIn;
+
+  /// Called when zoom out is requested (-/_ key).
+  final VoidCallback? onZoomOut;
+
+  /// Called when zoom reset is requested (R key).
+  final VoidCallback? onZoomReset;
+
+  /// Number of points to jump on Page Up/Down.
+  final int jumpSize;
+
+  /// Whether zoom keys (+/-/R) are enabled.
+  final bool enableZoomKeys;
+
   late final FocusNode _focusNode;
+  late final LiveRegionController _liveRegion;
   List<controller.DataPointInfo> _dataPoints = [];
+  Map<int, List<controller.DataPointInfo>> _seriesDataPoints = {};
   int _focusedIndex = -1;
+  int _focusedSeriesIndex = 0;
 
   /// The focus node for keyboard navigation.
   FocusNode get focusNode => _focusNode;
@@ -121,7 +152,14 @@ class ChartAccessibility {
   /// Disposes resources.
   void dispose() {
     _focusNode.dispose();
+    _liveRegion.dispose();
   }
+
+  /// Gets the live region controller for external use.
+  LiveRegionController get liveRegion => _liveRegion;
+
+  /// Gets the currently focused series index.
+  int get focusedSeriesIndex => _focusedSeriesIndex;
 
   /// Wraps a chart widget with accessibility support.
   ///
@@ -166,12 +204,26 @@ class ChartAccessibility {
   }
 
   /// Handles keyboard events for navigation.
+  ///
+  /// Supported keys:
+  /// - Arrow keys: Navigate between points
+  /// - Home/End: Jump to first/last point
+  /// - Page Up/Down: Jump by [jumpSize] points
+  /// - Enter/Space: Select current point
+  /// - Escape: Clear selection
+  /// - 1-9: Focus series by index
+  /// - D: Announce data description
+  /// - T: Announce trend
+  /// - S: Announce summary
+  /// - +/=: Zoom in (if enabled)
+  /// - -/_: Zoom out (if enabled)
+  /// - R: Reset zoom (if enabled)
   KeyEventResult _handleKeyEvent(FocusNode node, KeyEvent event) {
     if (event is KeyUpEvent) return KeyEventResult.ignored;
-    if (_dataPoints.isEmpty) return KeyEventResult.ignored;
 
     final key = event.logicalKey;
 
+    // Arrow key navigation
     if (key == LogicalKeyboardKey.arrowRight ||
         key == LogicalKeyboardKey.arrowDown) {
       _navigateNext();
@@ -184,6 +236,7 @@ class ChartAccessibility {
       return KeyEventResult.handled;
     }
 
+    // Jump navigation
     if (key == LogicalKeyboardKey.home) {
       _navigateToFirst();
       return KeyEventResult.handled;
@@ -194,6 +247,17 @@ class ChartAccessibility {
       return KeyEventResult.handled;
     }
 
+    if (key == LogicalKeyboardKey.pageDown) {
+      _navigateForward(jumpSize);
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.pageUp) {
+      _navigateBackward(jumpSize);
+      return KeyEventResult.handled;
+    }
+
+    // Selection
     if (key == LogicalKeyboardKey.enter || key == LogicalKeyboardKey.space) {
       _selectCurrentPoint();
       return KeyEventResult.handled;
@@ -204,7 +268,72 @@ class ChartAccessibility {
       return KeyEventResult.handled;
     }
 
+    // Number keys for series selection (1-9)
+    final seriesIndex = _getSeriesIndexFromKey(key);
+    if (seriesIndex != null) {
+      _focusSeries(seriesIndex);
+      return KeyEventResult.handled;
+    }
+
+    // Announcement keys
+    if (key == LogicalKeyboardKey.keyD) {
+      _announceDataDescription();
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.keyT) {
+      _announceTrend();
+      return KeyEventResult.handled;
+    }
+
+    if (key == LogicalKeyboardKey.keyS) {
+      _announceSummary();
+      return KeyEventResult.handled;
+    }
+
+    // Zoom keys (if enabled)
+    if (enableZoomKeys) {
+      if (key == LogicalKeyboardKey.equal ||
+          key == LogicalKeyboardKey.add ||
+          key == LogicalKeyboardKey.numpadAdd) {
+        onZoomIn?.call();
+        _liveRegion.announce('Zooming in');
+        return KeyEventResult.handled;
+      }
+
+      if (key == LogicalKeyboardKey.minus ||
+          key == LogicalKeyboardKey.numpadSubtract) {
+        onZoomOut?.call();
+        _liveRegion.announce('Zooming out');
+        return KeyEventResult.handled;
+      }
+
+      if (key == LogicalKeyboardKey.keyR) {
+        onZoomReset?.call();
+        _liveRegion.announce('Zoom reset');
+        return KeyEventResult.handled;
+      }
+    }
+
     return KeyEventResult.ignored;
+  }
+
+  /// Gets series index from number key (1-9).
+  int? _getSeriesIndexFromKey(LogicalKeyboardKey key) {
+    const numberKeys = [
+      LogicalKeyboardKey.digit1,
+      LogicalKeyboardKey.digit2,
+      LogicalKeyboardKey.digit3,
+      LogicalKeyboardKey.digit4,
+      LogicalKeyboardKey.digit5,
+      LogicalKeyboardKey.digit6,
+      LogicalKeyboardKey.digit7,
+      LogicalKeyboardKey.digit8,
+      LogicalKeyboardKey.digit9,
+    ];
+
+    final index = numberKeys.indexOf(key);
+    return index >= 0 ? index : null;
   }
 
   void _navigateNext() {
@@ -234,6 +363,129 @@ class ChartAccessibility {
     _focusedIndex = _dataPoints.length - 1;
     onNavigate?.call(_focusedIndex);
     _announceCurrentPoint();
+  }
+
+  /// Navigates forward by a specified number of points.
+  void _navigateForward(int count) {
+    if (_dataPoints.isEmpty) return;
+    _focusedIndex = math.min(_focusedIndex + count, _dataPoints.length - 1);
+    if (_focusedIndex < 0) _focusedIndex = 0;
+    onNavigate?.call(_focusedIndex);
+    _announceCurrentPoint();
+  }
+
+  /// Navigates backward by a specified number of points.
+  void _navigateBackward(int count) {
+    if (_dataPoints.isEmpty) return;
+    _focusedIndex = math.max(_focusedIndex - count, 0);
+    onNavigate?.call(_focusedIndex);
+    _announceCurrentPoint();
+  }
+
+  /// Focuses on a specific series by index.
+  void _focusSeries(int seriesIndex) {
+    // Group data points by series
+    _seriesDataPoints.clear();
+    for (final point in _dataPoints) {
+      final series = point.seriesIndex;
+      _seriesDataPoints.putIfAbsent(series, () => []).add(point);
+    }
+
+    // Check if series exists
+    if (!_seriesDataPoints.containsKey(seriesIndex)) {
+      _liveRegion.announce('Series ${seriesIndex + 1} not found');
+      return;
+    }
+
+    _focusedSeriesIndex = seriesIndex;
+    final seriesPoints = _seriesDataPoints[seriesIndex]!;
+
+    // Find first point of this series in the main list
+    final firstPointIndex = _dataPoints.indexWhere(
+      (p) => p.seriesIndex == seriesIndex,
+    );
+
+    if (firstPointIndex >= 0) {
+      _focusedIndex = firstPointIndex;
+      onNavigate?.call(_focusedIndex);
+      onSeriesFocus?.call(seriesIndex);
+      _liveRegion.announce(
+        'Series ${seriesIndex + 1} selected, ${seriesPoints.length} points',
+      );
+      _announceCurrentPoint();
+    }
+  }
+
+  /// Announces detailed data description for current point.
+  void _announceDataDescription() {
+    final point = focusedPoint;
+    if (point == null) {
+      _liveRegion.announce('No point selected');
+      return;
+    }
+
+    final semanticPoint = toSemanticDataPointInfo(point);
+    final buffer = StringBuffer();
+
+    buffer.write('Data point ${_focusedIndex + 1} of ${_dataPoints.length}. ');
+
+    if (semanticPoint.label != null) {
+      buffer.write('Label: ${semanticPoint.label}. ');
+    }
+
+    buffer.write('Value: ${_formatValue(semanticPoint.dataY)}. ');
+
+    if (semanticPoint.dataX != null) {
+      buffer.write('Position: ${semanticPoint.dataX}. ');
+    }
+
+    buffer.write('Series ${point.seriesIndex + 1}.');
+
+    _liveRegion.announce(buffer.toString());
+  }
+
+  /// Announces trend information for visible data.
+  void _announceTrend() {
+    if (_dataPoints.length < 2) {
+      _liveRegion.announce('Insufficient data for trend analysis');
+      return;
+    }
+
+    final semanticPoints = _dataPoints.map(toSemanticDataPointInfo).toList();
+    _liveRegion.announceTrend(semanticPoints);
+  }
+
+  /// Announces chart summary.
+  void _announceSummary() {
+    final semanticPoints = _dataPoints.map(toSemanticDataPointInfo).toList();
+    final semantics = ChartSemantics(
+      chartType: chartType,
+      title: title,
+      subtitle: subtitle,
+      dataPoints: semanticPoints,
+      xAxisLabel: xAxisLabel,
+      yAxisLabel: yAxisLabel,
+      valueFormatter: valueFormatter,
+    );
+
+    _liveRegion.announceChartSummary(semantics);
+  }
+
+  /// Formats a value for announcement.
+  String _formatValue(double value) {
+    if (valueFormatter != null) {
+      return valueFormatter!(value);
+    }
+    if (value.abs() >= 1000000) {
+      return '${(value / 1000000).toStringAsFixed(1)} million';
+    }
+    if (value.abs() >= 1000) {
+      return '${(value / 1000).toStringAsFixed(1)} thousand';
+    }
+    if (value == value.roundToDouble()) {
+      return value.toInt().toString();
+    }
+    return value.toStringAsFixed(2);
   }
 
   void _selectCurrentPoint() {

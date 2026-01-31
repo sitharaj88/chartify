@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'slope_chart_data.dart';
 
 export 'slope_chart_data.dart';
@@ -53,7 +54,7 @@ class SlopeChart extends StatefulWidget {
 }
 
 class _SlopeChartState extends State<SlopeChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -142,11 +143,15 @@ class _SlopeChartState extends State<SlopeChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -178,7 +183,9 @@ class _SlopeChartState extends State<SlopeChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
+                  hitRadius: hitRadius,
                 ),
                 size: Size.infinite,
               ),
@@ -234,12 +241,16 @@ class _SlopeChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
   }) : super(repaint: controller);
 
   final SlopeChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
 
   @override
   Rect getChartArea(Size size) => Rect.fromLTRB(
@@ -347,7 +358,7 @@ class _SlopeChartPainter extends ChartPainter {
     // Start label
     final startSpan = TextSpan(
       text: data.startLabel,
-      style: theme.titleStyle.copyWith(fontSize: 14),
+      style: theme.titleStyle.copyWith(fontSize: labelFontSize + 3),
     );
     final startPainter = TextPainter(
       text: startSpan,
@@ -365,7 +376,7 @@ class _SlopeChartPainter extends ChartPainter {
     // End label
     final endSpan = TextSpan(
       text: data.endLabel,
-      style: theme.titleStyle.copyWith(fontSize: 14),
+      style: theme.titleStyle.copyWith(fontSize: labelFontSize + 3),
     );
     final endPainter = TextPainter(
       text: endSpan,
@@ -452,7 +463,7 @@ class _SlopeChartPainter extends ChartPainter {
     // Start value
     final startValueSpan = TextSpan(
       text: item.startValue.toStringAsFixed(0),
-      style: theme.labelStyle.copyWith(fontSize: 10),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize - 1),
     );
     final startValuePainter = TextPainter(
       text: startValueSpan,
@@ -470,7 +481,7 @@ class _SlopeChartPainter extends ChartPainter {
     // End value
     final endValueSpan = TextSpan(
       text: item.endValue.toStringAsFixed(0),
-      style: theme.labelStyle.copyWith(fontSize: 10),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize - 1),
     );
     final endValuePainter = TextPainter(
       text: endValueSpan,

@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'bump_chart_data.dart';
 
 export 'bump_chart_data.dart';
@@ -51,7 +52,7 @@ class BumpChart extends StatefulWidget {
 }
 
 class _BumpChartState extends State<BumpChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -140,11 +141,15 @@ class _BumpChartState extends State<BumpChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -176,7 +181,9 @@ class _BumpChartState extends State<BumpChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
+                  hitRadius: hitRadius,
                 ),
                 size: Size.infinite,
               ),
@@ -232,12 +239,16 @@ class _BumpChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
   }) : super(repaint: controller);
 
   final BumpChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
 
   @override
   Rect getChartArea(Size size) {
@@ -302,7 +313,7 @@ class _BumpChartPainter extends ChartPainter {
         // Register hit target
         hitTester.addCircle(
           center: point,
-          radius: data.markerSize,
+          radius: hitRadius,
           info: DataPointInfo(
             seriesIndex: seriesIdx,
             pointIndex: t,
@@ -348,7 +359,7 @@ class _BumpChartPainter extends ChartPainter {
 
       final textSpan = TextSpan(
         text: label,
-        style: theme.labelStyle.copyWith(fontSize: 11),
+        style: theme.labelStyle.copyWith(fontSize: labelFontSize),
       );
       final textPainter = TextPainter(
         text: textSpan,
@@ -380,7 +391,7 @@ class _BumpChartPainter extends ChartPainter {
       // Draw rank number
       final textSpan = TextSpan(
         text: '$rank',
-        style: theme.labelStyle.copyWith(fontSize: 10),
+        style: theme.labelStyle.copyWith(fontSize: labelFontSize),
       );
       final textPainter = TextPainter(
         text: textSpan,
@@ -484,7 +495,7 @@ class _BumpChartPainter extends ChartPainter {
       style: theme.labelStyle.copyWith(
         color: color,
         fontWeight: FontWeight.w500,
-        fontSize: 11,
+        fontSize: labelFontSize,
       ),
     );
 
@@ -522,5 +533,7 @@ class _BumpChartPainter extends ChartPainter {
   bool shouldRepaint(covariant _BumpChartPainter oldDelegate) =>
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
-      controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
+      controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
+      labelFontSize != oldDelegate.labelFontSize ||
+      hitRadius != oldDelegate.hitRadius;
 }

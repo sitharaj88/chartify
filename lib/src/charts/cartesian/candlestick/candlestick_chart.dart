@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'candlestick_chart_data.dart';
 
 export 'candlestick_chart_data.dart';
@@ -57,7 +58,7 @@ class CandlestickChart extends StatefulWidget {
 }
 
 class _CandlestickChartState extends State<CandlestickChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -152,15 +153,19 @@ class _CandlestickChartState extends State<CandlestickChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final volumeHeight = widget.data.showVolume
             ? constraints.maxHeight * widget.data.volumeHeightRatio
             : 0.0;
 
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom - volumeHeight,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom - volumeHeight,
         );
 
         return ChartTooltipOverlay(
@@ -176,7 +181,7 @@ class _CandlestickChartState extends State<CandlestickChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onDataPointTap != null) {
                 widget.onDataPointTap!(hitInfo);
@@ -195,7 +200,8 @@ class _CandlestickChartState extends State<CandlestickChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -277,6 +283,7 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required super.padding,
+    required this.labelFontSize,
   }) : super(repaint: controller, showGrid: data.showGrid) {
     _calculateBounds();
   }
@@ -284,6 +291,7 @@ class _CandlestickChartPainter extends CartesianChartPainter {
   final CandlestickChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double labelFontSize;
 
   double _priceMin = 0;
   double _priceMax = 1;
@@ -582,7 +590,7 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     final range = _priceMax - _priceMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -611,7 +619,7 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     if (data.data.isEmpty) return;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 

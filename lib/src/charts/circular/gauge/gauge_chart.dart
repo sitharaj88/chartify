@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../animation/chart_animation.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 
 /// A range segment for the gauge chart.
 @immutable
@@ -141,7 +142,7 @@ class GaugeChart extends StatefulWidget {
 }
 
 class _GaugeChartState extends State<GaugeChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -188,6 +189,8 @@ class _GaugeChartState extends State<GaugeChart>
   @override
   Widget build(BuildContext context) {
     final theme = ChartTheme.of(context);
+    final labelFontSize = getScaledFontSize(context, 10.0);
+    final valueFontSize = getScaledFontSize(context, 36.0);
 
     return LayoutBuilder(
       builder: (context, constraints) {
@@ -203,6 +206,8 @@ class _GaugeChartState extends State<GaugeChart>
                     theme: theme,
                     animationValue: _animation.value,
                     padding: widget.padding,
+                    labelFontSize: labelFontSize,
+                    valueFontSize: valueFontSize,
                   ),
                 ),
                 if (widget.centerWidget != null)
@@ -210,7 +215,7 @@ class _GaugeChartState extends State<GaugeChart>
                     child: Center(child: widget.centerWidget),
                   ),
                 if (widget.centerWidget == null && widget.data.showValue)
-                  _buildDefaultCenterWidget(theme, size),
+                  _buildDefaultCenterWidget(theme, size, valueFontSize),
               ],
             ),
         );
@@ -218,7 +223,11 @@ class _GaugeChartState extends State<GaugeChart>
     );
   }
 
-  Widget _buildDefaultCenterWidget(ChartThemeData theme, Size size) {
+  Widget _buildDefaultCenterWidget(
+    ChartThemeData theme,
+    Size size,
+    double valueFontSize,
+  ) {
     // Position value BELOW the needle hub to avoid overlap
     final centerY = size.height / 2;
     final valueTop = centerY + widget.data.needleBaseRadius + 8;
@@ -234,7 +243,7 @@ class _GaugeChartState extends State<GaugeChart>
             widget.data.formattedValue,
             textAlign: TextAlign.center,
             style: theme.titleStyle.copyWith(
-              fontSize: 36,
+              fontSize: valueFontSize,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -258,6 +267,8 @@ class _GaugeChartPainter extends CircularChartPainter {
     required this.data,
     required super.theme,
     required this.padding,
+    required this.labelFontSize,
+    required this.valueFontSize,
     super.animationValue,
   }) : super(
           startAngle: data.startAngle,
@@ -265,6 +276,8 @@ class _GaugeChartPainter extends CircularChartPainter {
 
   final GaugeChartData data;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double valueFontSize;
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -450,7 +463,7 @@ class _GaugeChartPainter extends CircularChartPainter {
           canvas,
           tickValue.toStringAsFixed(0),
           labelPos,
-          style: theme.labelStyle.copyWith(fontSize: 10),
+          style: theme.labelStyle.copyWith(fontSize: labelFontSize),
         );
       }
     }

@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'lollipop_chart_data.dart';
 
 export 'lollipop_chart_data.dart';
@@ -51,7 +52,7 @@ class LollipopChart extends StatefulWidget {
 }
 
 class _LollipopChartState extends State<LollipopChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -140,11 +141,15 @@ class _LollipopChartState extends State<LollipopChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -176,7 +181,9 @@ class _LollipopChartState extends State<LollipopChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
+                  hitRadius: hitRadius,
                 ),
                 size: Size.infinite,
               ),
@@ -218,12 +225,16 @@ class _LollipopChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
   }) : super(repaint: controller);
 
   final LollipopChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
 
   @override
   Rect getChartArea(Size size) {
@@ -332,7 +343,7 @@ class _LollipopChartPainter extends ChartPainter {
       // Register hit target
       hitTester.addCircle(
         center: markerPoint,
-        radius: markerSize,
+        radius: hitRadius,
         info: DataPointInfo(
           seriesIndex: 0,
           pointIndex: i,
@@ -420,7 +431,7 @@ class _LollipopChartPainter extends ChartPainter {
 
         final textSpan = TextSpan(
           text: value.toStringAsFixed(0),
-          style: theme.labelStyle.copyWith(fontSize: 10),
+          style: theme.labelStyle.copyWith(fontSize: labelFontSize),
         );
         final textPainter = TextPainter(
           text: textSpan,
@@ -446,7 +457,7 @@ class _LollipopChartPainter extends ChartPainter {
 
         final textSpan = TextSpan(
           text: value.toStringAsFixed(0),
-          style: theme.labelStyle.copyWith(fontSize: 10),
+          style: theme.labelStyle.copyWith(fontSize: labelFontSize),
         );
         final textPainter = TextPainter(
           text: textSpan,
@@ -466,7 +477,7 @@ class _LollipopChartPainter extends ChartPainter {
       double itemCenter, bool isHorizontal,) {
     final textSpan = TextSpan(
       text: item.label,
-      style: theme.labelStyle.copyWith(fontSize: 11),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize),
     );
     final textPainter = TextPainter(
       text: textSpan,
@@ -497,7 +508,7 @@ class _LollipopChartPainter extends ChartPainter {
     final textSpan = TextSpan(
       text: item.value.toStringAsFixed(0),
       style: theme.labelStyle.copyWith(
-        fontSize: 10,
+        fontSize: labelFontSize,
         fontWeight: FontWeight.w500,
       ),
     );

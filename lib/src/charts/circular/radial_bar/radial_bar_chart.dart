@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import '../../../animation/chart_animation.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'radial_bar_chart_data.dart';
 
 export 'radial_bar_chart_data.dart';
@@ -51,7 +52,7 @@ class RadialBarChart extends StatefulWidget {
 }
 
 class _RadialBarChartState extends State<RadialBarChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -99,7 +100,12 @@ class _RadialBarChartState extends State<RadialBarChart>
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
-      builder: (context, constraints) => AnimatedBuilder(
+      builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
+        return AnimatedBuilder(
           animation: _animation,
           builder: (context, child) => Stack(
               alignment: Alignment.center,
@@ -110,13 +116,16 @@ class _RadialBarChartState extends State<RadialBarChart>
                     data: widget.data,
                     theme: theme,
                     animationValue: _animation.value,
-                    padding: widget.padding,
+                    padding: responsivePadding,
+                    labelFontSize: labelFontSize,
+                    hitRadius: hitRadius,
                   ),
                 ),
                 if (widget.centerWidget != null) widget.centerWidget!,
               ],
             ),
-        ),
+        );
+      },
     );
   }
 }
@@ -126,6 +135,8 @@ class _RadialBarChartPainter extends CircularChartPainter {
     required this.data,
     required super.theme,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
     super.animationValue,
   }) : super(
           startAngle: data.startAngle,
@@ -133,6 +144,8 @@ class _RadialBarChartPainter extends CircularChartPainter {
 
   final RadialBarChartData data;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -260,7 +273,7 @@ class _RadialBarChartPainter extends CircularChartPainter {
     final sweepAngle = data.maxAngle * animatedValue;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       fontWeight: FontWeight.w500,
     );
 
@@ -305,5 +318,7 @@ class _RadialBarChartPainter extends CircularChartPainter {
   @override
   bool shouldRepaint(covariant _RadialBarChartPainter oldDelegate) => super.shouldRepaint(oldDelegate) ||
         data != oldDelegate.data ||
-        padding != oldDelegate.padding;
+        padding != oldDelegate.padding ||
+        labelFontSize != oldDelegate.labelFontSize ||
+        hitRadius != oldDelegate.hitRadius;
 }

@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'waterfall_chart_data.dart';
 
 export 'waterfall_chart_data.dart';
@@ -56,13 +57,14 @@ class WaterfallChart extends StatefulWidget {
 }
 
 class _WaterfallChartState extends State<WaterfallChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
   Animation<double>? _animation;
   final ChartHitTester _hitTester = ChartHitTester();
   Rect _chartArea = Rect.zero;
+  double _hitRadius = 20.0;
 
   ChartAnimation get _animationConfig =>
       widget.animation ?? widget.data.animation ?? const ChartAnimation();
@@ -134,7 +136,7 @@ class _WaterfallChartState extends State<WaterfallChart>
   void _handleHover(PointerEvent event) {
     final hitInfo = _hitTester.hitTest(
       event.localPosition,
-      radius: widget.interactions.hitTestRadius,
+      radius: _hitRadius,
     );
     if (hitInfo != null) {
       _controller.setHoveredPoint(hitInfo);
@@ -151,11 +153,16 @@ class _WaterfallChartState extends State<WaterfallChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+        _hitRadius = hitRadius;
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -171,7 +178,7 @@ class _WaterfallChartState extends State<WaterfallChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onItemTap != null) {
                 widget.onItemTap!(widget.data.items[hitInfo.pointIndex], hitInfo.pointIndex);
@@ -190,7 +197,8 @@ class _WaterfallChartState extends State<WaterfallChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -241,6 +249,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required super.padding,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller) {
     _calculateBounds();
   }
@@ -248,6 +257,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
   final WaterfallChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double labelFontSize;
 
   double _yMin = 0;
   double _yMax = 1;
@@ -426,7 +436,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
   ) {
     final label = _formatValue(item.value);
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 10,
+      fontSize: labelFontSize,
       fontWeight: FontWeight.w500,
     );
 
@@ -547,7 +557,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     final range = _yMax - _yMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -576,7 +586,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     if (data.items.isEmpty) return;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 

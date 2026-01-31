@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'treemap_chart_data.dart';
 
 export 'treemap_chart_data.dart';
@@ -56,7 +57,7 @@ class TreemapChart extends StatefulWidget {
 }
 
 class _TreemapChartState extends State<TreemapChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -153,11 +154,15 @@ class _TreemapChartState extends State<TreemapChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -194,7 +199,8 @@ class _TreemapChartState extends State<TreemapChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                   onLayoutComplete: (rects) => _layoutCache = rects,
                 ),
                 size: Size.infinite,
@@ -239,6 +245,7 @@ class _TreemapChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
     required this.onLayoutComplete,
   }) : super(repaint: controller);
 
@@ -246,6 +253,7 @@ class _TreemapChartPainter extends ChartPainter {
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
   final void Function(List<TreemapRect>) onLayoutComplete;
 
   @override
@@ -591,7 +599,7 @@ class _TreemapChartPainter extends ChartPainter {
   void _drawLabel(Canvas canvas, Rect rect, String label, Color bgColor) {
     final textColor = _getContrastColor(bgColor);
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: textColor,
     );
 

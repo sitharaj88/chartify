@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../../../animation/chart_animation.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'sparkline_chart_data.dart';
 
 export 'sparkline_chart_data.dart';
@@ -44,7 +45,7 @@ class SparklineChart extends StatefulWidget {
 }
 
 class _SparklineChartState extends State<SparklineChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late AnimationController _animationController;
   late Animation<double> _animation;
 
@@ -91,17 +92,31 @@ class _SparklineChartState extends State<SparklineChart>
   Widget build(BuildContext context) {
     final theme = ChartTheme.of(context);
 
-    return AnimatedBuilder(
-      animation: _animation,
-      builder: (context, child) => CustomPaint(
-          painter: _SparklinePainter(
-            data: widget.data,
-            theme: theme,
-            animationValue: _animation.value,
-            padding: widget.padding,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(
+          context,
+          constraints,
+          override: widget.padding,
+        );
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
+        return AnimatedBuilder(
+          animation: _animation,
+          builder: (context, child) => CustomPaint(
+            painter: _SparklinePainter(
+              data: widget.data,
+              theme: theme,
+              animationValue: _animation.value,
+              padding: responsivePadding,
+              labelFontSize: labelFontSize,
+              hitRadius: hitRadius,
+            ),
+            size: Size.infinite,
           ),
-          size: Size.infinite,
-        ),
+        );
+      },
     );
   }
 }
@@ -112,12 +127,16 @@ class _SparklinePainter extends CustomPainter {
     required this.theme,
     required this.animationValue,
     required this.padding,
+    required this.labelFontSize,
+    required this.hitRadius,
   });
 
   final SparklineChartData data;
   final ChartThemeData theme;
   final double animationValue;
   final EdgeInsets padding;
+  final double labelFontSize;
+  final double hitRadius;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -546,5 +565,8 @@ class _SparklinePainter extends CustomPainter {
   bool shouldRepaint(covariant _SparklinePainter oldDelegate) =>
       data != oldDelegate.data ||
       animationValue != oldDelegate.animationValue ||
-      theme != oldDelegate.theme;
+      theme != oldDelegate.theme ||
+      padding != oldDelegate.padding ||
+      labelFontSize != oldDelegate.labelFontSize ||
+      hitRadius != oldDelegate.hitRadius;
 }

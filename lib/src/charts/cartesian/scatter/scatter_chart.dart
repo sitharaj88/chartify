@@ -10,6 +10,7 @@ import '../../../core/base/chart_painter.dart';
 import '../../../core/data/data_point.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 
 /// A data point for scatter charts with optional size.
 class ScatterDataPoint<X, Y extends num> extends DataPoint<X, Y> {
@@ -108,7 +109,7 @@ class ScatterChart extends StatefulWidget {
 }
 
 class _ScatterChartState extends State<ScatterChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -183,31 +184,21 @@ class _ScatterChartState extends State<ScatterChart>
     super.dispose();
   }
 
-  void _handleHover(PointerEvent event) {
-    final hitInfo = _hitTester.hitTest(
-      event.localPosition,
-      radius: widget.interactions.hitTestRadius,
-    );
-    if (hitInfo != null) {
-      _controller.setHoveredPoint(hitInfo);
-      widget.onDataPointHover?.call(hitInfo);
-    } else {
-      _controller.clearHoveredPoint();
-      widget.onDataPointHover?.call(null);
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -223,13 +214,25 @@ class _ScatterChartState extends State<ScatterChart>
             onTap: (details) {
               final hitInfo = _hitTester.hitTest(
                 details.localPosition,
-                radius: widget.interactions.hitTestRadius,
+                radius: hitRadius,
               );
               if (hitInfo != null && widget.onDataPointTap != null) {
                 widget.onDataPointTap!(hitInfo);
               }
             },
-            onHover: _handleHover,
+            onHover: (event) {
+              final hitInfo = _hitTester.hitTest(
+                event.localPosition,
+                radius: hitRadius,
+              );
+              if (hitInfo != null) {
+                _controller.setHoveredPoint(hitInfo);
+                widget.onDataPointHover?.call(hitInfo);
+              } else {
+                _controller.clearHoveredPoint();
+                widget.onDataPointHover?.call(null);
+              }
+            },
             onExit: (_) {
               _controller.clearHoveredPoint();
               widget.onDataPointHover?.call(null);
@@ -242,7 +245,8 @@ class _ScatterChartState extends State<ScatterChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -288,6 +292,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
     required this.controller,
     required this.hitTester,
     required super.padding,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller) {
     _calculateBounds();
   }
@@ -295,6 +300,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
   final ScatterChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double labelFontSize;
 
   double _xMin = 0;
   double _xMax = 1;
@@ -550,7 +556,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
     final range = _yMax - _yMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 
@@ -580,7 +586,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
     final range = _xMax - _xMin;
 
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 11,
+      fontSize: labelFontSize,
       color: theme.labelStyle.color?.withValues(alpha: 0.7),
     );
 

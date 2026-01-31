@@ -74,15 +74,15 @@ void main() {
         expect(controller.viewport.isZoomed, true);
       });
 
-      test('zoom clamps scale between 0.1 and 10.0', () {
-        // Test upper bound
+      test('zoom clamps scale between 0.5 and 20.0', () {
+        // Test upper bound (default maxZoomX is 20.0)
         controller.zoom(100.0, Offset.zero);
-        expect(controller.viewport.scaleX, 10.0);
+        expect(controller.viewport.scaleX, 20.0);
 
-        // Reset and test lower bound
+        // Reset and test lower bound (default minZoomX is 0.5)
         controller.resetViewport();
         controller.zoom(0.001, Offset.zero);
-        expect(controller.viewport.scaleX, 0.1);
+        expect(controller.viewport.scaleX, 0.5);
       });
 
       test('resetViewport restores defaults', () {

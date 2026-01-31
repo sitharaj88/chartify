@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../_base/chart_responsive_mixin.dart';
 import '../../../animation/chart_animation.dart';
 import '../../../components/tooltip/chart_tooltip.dart';
 import '../../../core/base/chart_controller.dart';
@@ -55,7 +56,7 @@ class HeatmapChart extends StatefulWidget {
 }
 
 class _HeatmapChartState extends State<HeatmapChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -153,11 +154,15 @@ class _HeatmapChartState extends State<HeatmapChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -194,7 +199,8 @@ class _HeatmapChartState extends State<HeatmapChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -246,12 +252,14 @@ class _HeatmapChartPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
   }) : super(repaint: controller);
 
   final HeatmapChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
 
   @override
   Rect getChartArea(Size size) => Rect.fromLTRB(

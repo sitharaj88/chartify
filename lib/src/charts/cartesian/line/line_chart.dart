@@ -18,6 +18,7 @@ import '../../../rendering/renderers/axis_renderer.dart';
 import '../../../rendering/renderers/grid_renderer.dart';
 import '../../../rendering/renderers/renderer.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'line_chart_data.dart';
 import 'line_series.dart';
 
@@ -114,7 +115,7 @@ class LineChart extends StatefulWidget {
 }
 
 class _LineChartState extends State<LineChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -363,11 +364,24 @@ class _LineChartState extends State<LineChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        // Get responsive padding based on screen size
+        final responsivePadding = getResponsivePadding(
+          context,
+          constraints,
+          override: widget.padding,
+        );
+
+        // Get responsive font size for labels
+        final labelFontSize = getScaledFontSize(context, 11.0);
+
+        // Get WCAG-compliant hit test radius
+        final hitRadius = getHitTestRadius(context, constraints);
+
         _chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         // Reset spatial index when layout changes
@@ -388,7 +402,7 @@ class _LineChartState extends State<LineChart>
                 _buildSpatialIndex();
                 final hitInfo = _spatialIndex?.findNearest(
                   details.localPosition,
-                  maxDistance: widget.interactions.hitTestRadius,
+                  maxDistance: hitRadius,
                 );
                 if (hitInfo != null) {
                   widget.onDataPointTap!(hitInfo);
@@ -405,7 +419,7 @@ class _LineChartState extends State<LineChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
                   showCrosshair: widget.showCrosshair,
                   crosshairColor: widget.crosshairColor,
                   xBounds: _xBounds,
@@ -415,6 +429,7 @@ class _LineChartState extends State<LineChart>
                     _yBounds = y;
                   },
                   getSeriesData: _needsDecimation ? _getSeriesData : null,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -494,6 +509,7 @@ class _LineChartPainter extends CustomPainter {
     this.yBounds,
     this.onBoundsCalculated,
     this.getSeriesData,
+    this.labelFontSize = 11.0,
   }) : super(repaint: controller);
 
   final LineChartData data;
@@ -510,6 +526,9 @@ class _LineChartPainter extends CustomPainter {
 
   /// Optional function to get decimated series data for large datasets.
   final SeriesDataGetter? getSeriesData;
+
+  /// Font size for axis labels (responsive).
+  final double labelFontSize;
 
   // Renderers (lazily initialized)
   AxisRenderer<double>? _yAxisRenderer;
@@ -646,7 +665,7 @@ class _LineChartPainter extends CustomPainter {
       config: AxisConfig(
         position: ChartPosition.left,
         labelStyle: theme.labelStyle.copyWith(
-          fontSize: 11,
+          fontSize: labelFontSize,
           color: theme.labelStyle.color?.withAlpha(180),
         ),
         lineColor: theme.axisLineColor,

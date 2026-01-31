@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'sunburst_chart_data.dart';
 
 export 'sunburst_chart_data.dart';
@@ -56,7 +57,7 @@ class SunburstChart extends StatefulWidget {
 }
 
 class _SunburstChartState extends State<SunburstChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -152,7 +153,11 @@ class _SunburstChartState extends State<SunburstChart>
     final theme = ChartTheme.of(context);
 
     return LayoutBuilder(
-      builder: (context, constraints) => ChartTooltipOverlay(
+      builder: (context, constraints) {
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
+        return ChartTooltipOverlay(
           controller: _controller,
           config: widget.tooltip,
           theme: theme,
@@ -165,7 +170,7 @@ class _SunburstChartState extends State<SunburstChart>
             hitTester: _hitTester,
             onTap: (details) {
               final hitInfo =
-                  _hitTester.hitTest(details.localPosition, radius: 0);
+                  _hitTester.hitTest(details.localPosition, radius: hitRadius);
               if (hitInfo != null && widget.onArcTap != null) {
                 final idx = hitInfo.pointIndex;
                 if (idx >= 0 && idx < _arcCache.length) {
@@ -187,6 +192,7 @@ class _SunburstChartState extends State<SunburstChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
+                  labelFontSize: labelFontSize,
                   onLayoutComplete: (arcs, _) {
                     _arcCache = arcs;
                   },
@@ -195,7 +201,8 @@ class _SunburstChartState extends State<SunburstChart>
               ),
             ),
           ),
-        ),
+        );
+      },
     );
   }
 
@@ -231,12 +238,14 @@ class _SunburstChartPainter extends ChartPainter {
     required super.animationValue,
     required this.controller,
     required this.hitTester,
+    required this.labelFontSize,
     required this.onLayoutComplete,
   }) : super(repaint: controller);
 
   final SunburstChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
+  final double labelFontSize;
   final void Function(List<SunburstArc>, Offset) onLayoutComplete;
 
   @override
@@ -497,7 +506,7 @@ class _SunburstChartPainter extends ChartPainter {
     // Determine text color based on background
     final textColor = _getContrastColor(bgColor);
     final textStyle = theme.labelStyle.copyWith(
-      fontSize: 10,
+      fontSize: labelFontSize,
       color: textColor,
     );
 
@@ -545,7 +554,7 @@ class _SunburstChartPainter extends ChartPainter {
   void _drawCenterLabel(Canvas canvas, Offset center) {
     final textStyle = data.centerLabelStyle ??
         theme.labelStyle.copyWith(
-          fontSize: 14,
+          fontSize: labelFontSize * 1.4,
           fontWeight: FontWeight.bold,
         );
 
@@ -574,5 +583,6 @@ class _SunburstChartPainter extends ChartPainter {
   bool shouldRepaint(covariant _SunburstChartPainter oldDelegate) =>
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
+      labelFontSize != oldDelegate.labelFontSize ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint;
 }

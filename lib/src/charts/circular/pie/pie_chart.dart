@@ -8,6 +8,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'pie_chart_data.dart';
 
 /// A pie chart widget.
@@ -51,7 +52,7 @@ class PieChart extends StatefulWidget {
 }
 
 class _PieChartState extends State<PieChart>
-    with TickerProviderStateMixin {
+    with TickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -158,15 +159,15 @@ class _PieChartState extends State<PieChart>
     super.dispose();
   }
 
-  void _handleTap(TapDownDetails details) {
-    final hitInfo = _hitTester.hitTest(details.localPosition, radius: 0);
+  void _handleTap(TapDownDetails details, double hitRadius) {
+    final hitInfo = _hitTester.hitTest(details.localPosition, radius: hitRadius);
     if (hitInfo != null && widget.onSectionTap != null) {
       widget.onSectionTap!(hitInfo.pointIndex, widget.data.sections[hitInfo.pointIndex]);
     }
   }
 
-  void _handleHover(PointerEvent event) {
-    final hitInfo = _hitTester.hitTest(event.localPosition, radius: 0);
+  void _handleHover(PointerEvent event, double hitRadius) {
+    final hitInfo = _hitTester.hitTest(event.localPosition, radius: hitRadius);
     if (hitInfo != null) {
       if (_hoveredIndex != hitInfo.pointIndex) {
         _hoveredIndex = hitInfo.pointIndex;
@@ -190,6 +191,9 @@ class _PieChartState extends State<PieChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final labelFontSize = getScaledFontSize(context, 12.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final size = Size(constraints.maxWidth, constraints.maxHeight);
         final minDimension = math.min(size.width, size.height);
         final center = Offset(size.width / 2, size.height / 2);
@@ -204,13 +208,13 @@ class _PieChartState extends State<PieChart>
           chartArea: _chartArea,
           tooltipDataBuilder: (info) => _buildTooltipData(info, theme),
           child: MouseRegion(
-            onHover: _handleHover,
+            onHover: (event) => _handleHover(event, hitRadius),
             onExit: (_) {
               _controller.clearHoveredPoint();
               widget.onSectionHover?.call(null, null);
             },
             child: GestureDetector(
-              onTapDown: _handleTap,
+              onTapDown: (details) => _handleTap(details, hitRadius),
               child: Stack(
                 children: [
                   RepaintBoundary(
@@ -222,6 +226,7 @@ class _PieChartState extends State<PieChart>
                         controller: _controller,
                         hitTester: _hitTester,
                         hoverScale: _hoverScale,
+                        labelFontSize: labelFontSize,
                       ),
                       size: Size.infinite,
                     ),
@@ -265,12 +270,14 @@ class _PieChartPainter extends CircularChartPainter {
     required this.controller,
     required this.hitTester,
     required this.hoverScale,
+    this.labelFontSize = 12.0,
   }) : super(innerRadiusRatio: 0, startAngle: data.startAngle);
 
   final PieChartData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final double hoverScale;
+  final double labelFontSize;
 
   @override
   void paintSeries(Canvas canvas, Size size, Rect chartArea) {
@@ -548,7 +555,7 @@ class _PieChartPainter extends CircularChartPainter {
     // Minimum percentage threshold for showing labels (2%)
     const minLabelThreshold = 0.02;
 
-    final textStyle = data.labelStyle ?? theme.labelStyle.copyWith(fontSize: 12);
+    final textStyle = data.labelStyle ?? theme.labelStyle.copyWith(fontSize: labelFontSize);
 
     // First pass: calculate all label positions and bounds
     final labelInfos = <_LabelInfo>[];
@@ -773,7 +780,8 @@ class _PieChartPainter extends CircularChartPainter {
       super.shouldRepaint(oldDelegate) ||
       data != oldDelegate.data ||
       controller.hoveredPoint != oldDelegate.controller.hoveredPoint ||
-      hoverScale != oldDelegate.hoverScale;
+      hoverScale != oldDelegate.hoverScale ||
+      labelFontSize != oldDelegate.labelFontSize;
 }
 
 /// Helper class for label collision detection.

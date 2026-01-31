@@ -6,6 +6,7 @@ import '../../../core/base/chart_controller.dart';
 import '../../../core/base/chart_painter.dart';
 import '../../../core/gestures/gesture_detector.dart';
 import '../../../theme/chart_theme_data.dart';
+import '../../_base/chart_responsive_mixin.dart';
 import 'calendar_heatmap_data.dart';
 
 export 'calendar_heatmap_data.dart';
@@ -50,7 +51,7 @@ class CalendarHeatmapChart extends StatefulWidget {
 }
 
 class _CalendarHeatmapChartState extends State<CalendarHeatmapChart>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, ChartResponsiveMixin {
   late ChartController _controller;
   bool _ownsController = false;
   AnimationController? _animationController;
@@ -139,11 +140,15 @@ class _CalendarHeatmapChartState extends State<CalendarHeatmapChart>
 
     return LayoutBuilder(
       builder: (context, constraints) {
+        final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
+        final labelFontSize = getScaledFontSize(context, 11.0);
+        final hitRadius = getHitTestRadius(context, constraints);
+
         final chartArea = Rect.fromLTRB(
-          widget.padding.left,
-          widget.padding.top,
-          constraints.maxWidth - widget.padding.right,
-          constraints.maxHeight - widget.padding.bottom,
+          responsivePadding.left,
+          responsivePadding.top,
+          constraints.maxWidth - responsivePadding.right,
+          constraints.maxHeight - responsivePadding.bottom,
         );
 
         return ChartTooltipOverlay(
@@ -178,7 +183,8 @@ class _CalendarHeatmapChartState extends State<CalendarHeatmapChart>
                   animationValue: _animation?.value ?? 1.0,
                   controller: _controller,
                   hitTester: _hitTester,
-                  padding: widget.padding,
+                  padding: responsivePadding,
+                  labelFontSize: labelFontSize,
                 ),
                 size: Size.infinite,
               ),
@@ -234,12 +240,14 @@ class _CalendarHeatmapPainter extends ChartPainter {
     required this.controller,
     required this.hitTester,
     required this.padding,
+    required this.labelFontSize,
   }) : super(repaint: controller);
 
   final CalendarHeatmapData data;
   final ChartController controller;
   final ChartHitTester hitTester;
   final EdgeInsets padding;
+  final double labelFontSize;
 
   static const _dayLabels = ['Mon', '', 'Wed', '', 'Fri', '', ''];
   static const _monthNames = [
@@ -371,7 +379,7 @@ class _CalendarHeatmapPainter extends ChartPainter {
 
       final textSpan = TextSpan(
         text: label,
-        style: theme.labelStyle.copyWith(fontSize: 9),
+        style: theme.labelStyle.copyWith(fontSize: labelFontSize * 0.82),
       );
       final textPainter = TextPainter(
         text: textSpan,
@@ -391,7 +399,7 @@ class _CalendarHeatmapPainter extends ChartPainter {
 
     final textSpan = TextSpan(
       text: _monthNames[month - 1],
-      style: theme.labelStyle.copyWith(fontSize: 10),
+      style: theme.labelStyle.copyWith(fontSize: labelFontSize * 0.91),
     );
     final textPainter = TextPainter(
       text: textSpan,
