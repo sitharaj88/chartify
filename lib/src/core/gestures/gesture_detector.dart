@@ -1056,34 +1056,48 @@ class ChartHitTester {
     final candidates = _spatialIndex!.queryRect(queryRect);
 
     // Find closest among candidates
-    DataPointInfo? closest;
+    // When distances are equal, prefer smaller targets (nodes over links)
+    _HitTarget? closestTarget;
     var closestDistance = double.infinity;
+    var closestArea = double.infinity;
 
     for (final target in candidates) {
       final distance = target.distanceTo(position);
-      if (distance <= radius && distance < closestDistance) {
-        closestDistance = distance;
-        closest = target.info;
+      if (distance <= radius) {
+        // Prefer closer targets, or smaller targets when distances are equal
+        if (distance < closestDistance ||
+            (distance == closestDistance && target.area < closestArea)) {
+          closestDistance = distance;
+          closestArea = target.area;
+          closestTarget = target;
+        }
       }
     }
 
-    return closest;
+    return closestTarget?.info;
   }
 
   /// Linear O(n) hit testing for small datasets.
   DataPointInfo? _hitTestLinear(Offset position, double radius) {
-    DataPointInfo? closest;
+    // When distances are equal, prefer smaller targets (nodes over links)
+    _HitTarget? closestTarget;
     var closestDistance = double.infinity;
+    var closestArea = double.infinity;
 
     for (final target in _targets) {
       final distance = target.distanceTo(position);
-      if (distance <= radius && distance < closestDistance) {
-        closestDistance = distance;
-        closest = target.info;
+      if (distance <= radius) {
+        // Prefer closer targets, or smaller targets when distances are equal
+        if (distance < closestDistance ||
+            (distance == closestDistance && target.area < closestArea)) {
+          closestDistance = distance;
+          closestArea = target.area;
+          closestTarget = target;
+        }
       }
     }
 
-    return closest;
+    return closestTarget?.info;
   }
 
   /// Returns all targets within the given radius.
@@ -1140,6 +1154,10 @@ class ChartHitTester {
 abstract class _HitTarget {
   DataPointInfo get info;
   double distanceTo(Offset position);
+
+  /// Returns the area of the hit target for tie-breaking.
+  /// Smaller targets (like nodes) should be preferred over larger targets (like links).
+  double get area;
 }
 
 class _CircleHitTarget implements _HitTarget {
@@ -1159,6 +1177,9 @@ class _CircleHitTarget implements _HitTarget {
     final distance = (position - center).distance - radius;
     return distance < 0 ? 0 : distance;
   }
+
+  @override
+  double get area => 3.14159265359 * radius * radius;
 }
 
 class _RectHitTarget implements _HitTarget {
@@ -1184,6 +1205,9 @@ class _RectHitTarget implements _HitTarget {
 
     return Offset(dx, dy).distance;
   }
+
+  @override
+  double get area => rect.width * rect.height;
 }
 
 class _PathHitTarget implements _HitTarget {
@@ -1207,6 +1231,9 @@ class _PathHitTarget implements _HitTarget {
     // Note: For production, use path.computeMetrics() to calculate actual distance
     return double.infinity;
   }
+
+  @override
+  double get area => path.getBounds().width * path.getBounds().height;
 }
 
 class _ArcHitTarget implements _HitTarget {
@@ -1281,5 +1308,11 @@ class _ArcHitTarget implements _HitTarget {
     }
 
     return inSector ? 0 : double.infinity;
+  }
+
+  @override
+  double get area {
+    // Area of arc sector: (sweepAngle / 2) * (outerRadius^2 - innerRadius^2)
+    return (sweepAngle.abs() / 2) * (outerRadius * outerRadius - innerRadius * innerRadius);
   }
 }

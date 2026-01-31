@@ -209,12 +209,12 @@ class _SankeyChartState extends State<SankeyChart>
     );
   }
 
-  TooltipData _buildTooltipData(DataPointInfo info, ChartThemeData theme) {
+  TooltipData? _buildTooltipData(DataPointInfo info, ChartThemeData theme) {
     if (info.seriesIndex == 0) {
       // Node
       final idx = info.pointIndex;
       if (idx < 0 || idx >= widget.data.nodes.length) {
-        return TooltipData(position: info.position, entries: const []);
+        return null; // Invalid index - no tooltip
       }
 
       final node = widget.data.nodes[idx];
@@ -245,7 +245,7 @@ class _SankeyChartState extends State<SankeyChart>
       // Link
       final idx = info.pointIndex;
       if (idx < 0 || idx >= widget.data.links.length) {
-        return TooltipData(position: info.position, entries: const []);
+        return null; // Invalid index - no tooltip
       }
 
       final link = widget.data.links[idx];
@@ -254,7 +254,7 @@ class _SankeyChartState extends State<SankeyChart>
 
       // Handle missing nodes gracefully
       if (sourceNode == null || targetNode == null) {
-        return TooltipData(position: info.position, entries: const []);
+        return null; // Missing node reference - no tooltip
       }
 
       final color = link.color ?? sourceNode.color ?? theme.getSeriesColor(0);
@@ -325,9 +325,13 @@ class _SankeyChartPainter extends ChartPainter {
     for (var i = 0; i < linkPositions.length; i++) {
       final linkPos = linkPositions[i];
       final link = linkPos.link;
+
+      // Use stored original index for reliable tooltip lookup
+      final originalLinkIndex = linkPos.originalIndex;
+
       final isHovered =
           controller.hoveredPoint?.seriesIndex == 1 &&
-          controller.hoveredPoint?.pointIndex == i;
+          controller.hoveredPoint?.pointIndex == originalLinkIndex;
 
       final sourceNode = nodeMap[link.sourceId];
       final sourcePos = positionMap[link.sourceId];
@@ -350,19 +354,36 @@ class _SankeyChartPainter extends ChartPainter {
       );
 
       // Register link hit target
+      // sourceY and targetY are CENTER positions, so account for width/2 on each side
       final midX = (sourcePos.x + data.nodeWidth + targetPos.x) / 2;
+
+      // Account for bezier curve bulge - curves can extend beyond straight line bounds
+      // The bulge amount depends on the vertical displacement between source and target
+      final verticalDisplacement = (linkPos.targetY - linkPos.sourceY).abs();
+      final curveBulge = verticalDisplacement * 0.15; // ~15% bulge for bezier curve
+
+      final linkTop = math.min(linkPos.sourceY, linkPos.targetY) -
+          linkPos.width / 2 - curveBulge;
+      final linkBottom = math.max(linkPos.sourceY, linkPos.targetY) +
+          linkPos.width / 2 + curveBulge;
+
+      // Ensure minimum hit target height for thin links (WCAG compliance)
+      const minHitHeight = 24.0; // Minimum touch target
+      final hitHeight = math.max(linkBottom - linkTop, minHitHeight);
+      final hitTop = (linkTop + linkBottom) / 2 - hitHeight / 2;
+
       hitTester.addRect(
         rect: Rect.fromLTWH(
           sourcePos.x + data.nodeWidth,
-          math.min(linkPos.sourceY, linkPos.targetY),
+          hitTop,
           targetPos.x - sourcePos.x - data.nodeWidth,
-          (linkPos.sourceY - linkPos.targetY).abs() + linkPos.width,
+          hitHeight,
         ),
         info: DataPointInfo(
           seriesIndex: 1,
-          pointIndex: i,
+          pointIndex: originalLinkIndex,
           position: Offset(midX, (linkPos.sourceY + linkPos.targetY) / 2),
-          xValue: i,
+          xValue: originalLinkIndex,
           yValue: link.value,
         ),
       );
@@ -514,12 +535,20 @@ class _SankeyChartPainter extends ChartPainter {
       posMap[pos.node.id] = pos;
     }
 
-    // Only process valid links (already filtered earlier)
-    for (final link in validLinks) {
+    // Process all links, storing original indices for reliable tooltip lookup
+    for (var i = 0; i < data.links.length; i++) {
+      final link = data.links[i];
+
+      // Skip invalid links (those with missing source/target nodes)
+      if (!nodeMap.containsKey(link.sourceId) ||
+          !nodeMap.containsKey(link.targetId)) {
+        continue;
+      }
+
       final sourcePos = posMap[link.sourceId];
       final targetPos = posMap[link.targetId];
 
-      // Skip if positions not found (shouldn't happen with validLinks)
+      // Skip if positions not found
       if (sourcePos == null || targetPos == null) continue;
 
       final sourceOffset = sourceOffsets[link.sourceId] ?? 0.0;
@@ -534,6 +563,7 @@ class _SankeyChartPainter extends ChartPainter {
         sourceY: sourcePos.y + sourceOffset + width / 2,
         targetY: targetPos.y + targetOffset + width / 2,
         width: width,
+        originalIndex: i,
       ),);
 
       sourceOffsets[link.sourceId] = sourceOffset + width;

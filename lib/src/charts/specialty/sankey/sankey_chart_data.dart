@@ -135,10 +135,15 @@ class SankeyLinkPosition {
     required this.sourceY,
     required this.targetY,
     required this.width,
+    required this.originalIndex,
   });
 
   final SankeyLink link;
   double sourceY;
   double targetY;
   final double width;
+
+  /// The original index of this link in the data.links list.
+  /// Used for reliable tooltip lookup without indexOf().
+  final int originalIndex;
 }
