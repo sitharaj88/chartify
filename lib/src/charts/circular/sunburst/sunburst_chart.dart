@@ -306,8 +306,9 @@ class _SunburstChartPainter extends ChartPainter {
     ) {
       if (data.maxDepth != null && depth > data.maxDepth!) return;
 
+      const ringGap = 2.0;
       final innerRadius = data.innerRadius + depth * ringWidth;
-      final outerRadius = innerRadius + ringWidth;
+      final outerRadius = innerRadius + ringWidth - ringGap;
 
       if (outerRadius > maxRadius) return;
 
@@ -394,9 +395,23 @@ class _SunburstChartPainter extends ChartPainter {
       fillColor = color.withValues(alpha: 1);
     }
 
+    // Draw shadow on outer segments (leaf nodes or max depth)
+    if (arc.node.isLeaf || (data.maxDepth != null && arc.depth == data.maxDepth)) {
+      final shadowPaint = Paint()
+        ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.5).round())
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      canvas.save();
+      canvas.translate(1, 2);
+      canvas.drawPath(path, shadowPaint);
+      canvas.restore();
+    }
+
     final fillPaint = Paint()
       ..color = fillColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, fillPaint);
 
@@ -404,7 +419,8 @@ class _SunburstChartPainter extends ChartPainter {
     final borderPaint = Paint()
       ..color = theme.backgroundColor.withValues(alpha: 0.5)
       ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, borderPaint);
 
@@ -412,7 +428,8 @@ class _SunburstChartPainter extends ChartPainter {
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(path, highlightPaint);
     }
 

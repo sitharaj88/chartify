@@ -324,11 +324,13 @@ class _TreemapChartPainter extends ChartPainter {
       }
 
       // Calculate content area (minus header and padding)
+      // Ensure a minimum cell padding of 4px for visual clarity
+      final effectivePadding = data.padding < 4.0 ? 4.0 : data.padding;
       final contentRect = Rect.fromLTRB(
-        rect.left + data.padding,
-        rect.top + data.headerHeight + data.padding,
-        rect.right - data.padding,
-        rect.bottom - data.padding,
+        rect.left + effectivePadding,
+        rect.top + data.headerHeight + effectivePadding,
+        rect.right - effectivePadding,
+        rect.bottom - effectivePadding,
       );
 
       if (contentRect.width <= 0 || contentRect.height <= 0) return;
@@ -544,6 +546,8 @@ class _TreemapChartPainter extends ChartPainter {
 
     if (rect.width <= 0 || rect.height <= 0) return;
 
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(theme.barCornerRadius));
+
     // Determine color
     Color color;
     if (node.color != null) {
@@ -565,9 +569,18 @@ class _TreemapChartPainter extends ChartPainter {
     // Draw fill
     final fillPaint = Paint()
       ..color = fillColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    canvas.drawRect(rect, fillPaint);
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.4).round())
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.3)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawRRect(rrect.shift(Offset(0, theme.shadowBlurRadius * 0.1)), shadowPaint);
+
+    canvas.drawRRect(rrect, fillPaint);
 
     // Draw border
     if (data.border.showAt(depth)) {
@@ -575,17 +588,19 @@ class _TreemapChartPainter extends ChartPainter {
       final borderPaint = Paint()
         ..color = borderColor.withValues(alpha: borderColor.a * opacity)
         ..strokeWidth = isHovered ? data.border.width + 1 : data.border.width
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
 
-      canvas.drawRect(rect, borderPaint);
+      canvas.drawRRect(rrect, borderPaint);
     }
 
     // Draw hover highlight
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.3)
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(rect, highlightPaint);
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      canvas.drawRRect(rrect, highlightPaint);
     }
 
     // Draw label

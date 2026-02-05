@@ -311,7 +311,8 @@ class _LollipopChartPainter extends ChartPainter {
         ..color = color
         ..strokeWidth = data.stemWidth
         ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true;
 
       canvas.drawLine(basePoint, markerPoint, stemPaint);
 
@@ -320,12 +321,22 @@ class _LollipopChartPainter extends ChartPainter {
 
       final fillPaint = Paint()
         ..color = color
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       final borderPaint = Paint()
-        ..color = isHovered ? Colors.white : color.withValues(alpha: 0.3)
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..color = Colors.white
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
+
+      // Draw shadow
+      final shadowPaint = Paint()
+        ..color = color.withValues(alpha: theme.shadowOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      _drawMarker(canvas, markerPoint, markerSize + 2, shape, shadowPaint);
 
       _drawMarker(canvas, markerPoint, markerSize, shape, fillPaint);
       _drawMarker(canvas, markerPoint, markerSize, shape, borderPaint);
@@ -389,7 +400,9 @@ class _LollipopChartPainter extends ChartPainter {
       double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     const gridLines = 5;
     for (var i = 0; i <= gridLines; i++) {
@@ -415,7 +428,9 @@ class _LollipopChartPainter extends ChartPainter {
       double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.axisLineColor
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     if (isHorizontal) {
       canvas.drawLine(

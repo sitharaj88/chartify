@@ -67,7 +67,7 @@ class SankeyChartData {
     required this.links,
     this.nodeWidth = 20.0,
     this.nodePadding = 10.0,
-    this.linkOpacity = 0.5,
+    this.linkOpacity = 0.4,
     this.showLabels = true,
     this.showValues = true,
     this.alignment = SankeyAlignment.justify,

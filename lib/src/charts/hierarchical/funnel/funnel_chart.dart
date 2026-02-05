@@ -437,6 +437,14 @@ class _FunnelChartPainter extends ChartPainter {
   }
 
   void _drawSection(Canvas canvas, Path path, Color color, bool isHovered) {
+    // Draw shadow behind segment
+    final shadowPaint = Paint()
+      ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.5).round())
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawPath(path, shadowPaint);
+
     var fillColor = color;
     if (isHovered) {
       fillColor = color.withValues(alpha: 1);
@@ -444,7 +452,8 @@ class _FunnelChartPainter extends ChartPainter {
 
     final fillPaint = Paint()
       ..color = fillColor.withValues(alpha: isHovered ? 0.9 : 0.8)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, fillPaint);
 
@@ -452,7 +461,8 @@ class _FunnelChartPainter extends ChartPainter {
     final borderPaint = Paint()
       ..color = color
       ..strokeWidth = 1
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, borderPaint);
 
@@ -460,7 +470,8 @@ class _FunnelChartPainter extends ChartPainter {
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(path, highlightPaint);
     }
   }

@@ -72,7 +72,7 @@ class HeatmapChartData {
     this.maxValue,
     this.showValues = false,
     this.cellPadding = 1,
-    this.cellBorderRadius = 2,
+    this.cellBorderRadius = 6,
     this.showColorLegend = true,
     this.animation,
   });

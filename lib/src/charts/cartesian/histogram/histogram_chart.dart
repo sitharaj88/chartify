@@ -253,13 +253,19 @@ class _HistogramChartPainter extends CartesianChartPainter {
   _HistogramChartPainter({
     required this.data,
     required this.bins,
-    required super.theme,
-    required super.animationValue,
+    required ChartThemeData theme,
+    required double animationValue,
     required this.controller,
     required this.hitTester,
-    required super.padding,
+    required EdgeInsets padding,
     this.labelFontSize = 11.0,
-  }) : super(repaint: controller) {
+  }) : super(
+          theme: theme,
+          animationValue: animationValue,
+          padding: padding,
+          repaint: controller,
+          gridDashPattern: theme.gridDashPattern,
+        ) {
     _calculateBounds();
   }
 
@@ -272,6 +278,31 @@ class _HistogramChartPainter extends CartesianChartPainter {
   double _xMin = 0;
   double _xMax = 1;
   double _yMax = 1;
+
+  @override
+  void paintGrid(Canvas canvas, Size size) {
+    if (!showGrid) return;
+
+    final chartArea = getChartArea(size);
+    final gridPaint = getPaint(
+      color: theme.gridLineColor,
+      strokeWidth: theme.gridLineWidth,
+    );
+
+    // Paint horizontal lines only (no vertical lines)
+    const horizontalCount = 5;
+    for (var i = 0; i <= horizontalCount; i++) {
+      final y = chartArea.top + (chartArea.height / horizontalCount) * i;
+      final start = Offset(chartArea.left, y);
+      final end = Offset(chartArea.right, y);
+
+      if (gridDashPattern != null) {
+        drawDashedLine(canvas, start, end, gridPaint, gridDashPattern!);
+      } else {
+        canvas.drawLine(start, end, gridPaint);
+      }
+    }
+  }
 
   void _calculateBounds() {
     if (bins.isEmpty) return;
@@ -362,28 +393,41 @@ class _HistogramChartPainter extends CartesianChartPainter {
       fillColor = color.withValues(alpha: 1);
     }
 
+    final rrect = RRect.fromRectAndRadius(rect, Radius.circular(theme.barCornerRadius * 0.5));
+
+    // Draw subtle shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.5).round())
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawRRect(rrect.shift(Offset(0, theme.shadowBlurRadius * 0.15)), shadowPaint);
+
     final fillPaint = Paint()
       ..color = fillColor.withValues(alpha: isHovered ? 1.0 : 0.8)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    canvas.drawRect(rect, fillPaint);
+    canvas.drawRRect(rrect, fillPaint);
 
     // Draw border
     if (data.borderWidth > 0) {
       final borderPaint = Paint()
         ..color = data.borderColor ?? color.withValues(alpha: 1)
         ..strokeWidth = data.borderWidth
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
 
-      canvas.drawRect(rect, borderPaint);
+      canvas.drawRRect(rrect, borderPaint);
     }
 
     // Hover highlight
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill;
-      canvas.drawRect(rect, highlightPaint);
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      canvas.drawRRect(rrect, highlightPaint);
     }
   }
 
@@ -401,7 +445,8 @@ class _HistogramChartPainter extends CartesianChartPainter {
     final paint = Paint()
       ..color = curveColor
       ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
 
     final path = Path();
     var isFirst = true;

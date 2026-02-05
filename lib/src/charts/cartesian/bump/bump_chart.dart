@@ -376,6 +376,7 @@ class _BumpChartPainter extends ChartPainter {
   void _drawGrid(
       Canvas canvas, Rect chartArea, int timePointCount, int maxRank,) {
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..strokeWidth = 1;
 
@@ -421,6 +422,7 @@ class _BumpChartPainter extends ChartPainter {
     if (points.length < 2) return;
 
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = color.withValues(alpha: isHovered ? 1.0 : 0.7)
       ..strokeWidth = isHovered ? data.lineWidth * 1.5 : data.lineWidth
       ..style = PaintingStyle.stroke
@@ -439,6 +441,17 @@ class _BumpChartPainter extends ChartPainter {
         path.cubicTo(midX, p0.dy, midX, p1.dy, p1.dx, p1.dy);
       }
 
+      // Draw shadow
+      final shadowPaint = Paint()
+        ..isAntiAlias = true
+        ..color = color.withValues(alpha: theme.shadowOpacity)
+        ..strokeWidth = paint.strokeWidth + 2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4);
+      canvas.drawPath(path, shadowPaint);
+
       canvas.drawPath(path, paint);
     } else {
       for (var i = 1; i < points.length; i++) {
@@ -453,15 +466,18 @@ class _BumpChartPainter extends ChartPainter {
 
     // Draw filled circle
     final fillPaint = Paint()
+      ..isAntiAlias = true
       ..color = color
       ..style = PaintingStyle.fill;
     canvas.drawCircle(point, size / 2, fillPaint);
 
     // Draw border
     final borderPaint = Paint()
+      ..isAntiAlias = true
       ..color = isHovered ? Colors.white : theme.backgroundColor
       ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
     canvas.drawCircle(point, size / 2, borderPaint);
 
     // Draw rank number

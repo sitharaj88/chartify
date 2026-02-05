@@ -355,14 +355,17 @@ class _BulletChartPainter extends ChartPainter {
     bool isHorizontal,
     double maxValue,
   ) {
+    const rangeRadius = Radius.circular(4);
+
     if (item.ranges.isEmpty) {
       // Draw single background
       final paint = Paint()
+        ..isAntiAlias = true
         ..color = colors.isNotEmpty
             ? colors.first.withValues(alpha: 0.3)
             : Colors.grey.withValues(alpha: 0.3)
         ..style = PaintingStyle.fill;
-      canvas.drawRect(rect, paint);
+      canvas.drawRRect(RRect.fromRectAndRadius(rect, rangeRadius), paint);
       return;
     }
 
@@ -390,10 +393,11 @@ class _BulletChartPainter extends ChartPainter {
       }
 
       final paint = Paint()
+        ..isAntiAlias = true
         ..color = color.withValues(alpha: animationValue * 0.8)
         ..style = PaintingStyle.fill;
 
-      canvas.drawRect(rangeRect, paint);
+      canvas.drawRRect(RRect.fromRectAndRadius(rangeRect, rangeRadius), paint);
     }
   }
 
@@ -438,10 +442,14 @@ class _BulletChartPainter extends ChartPainter {
     }
 
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = fillColor
       ..style = PaintingStyle.fill;
 
-    canvas.drawRect(valueRect, paint);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(valueRect, Radius.circular(theme.barCornerRadius * 0.67)),
+      paint,
+    );
 
     // Draw value text if enabled
     if (data.showValues && valueRect.width > 30) {
@@ -482,9 +490,11 @@ class _BulletChartPainter extends ChartPainter {
     final targetColor = data.targetColor ?? Colors.black87;
 
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = targetColor.withValues(alpha: animationValue)
       ..strokeWidth = data.targetWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round;
 
     if (isHorizontal) {
       final x = rect.left + rect.width * targetRatio;

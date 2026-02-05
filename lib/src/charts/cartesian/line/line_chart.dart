@@ -651,6 +651,8 @@ class _LineChartPainter extends CustomPainter {
       config: GridConfig(
         lineColor: theme.gridLineColor,
         lineWidth: theme.gridLineWidth,
+        dashPattern: theme.gridDashPattern,
+        verticalLines: false,
       ),
       xScale: _xScale,
       yScale: _yScale,
@@ -841,9 +843,24 @@ class _LineChartPainter extends CustomPainter {
       ..strokeWidth = series.strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = series.strokeCap
-      ..strokeJoin = series.strokeJoin;
+      ..strokeJoin = series.strokeJoin
+      ..isAntiAlias = true;
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = color.withAlpha(25)
+      ..strokeWidth = series.strokeWidth + 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = series.strokeCap
+      ..strokeJoin = series.strokeJoin
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+      ..isAntiAlias = true;
 
     final path = _createLinePath(positions, series);
+
+    if (animationValue >= 1.0) {
+      canvas.drawPath(path, shadowPaint);
+    }
 
     if (animationValue < 1.0) {
       final animatedPath = _animatePath(path, animationValue);
@@ -981,7 +998,8 @@ class _LineChartPainter extends CustomPainter {
     if (series.areaGradient != null) {
       final gradientPaint = Paint()
         ..shader = series.areaGradient!.createShader(_chartArea)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(areaPath, gradientPaint);
     } else {
       final gradient = LinearGradient(
@@ -994,7 +1012,8 @@ class _LineChartPainter extends CustomPainter {
       );
       final areaPaint = Paint()
         ..shader = gradient.createShader(_chartArea)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(areaPath, areaPaint);
     }
   }
@@ -1047,12 +1066,14 @@ class _LineChartPainter extends CustomPainter {
 
       final markerPaint = Paint()
         ..color = color
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       final borderPaint = Paint()
         ..color = isDark ? const Color(0xFF1E1E1E) : Colors.white
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
+        ..strokeWidth = 2
+        ..isAntiAlias = true;
 
       _drawMarkerShape(canvas, position, animatedSize, series.markerShape, markerPaint, borderPaint);
     }
@@ -1288,20 +1309,23 @@ class _LineChartPainter extends CustomPainter {
     // Outer glow
     final glowPaint = Paint()
       ..color = seriesColor.withAlpha(77)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(info.position, 14, glowPaint);
 
     // White border
     final isDark = theme.brightness == Brightness.dark;
     final borderPaint = Paint()
       ..color = isDark ? const Color(0xFF2D2D2D) : Colors.white
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(info.position, 7, borderPaint);
 
     // Colored center
     final dotPaint = Paint()
       ..color = seriesColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(info.position, 5, dotPaint);
   }
 

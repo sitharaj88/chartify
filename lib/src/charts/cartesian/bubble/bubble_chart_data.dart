@@ -93,8 +93,8 @@ class BubbleSeries<X, Y extends num> {
     required this.data, this.name,
     this.color,
     this.visible = true,
-    this.borderColor,
-    this.borderWidth = 0,
+    this.borderColor = Colors.white,
+    this.borderWidth = 1.5,
     this.opacity = 0.7,
   });
 
@@ -111,7 +111,7 @@ class BubbleSeries<X, Y extends num> {
   final bool visible;
 
   /// Border color for bubbles.
-  final Color? borderColor;
+  final Color borderColor;
 
   /// Border width for bubbles.
   final double borderWidth;

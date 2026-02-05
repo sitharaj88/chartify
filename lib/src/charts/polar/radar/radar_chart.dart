@@ -322,12 +322,20 @@ class _RadarChartPainter extends PolarChartPainter {
       if (points.isEmpty) continue;
 
       // Draw filled area
-      final fillColor = series.fillColor ?? seriesColor.withValues(alpha: 0.2);
+      final fillColor = series.fillColor ?? seriesColor.withValues(alpha: theme.areaFillOpacity);
       final fillPath = Path()..moveTo(points.first.dx, points.first.dy);
       for (var i = 1; i < points.length; i++) {
         fillPath.lineTo(points[i].dx, points[i].dy);
       }
       fillPath.close();
+
+      // Draw subtle shadow beneath the filled area
+      final shadowPaint = Paint()
+        ..color = seriesColor.withValues(alpha: theme.shadowOpacity * 0.5)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.75);
+      canvas.drawPath(fillPath, shadowPaint);
 
       final fillPaint = getPaint(
         color: fillColor,
@@ -381,6 +389,30 @@ class _RadarChartPainter extends PolarChartPainter {
     }
   }
 
+  /// Dash pattern for grid lines.
+  List<double> get _gridDashPattern => theme.gridDashPattern ?? const [4, 3];
+
+  /// Creates a dashed version of the given [source] path.
+  Path _dashedPath(Path source) {
+    final result = Path();
+    for (final metric in source.computeMetrics()) {
+      var distance = 0.0;
+      var draw = true;
+      var idx = 0;
+      while (distance < metric.length) {
+        final len = _gridDashPattern[idx % _gridDashPattern.length];
+        final next = (distance + len).clamp(0.0, metric.length);
+        if (draw) {
+          result.addPath(metric.extractPath(distance, next), Offset.zero);
+        }
+        distance = next;
+        draw = !draw;
+        idx++;
+      }
+    }
+    return result;
+  }
+
   @override
   void paintGrid(Canvas canvas, Size size) {
     if (!data.showGridLines) return;
@@ -395,12 +427,15 @@ class _RadarChartPainter extends PolarChartPainter {
       strokeWidth: theme.gridLineWidth,
     );
 
-    // Draw grid rings
+    // Draw grid rings (dashed)
     for (var i = 1; i <= tickCount; i++) {
       final r = radius * (i / tickCount);
 
       if (data.gridType == RadarGridType.circular) {
-        canvas.drawCircle(center, r, gridPaint);
+        // Build a full-circle path, then dash it
+        final circlePath = Path()
+          ..addOval(Rect.fromCircle(center: center, radius: r));
+        canvas.drawPath(_dashedPath(circlePath), gridPaint);
       } else {
         // Polygon grid
         final path = Path();
@@ -417,18 +452,18 @@ class _RadarChartPainter extends PolarChartPainter {
           }
         }
         path.close();
-        canvas.drawPath(path, gridPaint);
+        canvas.drawPath(_dashedPath(path), gridPaint);
       }
     }
 
-    // Draw axis lines (spokes)
+    // Draw axis lines / spokes (dashed)
     for (var i = 0; i < axisCount; i++) {
       final angle = degreesToRadians(-90 + (360 / axisCount) * i);
       final end = Offset(
         center.dx + radius * math.cos(angle),
         center.dy + radius * math.sin(angle),
       );
-      canvas.drawLine(center, end, gridPaint);
+      drawDashedLine(canvas, center, end, gridPaint, _gridDashPattern);
     }
   }
 

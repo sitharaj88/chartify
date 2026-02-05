@@ -321,26 +321,41 @@ class _RangeChartPainter extends ChartPainter {
         );
       }
 
-      // Draw bar
-      final fillColor = isHovered
-          ? color.withValues(alpha: 1)
-          : color.withValues(alpha: 0.7);
-
-      final paint = Paint()
-        ..color = fillColor
-        ..style = PaintingStyle.fill;
-
+      // Draw bar with gradient fill (top lighter, bottom darker)
       final rRect = RRect.fromRectAndRadius(
         barRect,
         Radius.circular(data.cornerRadius),
       );
-      canvas.drawRRect(rRect, paint);
+
+      final lighterColor = Color.lerp(color, Colors.white, 0.25)!
+          .withValues(alpha: isHovered ? 1.0 : 0.7);
+      final darkerColor = color.withValues(alpha: isHovered ? 1.0 : 0.7);
+
+      final gradientPaint = Paint()
+        ..shader = LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [lighterColor, darkerColor],
+        ).createShader(barRect)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+
+      // Draw shadow
+      final shadowPaint = Paint()
+        ..color = color.withValues(alpha: theme.shadowOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      canvas.drawRRect(rRect.shift(Offset(0, theme.shadowBlurRadius * 0.1)), shadowPaint);
+
+      canvas.drawRRect(rRect, gradientPaint);
 
       // Draw border
       final borderPaint = Paint()
         ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.5;
+        ..strokeWidth = 1.5
+        ..isAntiAlias = true;
       canvas.drawRRect(rRect, borderPaint);
 
       // Draw midpoint marker
@@ -364,14 +379,16 @@ class _RangeChartPainter extends ChartPainter {
 
         final markerPaint = Paint()
           ..color = Colors.white
-          ..style = PaintingStyle.fill;
+          ..style = PaintingStyle.fill
+          ..isAntiAlias = true;
 
         canvas.drawCircle(midPoint, data.midMarkerSize / 2, markerPaint);
 
         final markerBorderPaint = Paint()
           ..color = color
           ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
+          ..strokeWidth = 2
+          ..isAntiAlias = true;
         canvas.drawCircle(midPoint, data.midMarkerSize / 2, markerBorderPaint);
       }
 
@@ -398,7 +415,9 @@ class _RangeChartPainter extends ChartPainter {
       double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     const gridLines = 5;
     for (var i = 0; i <= gridLines; i++) {
@@ -424,7 +443,9 @@ class _RangeChartPainter extends ChartPainter {
       double maxValue, bool isHorizontal,) {
     final paint = Paint()
       ..color = theme.axisLineColor
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     if (isHorizontal) {
       canvas.drawLine(

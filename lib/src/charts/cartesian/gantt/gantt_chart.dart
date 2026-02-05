@@ -456,8 +456,10 @@ class _GanttChartPainter extends ChartPainter {
     final x = chartArea.left + ratio * chartArea.width;
 
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = data.todayLineColor ?? Colors.red.withValues(alpha:0.7)
-      ..strokeWidth = 2;
+      ..strokeWidth = 2
+      ..strokeCap = StrokeCap.round;
 
     // Draw dashed line
     const dashHeight = 6.0;
@@ -523,10 +525,14 @@ class _GanttChartPainter extends ChartPainter {
     );
 
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = data.baselineColor ?? Colors.grey.withValues(alpha:0.5)
       ..style = PaintingStyle.fill;
 
-    canvas.drawRect(baselineRect, paint);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(baselineRect, const Radius.circular(2)),
+      paint,
+    );
   }
 
   void _drawSummaryBar(
@@ -543,11 +549,15 @@ class _GanttChartPainter extends ChartPainter {
 
     // Draw main bar
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = isHovered ? color : color.withValues(alpha:0.8)
       ..style = PaintingStyle.fill;
 
     final rect = Rect.fromLTWH(startX, topY, endX - startX, barHeight);
-    canvas.drawRect(rect, paint);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(rect, const Radius.circular(3)),
+      paint,
+    );
 
     // Draw bracket ends (downward triangles)
     final triangleSize = barHeight * 1.2;
@@ -640,6 +650,7 @@ class _GanttChartPainter extends ChartPainter {
     int taskCount,
   ) {
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = theme.gridLineColor.withValues(alpha:0.2)
       ..strokeWidth = 1;
 
@@ -686,9 +697,11 @@ class _GanttChartPainter extends ChartPainter {
       const iconSize = 10.0;
 
       final iconPaint = Paint()
+        ..isAntiAlias = true
         ..color = theme.labelStyle.color ?? Colors.black
         ..strokeWidth = 1.5
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
 
       // Draw +/- icon
       final isCollapsed = data.collapsedGroupIds.contains(task.id);
@@ -743,15 +756,24 @@ class _GanttChartPainter extends ChartPainter {
     Color color,
     bool isHovered,
   ) {
+    final cornerRadius = Radius.circular(theme.barCornerRadius);
+
+    final rRect = RRect.fromRectAndRadius(rect, cornerRadius);
+
+    // Subtle shadow behind the bar
+    final shadowPaint = Paint()
+      ..isAntiAlias = true
+      ..color = color.withValues(alpha: theme.shadowOpacity * 1.2)
+      ..style = PaintingStyle.fill
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5);
+    canvas.drawRRect(rRect.shift(Offset(0, theme.shadowBlurRadius * 0.15)), shadowPaint);
+
     // Background bar
     final bgPaint = Paint()
+      ..isAntiAlias = true
       ..color = isHovered ? color.withValues(alpha:0.4) : color.withValues(alpha:0.3)
       ..style = PaintingStyle.fill;
 
-    final rRect = RRect.fromRectAndRadius(
-      rect,
-      Radius.circular(data.barRadius),
-    );
     canvas.drawRRect(rRect, bgPaint);
 
     // Progress bar
@@ -764,12 +786,13 @@ class _GanttChartPainter extends ChartPainter {
       );
 
       final progressPaint = Paint()
+        ..isAntiAlias = true
         ..color = isHovered ? color : color.withValues(alpha:0.9)
         ..style = PaintingStyle.fill;
 
       final progressRRect = RRect.fromRectAndRadius(
         progressRect,
-        Radius.circular(data.barRadius),
+        cornerRadius,
       );
       canvas.drawRRect(progressRRect, progressPaint);
     }
@@ -777,9 +800,11 @@ class _GanttChartPainter extends ChartPainter {
     // Border
     if (isHovered) {
       final borderPaint = Paint()
+        ..isAntiAlias = true
         ..color = color
         ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
       canvas.drawRRect(rRect, borderPaint);
     }
   }
@@ -802,15 +827,18 @@ class _GanttChartPainter extends ChartPainter {
       ..close();
 
     final fillPaint = Paint()
+      ..isAntiAlias = true
       ..color = isHovered ? color : color.withValues(alpha:0.8)
       ..style = PaintingStyle.fill;
     canvas.drawPath(path, fillPaint);
 
     if (isHovered) {
       final borderPaint = Paint()
+        ..isAntiAlias = true
         ..color = Colors.white
         ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
       canvas.drawPath(path, borderPaint);
     }
   }
@@ -829,9 +857,12 @@ class _GanttChartPainter extends ChartPainter {
     }
 
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = theme.gridLineColor
       ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
 
     // Draw explicit dependencies with type support
     for (final dep in data.dependencies) {
@@ -978,6 +1009,7 @@ class _GanttChartPainter extends ChartPainter {
     }
 
     final arrowPaint = Paint()
+      ..isAntiAlias = true
       ..color = theme.gridLineColor
       ..style = PaintingStyle.fill;
     canvas.drawPath(arrowPath, arrowPaint);

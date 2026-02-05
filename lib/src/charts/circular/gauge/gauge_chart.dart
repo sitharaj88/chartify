@@ -285,6 +285,26 @@ class _GaugeChartPainter extends CircularChartPainter {
     final radius = chartArea.width / 2;
     final innerRadius = radius - data.thickness;
 
+    // Draw shadow behind the gauge arc
+    final arcShadowPaint = Paint()
+      ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.5).round())
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.75)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = data.thickness
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
+    final shadowRect = Rect.fromCircle(
+      center: Offset(center.dx + 1, center.dy + 2),
+      radius: radius - data.thickness / 2,
+    );
+    canvas.drawArc(
+      shadowRect,
+      degreesToRadians(data.startAngle),
+      degreesToRadians(data.sweepAngle),
+      false,
+      arcShadowPaint,
+    );
+
     // Draw background arc
     _drawBackgroundArc(canvas, center, radius, innerRadius);
 
@@ -350,7 +370,6 @@ class _GaugeChartPainter extends CircularChartPainter {
       final rangePaint = getPaint(
         color: range.color.withValues(alpha: 0.3),
         strokeWidth: data.thickness,
-        strokeCap: StrokeCap.butt,
       );
 
       final rect = Rect.fromCircle(
@@ -484,24 +503,27 @@ class _GaugeChartPainter extends CircularChartPainter {
     canvas.save();
     canvas.translate(2, 2);
     final shadowPaint = Paint()
-      ..color = Colors.black.withValues(alpha: 0.25)
+      ..color = Colors.black.withValues(alpha: theme.shadowOpacity * 1.6)
       ..style = PaintingStyle.fill
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 3);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..isAntiAlias = true;
     canvas.drawPath(needlePath, shadowPaint);
     canvas.restore();
 
     // Draw needle body
     final needlePaint = Paint()
       ..color = needleColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawPath(needlePath, needlePaint);
 
     // Draw needle base
     if (data.showNeedleBase) {
       // Shadow for base
       final baseShadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.2)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 4);
+        ..color = Colors.black.withValues(alpha: theme.shadowOpacity * 1.3)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+        ..isAntiAlias = true;
       canvas.drawCircle(
         Offset(center.dx + 1, center.dy + 2),
         data.needleBaseRadius,
@@ -511,13 +533,15 @@ class _GaugeChartPainter extends CircularChartPainter {
       // Base circle
       final basePaint = Paint()
         ..color = needleColor
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawCircle(center, data.needleBaseRadius, basePaint);
 
       // Highlight
       final baseHighlightPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.35)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawCircle(
         Offset(center.dx - data.needleBaseRadius * 0.25,
             center.dy - data.needleBaseRadius * 0.25,),

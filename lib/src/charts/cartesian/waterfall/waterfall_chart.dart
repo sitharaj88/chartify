@@ -250,7 +250,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     required this.hitTester,
     required super.padding,
     this.labelFontSize = 11.0,
-  }) : super(repaint: controller) {
+  }) : super(repaint: controller, gridDashPattern: theme.gridDashPattern) {
     _calculateBounds();
   }
 
@@ -390,7 +390,9 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     final paint = Paint()
       ..color = connectorColor
       ..strokeWidth = data.connectorWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     // Draw dashed line
     _drawDashedLine(
@@ -405,7 +407,7 @@ class _WaterfallChartPainter extends CartesianChartPainter {
   void _drawBar(Canvas canvas, Rect rect, Color color, bool isHovered) {
     final rrect = RRect.fromRectAndRadius(
       rect,
-      Radius.circular(data.borderRadius),
+      Radius.circular(theme.barCornerRadius * 0.67),
     );
 
     var fillColor = color;
@@ -413,9 +415,17 @@ class _WaterfallChartPainter extends CartesianChartPainter {
       fillColor = color.withValues(alpha: 1);
     }
 
+    // Draw subtle shadow beneath the bar
+    final shadowPaint = Paint()
+      ..color = color.withValues(alpha: theme.shadowOpacity * 1.2)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+      ..isAntiAlias = true;
+    canvas.drawRRect(rrect.shift(Offset(0, theme.shadowBlurRadius * 0.15)), shadowPaint);
+
     final paint = Paint()
       ..color = fillColor.withValues(alpha: isHovered ? 1.0 : 0.85)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawRRect(rrect, paint);
 
@@ -423,7 +433,8 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = Colors.white.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawRRect(rrect, highlightPaint);
     }
   }
@@ -543,7 +554,9 @@ class _WaterfallChartPainter extends CartesianChartPainter {
     final y = _valueToY(0, chartArea);
     final paint = Paint()
       ..color = theme.axisLineColor
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(
       Offset(chartArea.left, y),

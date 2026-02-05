@@ -339,7 +339,8 @@ class _HeatmapChartPainter extends ChartPainter {
 
     final fillPaint = Paint()
       ..color = fillColor.withValues(alpha: fillColor.a * opacity)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawRRect(rrect, fillPaint);
 
@@ -348,7 +349,8 @@ class _HeatmapChartPainter extends ChartPainter {
       final borderPaint = Paint()
         ..color = theme.labelStyle.color ?? Colors.black
         ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
       canvas.drawRRect(rrect, borderPaint);
     }
 
@@ -454,7 +456,9 @@ class _HeatmapChartPainter extends ChartPainter {
       stops: data.colorScale.stops,
     );
 
-    final paint = Paint()..shader = gradient.createShader(legendRect);
+    final paint = Paint()
+      ..shader = gradient.createShader(legendRect)
+      ..isAntiAlias = true;
     canvas.drawRRect(
       RRect.fromRectAndRadius(legendRect, const Radius.circular(4)),
       paint,

@@ -246,7 +246,7 @@ class _BubbleChartPainter extends CartesianChartPainter {
     required this.hitTester,
     required super.padding,
     this.labelFontSize = 11.0,
-  }) : super(repaint: controller) {
+  }) : super(repaint: controller, gridDashPattern: theme.gridDashPattern) {
     _calculateBounds();
   }
 
@@ -449,8 +449,9 @@ class _BubbleChartPainter extends CartesianChartPainter {
     // Draw shadow for hovered/selected
     if (isHovered || isSelected) {
       final shadowPaint = Paint()
-        ..color = Colors.black.withValues(alpha: 0.2)
-        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 8);
+        ..color = Colors.black.withValues(alpha: theme.shadowOpacity * 1.3)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius)
+        ..isAntiAlias = true;
       canvas.drawCircle(
         Offset(bubble.position.dx + 2, bubble.position.dy + 2),
         radius,
@@ -461,17 +462,17 @@ class _BubbleChartPainter extends CartesianChartPainter {
     // Draw fill
     final fillPaint = Paint()
       ..color = fillColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(bubble.position, radius, fillPaint);
 
     // Draw border
-    if (bubble.borderWidth > 0 && bubble.borderColor != null) {
-      final borderPaint = Paint()
-        ..color = bubble.borderColor!
-        ..strokeWidth = bubble.borderWidth
-        ..style = PaintingStyle.stroke;
-      canvas.drawCircle(bubble.position, radius, borderPaint);
-    }
+    final borderPaint = Paint()
+      ..color = bubble.borderColor
+      ..strokeWidth = bubble.borderWidth
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+    canvas.drawCircle(bubble.position, radius, borderPaint);
 
     // Draw label if enabled
     if (data.showLabels && bubble.point.label != null) {
@@ -482,7 +483,8 @@ class _BubbleChartPainter extends CartesianChartPainter {
     if (isHovered) {
       final hoverPaint = Paint()
         ..color = bubble.color.withValues(alpha: 0.3)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawCircle(bubble.position, radius + 4, hoverPaint);
     }
   }
@@ -633,7 +635,7 @@ class _BubbleInfo {
   final Offset position;
   final double size;
   final Color color;
-  final Color? borderColor;
+  final Color borderColor;
   final double borderWidth;
   final double opacity;
   final int seriesIndex;

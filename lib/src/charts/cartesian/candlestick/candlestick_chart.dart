@@ -284,7 +284,7 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     required this.hitTester,
     required super.padding,
     required this.labelFontSize,
-  }) : super(repaint: controller, showGrid: data.showGrid) {
+  }) : super(repaint: controller, showGrid: data.showGrid, gridDashPattern: theme.gridDashPattern) {
     _calculateBounds();
   }
 
@@ -408,7 +408,9 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     final wickPaint = Paint()
       ..color = displayColor
       ..strokeWidth = data.wickWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
 
     canvas.drawLine(
       Offset(x, animatedHighY),
@@ -432,7 +434,8 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = color.withValues(alpha: 0.2)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       canvas.drawRect(
         Rect.fromLTRB(
@@ -464,9 +467,20 @@ class _CandlestickChartPainter extends CartesianChartPainter {
 
     final paint = Paint()
       ..color = color
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    canvas.drawRect(bodyRect, paint);
+    final rrect = RRect.fromRectAndRadius(bodyRect, Radius.circular(theme.barCornerRadius * 0.33));
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = color.withValues(alpha: theme.shadowOpacity)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawRRect(rrect.shift(Offset(0, theme.shadowBlurRadius * 0.1)), shadowPaint);
+
+    canvas.drawRRect(rrect, paint);
   }
 
   void _drawHollowBody(
@@ -488,9 +502,11 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.5
-      ..style = isBullish ? PaintingStyle.stroke : PaintingStyle.fill;
+      ..style = isBullish ? PaintingStyle.stroke : PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    canvas.drawRect(bodyRect, paint);
+    final rrect = RRect.fromRectAndRadius(bodyRect, Radius.circular(theme.barCornerRadius * 0.33));
+    canvas.drawRRect(rrect, paint);
   }
 
   void _drawOHLCBody(
@@ -504,7 +520,8 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 1.5
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
 
     // Left tick (open)
     canvas.drawLine(
@@ -532,7 +549,8 @@ class _CandlestickChartPainter extends CartesianChartPainter {
     // Draw separator line
     final separatorPaint = Paint()
       ..color = theme.gridLineColor
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true;
     canvas.drawLine(
       Offset(volumeArea.left, volumeArea.top),
       Offset(volumeArea.right, volumeArea.top),
@@ -554,7 +572,8 @@ class _CandlestickChartPainter extends CartesianChartPainter {
 
       final paint = Paint()
         ..color = color.withValues(alpha: 0.5)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       canvas.drawRect(
         Rect.fromLTRB(

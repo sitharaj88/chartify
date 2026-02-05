@@ -280,6 +280,9 @@ class GridRenderer<X, Y> with RendererMixin<GridConfig> implements ChartRenderer
       return;
     }
 
+    // Use round stroke caps for softer dash ends.
+    paint.strokeCap = StrokeCap.round;
+
     final dx = end.dx - start.dx;
     final dy = end.dy - start.dy;
     final length = dx * dx + dy * dy;
@@ -352,9 +355,11 @@ class GridFactory {
   GridFactory._();
 
   /// Creates a standard grid with both horizontal and vertical lines.
+  /// Uses a dashed pattern by default for a cleaner appearance.
   static GridConfig standard({Color? color, double lineWidth = 1.0}) => GridConfig(
       lineColor: color ?? const Color(0xFFE0E0E0),
       lineWidth: lineWidth,
+      dashPattern: const [5, 3],
     );
 
   /// Creates a grid with only horizontal lines.
@@ -390,6 +395,18 @@ class GridFactory {
       horizontalLines: showLines,
       verticalLines: false,
       alternatingFillColors: colors,
+    );
+
+  /// Creates a modern, minimal grid suited for contemporary UI designs.
+  /// Draws only horizontal lines with a thin dashed pattern for a clean look.
+  static GridConfig modern({
+    Color? color,
+    bool isDark = false,
+  }) => GridConfig(
+      verticalLines: false,
+      lineColor: color ?? (isDark ? const Color(0xFF374151) : const Color(0xFFE5E7EB)),
+      lineWidth: 0.5,
+      dashPattern: const [6, 4],
     );
 
   /// Creates an invisible grid (no visible elements).

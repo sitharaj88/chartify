@@ -63,6 +63,8 @@ class MarkerConfig extends RendererConfig {
     this.strokeWidth = 2.0,
     this.elevation = 0.0,
     this.shadowColor,
+    this.glowRadius = 0.0,
+    this.glowColor,
     this.customPath,
   });
 
@@ -90,6 +92,12 @@ class MarkerConfig extends RendererConfig {
   /// Color of the shadow.
   final Color? shadowColor;
 
+  /// Radius of the glow effect around the marker.
+  final double glowRadius;
+
+  /// Color of the glow effect. Defaults to fill color with reduced opacity.
+  final Color? glowColor;
+
   /// Custom path builder for custom shapes.
   final Path Function(Offset center, double size)? customPath;
 
@@ -103,6 +111,8 @@ class MarkerConfig extends RendererConfig {
     double? strokeWidth,
     double? elevation,
     Color? shadowColor,
+    double? glowRadius,
+    Color? glowColor,
     Path Function(Offset center, double size)? customPath,
   }) => MarkerConfig(
       visible: visible ?? this.visible,
@@ -113,6 +123,8 @@ class MarkerConfig extends RendererConfig {
       strokeWidth: strokeWidth ?? this.strokeWidth,
       elevation: elevation ?? this.elevation,
       shadowColor: shadowColor ?? this.shadowColor,
+      glowRadius: glowRadius ?? this.glowRadius,
+      glowColor: glowColor ?? this.glowColor,
       customPath: customPath ?? this.customPath,
     );
 }
@@ -159,11 +171,21 @@ class MarkerRenderer with RendererMixin<MarkerConfig> implements ChartRenderer<M
 
     final path = _buildPath(config.shape, position, config.size, config.customPath);
 
+    // Draw glow
+    if (config.glowRadius > 0) {
+      final glowPaint = Paint()
+        ..color = (config.glowColor ?? config.fillColor ?? const Color(0xFF6366F1)).withValues(alpha: 0.25)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.glowRadius)
+        ..isAntiAlias = true;
+      canvas.drawCircle(position, config.size / 2 + 2, glowPaint);
+    }
+
     // Draw shadow
     if (config.elevation > 0) {
       final shadowPaint = Paint()
         ..color = config.shadowColor ?? const Color(0x40000000)
-        ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.elevation);
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.elevation)
+        ..isAntiAlias = true;
       canvas.drawPath(path.shift(Offset(0, config.elevation / 2)), shadowPaint);
     }
 
@@ -171,7 +193,8 @@ class MarkerRenderer with RendererMixin<MarkerConfig> implements ChartRenderer<M
     if (config.fillColor != null) {
       final fillPaint = Paint()
         ..color = config.fillColor!
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(path, fillPaint);
     }
 
@@ -182,7 +205,8 @@ class MarkerRenderer with RendererMixin<MarkerConfig> implements ChartRenderer<M
         ..style = PaintingStyle.stroke
         ..strokeWidth = config.strokeWidth
         ..strokeCap = StrokeCap.round
-        ..strokeJoin = StrokeJoin.round;
+        ..strokeJoin = StrokeJoin.round
+        ..isAntiAlias = true;
       canvas.drawPath(path, strokePaint);
     }
   }

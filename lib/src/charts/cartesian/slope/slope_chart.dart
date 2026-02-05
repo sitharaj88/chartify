@@ -298,11 +298,29 @@ class _SlopeChartPainter extends ChartPainter {
 
       // Draw line
       final lineWidth = isHovered ? data.lineWidth * 2 : data.lineWidth;
+
+      // Subtle shadow under the slope line
+      final shadowPaint = Paint()
+        ..isAntiAlias = true
+        ..color = color.withValues(alpha: theme.shadowOpacity)
+        ..strokeWidth = lineWidth + 3
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4);
+      canvas.drawLine(
+        startPoint.translate(0, 2),
+        endPoint.translate(0, 2),
+        shadowPaint,
+      );
+
       final linePaint = Paint()
+        ..isAntiAlias = true
         ..color = color.withValues(alpha: isHovered ? 1.0 : 0.8)
         ..strokeWidth = lineWidth
         ..style = PaintingStyle.stroke
-        ..strokeCap = StrokeCap.round;
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round;
 
       canvas.drawLine(startPoint, endPoint, linePaint);
 
@@ -310,13 +328,16 @@ class _SlopeChartPainter extends ChartPainter {
       final markerSize = isHovered ? data.markerSize * 1.3 : data.markerSize;
 
       final fillPaint = Paint()
+        ..isAntiAlias = true
         ..color = color
         ..style = PaintingStyle.fill;
 
       final borderPaint = Paint()
+        ..isAntiAlias = true
         ..color = isHovered ? Colors.white : theme.backgroundColor
         ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
 
       canvas.drawCircle(startPoint, markerSize / 2, fillPaint);
       canvas.drawCircle(startPoint, markerSize / 2, borderPaint);
@@ -394,6 +415,7 @@ class _SlopeChartPainter extends ChartPainter {
 
   void _drawAxes(Canvas canvas, Rect chartArea) {
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = theme.gridLineColor
       ..strokeWidth = 1;
 

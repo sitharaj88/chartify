@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import 'dart:ui' as ui;
 
 import 'package:flutter/material.dart';
 
@@ -337,7 +338,9 @@ class _RoseChartPainter extends ChartPainter {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     // Draw concentric circles
     const circles = 4;
@@ -403,17 +406,49 @@ class _RoseChartPainter extends ChartPainter {
       path.close();
     }
 
-    // Fill
+    // Subtle shadow beneath the segment
+    final shadowPaint = Paint()
+      ..color = color.withValues(alpha: theme.shadowOpacity * 0.67)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.6);
+    canvas.drawPath(path, shadowPaint);
+
+    // Gradient fill (lighter at top / outer edge, darker at bottom / inner edge)
+    final midAngle = startAngle + sweepAngle / 2;
+    final gradientStart = Offset(
+      center.dx + outerRadius * math.cos(midAngle),
+      center.dy + outerRadius * math.sin(midAngle),
+    );
+    final effectiveInner = innerRadius > 0 ? innerRadius : 0.0;
+    final gradientEnd = Offset(
+      center.dx + effectiveInner * math.cos(midAngle),
+      center.dy + effectiveInner * math.sin(midAngle),
+    );
+
+    final baseAlpha = isHovered ? 1.0 : 0.8;
     final fillPaint = Paint()
-      ..color = isHovered ? color : color.withValues(alpha: 0.8)
-      ..style = PaintingStyle.fill;
+      ..shader = ui.Gradient.linear(
+        gradientStart,
+        gradientEnd,
+        [
+          color.withValues(alpha: baseAlpha),
+          HSLColor.fromColor(color).withLightness(
+            (HSLColor.fromColor(color).lightness * 0.7).clamp(0.0, 1.0),
+          ).toColor().withValues(alpha: baseAlpha),
+        ],
+      )
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawPath(path, fillPaint);
 
     // Border
     final borderPaint = Paint()
       ..color = isHovered ? Colors.white : color
       ..strokeWidth = isHovered ? 2 : 1
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
     canvas.drawPath(path, borderPaint);
   }
 

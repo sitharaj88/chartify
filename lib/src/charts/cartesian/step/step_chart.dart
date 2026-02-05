@@ -351,7 +351,9 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
   void _drawGrid(Canvas canvas, Rect chartArea, double minY, double maxY) {
     final paint = Paint()
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     // Horizontal grid lines
     const gridLines = 5;
@@ -363,25 +365,14 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
         paint,
       );
     }
-
-    // Vertical grid lines based on data points
-    if (data.series.isNotEmpty && data.series.first.data.isNotEmpty) {
-      final pointCount = data.series.first.data.length;
-      for (var i = 0; i < pointCount; i++) {
-        final x = _getXPosition(i, pointCount, chartArea);
-        canvas.drawLine(
-          Offset(x, chartArea.top),
-          Offset(x, chartArea.bottom),
-          paint,
-        );
-      }
-    }
   }
 
   void _drawYAxis(Canvas canvas, Rect chartArea, double minY, double maxY) {
     final paint = Paint()
       ..color = theme.axisLineColor
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(
       Offset(chartArea.left, chartArea.top),
@@ -414,7 +405,9 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
   void _drawXAxis(Canvas canvas, Rect chartArea) {
     final paint = Paint()
       ..color = theme.axisLineColor
-      ..strokeWidth = 1;
+      ..strokeWidth = 1
+      ..isAntiAlias = true
+      ..strokeCap = StrokeCap.round;
 
     canvas.drawLine(
       Offset(chartArea.left, chartArea.bottom),
@@ -459,7 +452,8 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
       ..strokeWidth = series.lineWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
 
     final path = Path();
     path.moveTo(points.first.dx, points.first.dy);
@@ -485,6 +479,17 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
           path.lineTo(curr.dx, curr.dy);
       }
     }
+
+    // Draw subtle shadow behind the step line
+    final shadowPaint = Paint()
+      ..color = color.withValues(alpha: theme.shadowOpacity * 1.2)
+      ..strokeWidth = series.lineWidth + 3
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+      ..isAntiAlias = true;
+    canvas.drawPath(path, shadowPaint);
 
     canvas.drawPath(path, paint);
   }
@@ -529,7 +534,8 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
 
     final paint = Paint()
       ..color = fillColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, paint);
   }
@@ -556,14 +562,16 @@ class _StepChartPainter<X, Y extends num> extends ChartPainter {
       final borderPaint = Paint()
         ..color = color
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
+        ..strokeWidth = 2
+        ..isAntiAlias = true;
 
       canvas.drawCircle(point, radius, borderPaint);
 
       // Draw inner circle (fill)
       final fillPaint = Paint()
         ..color = isPointHovered ? color : theme.backgroundColor
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       canvas.drawCircle(point, radius - 1, fillPaint);
     }

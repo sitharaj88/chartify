@@ -228,13 +228,19 @@ class _BoxPlotChartState extends State<BoxPlotChart>
 class _BoxPlotChartPainter extends CartesianChartPainter {
   _BoxPlotChartPainter({
     required this.data,
-    required super.theme,
-    required super.animationValue,
+    required ChartThemeData theme,
+    required double animationValue,
     required this.controller,
     required this.hitTester,
-    required super.padding,
+    required EdgeInsets padding,
     this.labelFontSize = 11.0,
-  }) : super(repaint: controller) {
+  }) : super(
+          theme: theme,
+          animationValue: animationValue,
+          padding: padding,
+          repaint: controller,
+          gridDashPattern: theme.gridDashPattern,
+        ) {
     _calculateBounds();
   }
 
@@ -245,6 +251,31 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
 
   double _yMin = 0;
   double _yMax = 1;
+
+  @override
+  void paintGrid(Canvas canvas, Size size) {
+    if (!showGrid) return;
+
+    final chartArea = getChartArea(size);
+    final gridPaint = getPaint(
+      color: theme.gridLineColor,
+      strokeWidth: theme.gridLineWidth,
+    );
+
+    // Paint horizontal lines only (no vertical lines)
+    const horizontalCount = 5;
+    for (var i = 0; i <= horizontalCount; i++) {
+      final y = chartArea.top + (chartArea.height / horizontalCount) * i;
+      final start = Offset(chartArea.left, y);
+      final end = Offset(chartArea.right, y);
+
+      if (gridDashPattern != null) {
+        drawDashedLine(canvas, start, end, gridPaint, gridDashPattern!);
+      } else {
+        canvas.drawLine(start, end, gridPaint);
+      }
+    }
+  }
 
   void _calculateBounds() {
     if (data.items.isEmpty) return;
@@ -324,11 +355,14 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
     final strokePaint = Paint()
       ..color = color
       ..strokeWidth = data.strokeWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
 
     final fillPaint = Paint()
       ..color = color.withValues(alpha: isHovered ? data.fillOpacity + 0.2 : data.fillOpacity)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     // Draw whiskers
     final whiskerWidth = boxSize * data.whiskerWidth;
@@ -364,12 +398,13 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
       centerX + boxSize / 2,
       animatedQ1Y,
     );
+    final boxRRect = RRect.fromRectAndRadius(boxRect, Radius.circular(theme.barCornerRadius * 0.5));
 
     if (data.showNotch) {
       _drawNotchedBox(canvas, boxRect, medianY, data.notchWidth, fillPaint, strokePaint);
     } else {
-      canvas.drawRect(boxRect, fillPaint);
-      canvas.drawRect(boxRect, strokePaint);
+      canvas.drawRRect(boxRRect, fillPaint);
+      canvas.drawRRect(boxRRect, strokePaint);
     }
 
     // Draw median line
@@ -379,7 +414,9 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
       Paint()
         ..color = color
         ..strokeWidth = data.strokeWidth * 1.5
-        ..style = PaintingStyle.stroke,
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true,
     );
 
     // Draw mean marker
@@ -400,7 +437,8 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
     if (isHovered) {
       final highlightPaint = Paint()
         ..color = color.withValues(alpha: 0.1)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawRect(
         Rect.fromLTRB(centerX - itemSpace / 2, chartArea.top, centerX + itemSpace / 2, chartArea.bottom),
         highlightPaint,
@@ -448,11 +486,14 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
     final strokePaint = Paint()
       ..color = color
       ..strokeWidth = data.strokeWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
 
     final fillPaint = Paint()
       ..color = color.withValues(alpha: isHovered ? data.fillOpacity + 0.2 : data.fillOpacity)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     // Draw whiskers
     final whiskerSize = boxSize * data.whiskerWidth;
@@ -467,8 +508,9 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
 
     // Draw box
     final boxRect = Rect.fromLTRB(animatedQ1X, centerY - boxSize / 2, animatedQ3X, centerY + boxSize / 2);
-    canvas.drawRect(boxRect, fillPaint);
-    canvas.drawRect(boxRect, strokePaint);
+    final boxRRect = RRect.fromRectAndRadius(boxRect, Radius.circular(theme.barCornerRadius * 0.5));
+    canvas.drawRRect(boxRRect, fillPaint);
+    canvas.drawRRect(boxRRect, strokePaint);
 
     // Draw median line
     canvas.drawLine(
@@ -477,7 +519,9 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
       Paint()
         ..color = color
         ..strokeWidth = data.strokeWidth * 1.5
-        ..style = PaintingStyle.stroke,
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true,
     );
 
     // Register hit target
@@ -528,7 +572,9 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
     final paint = Paint()
       ..color = color
       ..strokeWidth = 2
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
 
     final size = data.meanMarkerSize / 2;
     canvas.drawLine(Offset(center.dx - size, center.dy - size), Offset(center.dx + size, center.dy + size), paint);
@@ -539,7 +585,8 @@ class _BoxPlotChartPainter extends CartesianChartPainter {
     final paint = Paint()
       ..color = color
       ..style = PaintingStyle.stroke
-      ..strokeWidth = 1.5;
+      ..strokeWidth = 1.5
+      ..isAntiAlias = true;
 
     canvas.drawCircle(center, data.outlierRadius, paint);
   }

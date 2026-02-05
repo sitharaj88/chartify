@@ -24,8 +24,10 @@ class ArcSeriesConfig extends SeriesConfig {
     this.startAngle = -90.0,
     this.sweepAngle = 360.0,
     this.innerRadiusFraction = 0.0,
-    this.strokeWidth = 0.0,
+    this.strokeWidth = 2.0,
     this.strokeColor,
+    this.shadowElevation = 0,
+    this.enableShadows = false,
     this.gapAngle = 0.0,
     this.cornerRadius = 0.0,
     this.explodeIndex,
@@ -54,6 +56,12 @@ class ArcSeriesConfig extends SeriesConfig {
 
   /// Stroke color for segment borders.
   final Color? strokeColor;
+
+  /// Shadow elevation for segments.
+  final double shadowElevation;
+
+  /// Whether to enable shadows on segments.
+  final bool enableShadows;
 
   /// Gap angle between segments in degrees.
   final double gapAngle;
@@ -92,6 +100,8 @@ class ArcSeriesConfig extends SeriesConfig {
     double? innerRadiusFraction,
     double? strokeWidth,
     Color? strokeColor,
+    double? shadowElevation,
+    bool? enableShadows,
     double? gapAngle,
     double? cornerRadius,
     int? explodeIndex,
@@ -110,6 +120,8 @@ class ArcSeriesConfig extends SeriesConfig {
       innerRadiusFraction: innerRadiusFraction ?? this.innerRadiusFraction,
       strokeWidth: strokeWidth ?? this.strokeWidth,
       strokeColor: strokeColor ?? this.strokeColor,
+      shadowElevation: shadowElevation ?? this.shadowElevation,
+      enableShadows: enableShadows ?? this.enableShadows,
       gapAngle: gapAngle ?? this.gapAngle,
       cornerRadius: cornerRadius ?? this.cornerRadius,
       explodeIndex: explodeIndex ?? this.explodeIndex,
@@ -180,7 +192,7 @@ class _ComputedSegment {
 /// Renders pie and donut charts with support for exploded segments,
 /// labels, and various visual effects.
 class ArcPainter extends SeriesPainter<ArcSeriesConfig>
-    with AnimatedSeriesMixin {
+    with AnimatedSeriesMixin, ShadowMixin {
   ArcPainter({
     required super.config,
     required super.seriesIndex,
@@ -434,10 +446,16 @@ class ArcPainter extends SeriesPainter<ArcSeriesConfig>
   }
 
   void _drawSegment(Canvas canvas, _ComputedSegment segment, int index) {
+    // Draw shadow
+    if (config.enableShadows && config.shadowElevation > 0) {
+      drawShadow(canvas, segment.path, const Color(0xFF000000), config.shadowElevation);
+    }
+
     // Draw fill
     final fillPaint = Paint()
       ..color = segment.color
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawPath(segment.path, fillPaint);
 

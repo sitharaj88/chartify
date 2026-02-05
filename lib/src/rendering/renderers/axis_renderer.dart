@@ -16,7 +16,7 @@ class AxisConfig extends RendererConfig {
     this.labelStyle,
     this.lineColor,
     this.lineWidth = 1.0,
-    this.tickLength = 5.0,
+    this.tickLength = 4.0,
     this.tickWidth = 1.0,
     this.tickColor,
     this.labelPadding = 4.0,
@@ -26,7 +26,7 @@ class AxisConfig extends RendererConfig {
     this.showLabels = true,
     this.tickCount,
     this.labelFormatter,
-    this.minLabelSpacing = 40.0,
+    this.minLabelSpacing = 48.0,
   });
 
   @override
@@ -267,6 +267,8 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
         const TextStyle(
           fontSize: 12,
           color: Color(0xFF666666),
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.2,
         );
 
     final results = <_LabelLayoutResult>[];
@@ -592,7 +594,12 @@ class AxisRenderer<T> with RendererMixin<AxisConfig> implements ChartRenderer<Ax
 
     final ticks = _getTicks();
     final labelStyle = _config.labelStyle ??
-        const TextStyle(fontSize: 12, color: Color(0xFF666666));
+        const TextStyle(
+          fontSize: 12,
+          color: Color(0xFF666666),
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.2,
+        );
 
     double maxSize = 0;
     for (final tick in ticks) {

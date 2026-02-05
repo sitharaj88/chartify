@@ -435,7 +435,7 @@ class _AreaChartPainter extends CartesianChartPainter {
     required this.hitTester,
     required super.padding,
     this.labelFontSize = 11.0,
-  }) : super(repaint: controller) {
+  }) : super(repaint: controller, gridDashPattern: theme.gridDashPattern) {
     _calculateBounds();
   }
 
@@ -602,7 +602,8 @@ class _AreaChartPainter extends CartesianChartPainter {
     if (series.gradient != null) {
       final paint = Paint()
         ..shader = series.gradient!.createShader(chartArea)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(path, paint);
     } else {
       final gradient = LinearGradient(
@@ -615,7 +616,8 @@ class _AreaChartPainter extends CartesianChartPainter {
       );
       final paint = Paint()
         ..shader = gradient.createShader(chartArea)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawPath(path, paint);
     }
   }
@@ -657,7 +659,19 @@ class _AreaChartPainter extends CartesianChartPainter {
       ..strokeWidth = series.strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = strokeColor.withAlpha((theme.shadowOpacity * 255).round())
+      ..strokeWidth = series.strokeWidth + 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+      ..isAntiAlias = true;
+    canvas.drawPath(path, shadowPaint);
 
     canvas.drawPath(path, paint);
   }
@@ -677,12 +691,14 @@ class _AreaChartPainter extends CartesianChartPainter {
 
       final markerPaint = Paint()
         ..color = color
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       final borderPaint = Paint()
         ..color = isDark ? const Color(0xFF1E1E1E) : Colors.white
         ..style = PaintingStyle.stroke
-        ..strokeWidth = 2;
+        ..strokeWidth = 2
+        ..isAntiAlias = true;
 
       canvas.drawCircle(pos, size / 2, markerPaint);
       canvas.drawCircle(pos, size / 2, borderPaint);
@@ -726,18 +742,21 @@ class _AreaChartPainter extends CartesianChartPainter {
 
     final glowPaint = Paint()
       ..color = color.withValues(alpha: 0.3)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(info.position, 14, glowPaint);
 
     final isDark = theme.brightness == Brightness.dark;
     final borderPaint = Paint()
       ..color = isDark ? const Color(0xFF2D2D2D) : Colors.white
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(info.position, 7, borderPaint);
 
     final dotPaint = Paint()
       ..color = color
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
     canvas.drawCircle(info.position, 5, dotPaint);
   }
 

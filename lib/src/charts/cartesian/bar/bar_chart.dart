@@ -448,6 +448,8 @@ class _BarChartPainter extends CustomPainter {
       config: GridConfig(
         lineColor: theme.gridLineColor,
         lineWidth: theme.gridLineWidth,
+        dashPattern: theme.gridDashPattern,
+        verticalLines: false,
       ),
       xScale: xScale,
       yScale: _yScale,
@@ -641,13 +643,30 @@ class _BarChartPainter extends CustomPainter {
     );
 
     // Draw fill
-    final fillPaint = Paint()..style = PaintingStyle.fill;
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     if (series.gradient != null) {
       fillPaint.shader = series.gradient!.createShader(rect);
     } else {
-      fillPaint.color = fillColor;
+      // Subtle vertical gradient for modern look
+      final hslColor = HSLColor.fromColor(fillColor);
+      final lighterColor = hslColor.withLightness((hslColor.lightness + 0.08).clamp(0.0, 1.0)).toColor();
+      fillPaint.shader = LinearGradient(
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+        colors: [lighterColor, fillColor],
+      ).createShader(rect);
     }
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.5).round())
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawRRect(rrect.shift(Offset(0, theme.shadowBlurRadius * 0.15)), shadowPaint);
 
     canvas.drawRRect(rrect, fillPaint);
 
@@ -656,7 +675,8 @@ class _BarChartPainter extends CustomPainter {
       final borderPaint = Paint()
         ..color = series.borderColor!
         ..strokeWidth = series.borderWidth
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
       canvas.drawRRect(rrect, borderPaint);
     }
 
@@ -664,7 +684,8 @@ class _BarChartPainter extends CustomPainter {
     if (isHovered) {
       final hoverPaint = Paint()
         ..color = Colors.white.withAlpha(51)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawRRect(rrect, hoverPaint);
     }
   }

@@ -44,7 +44,7 @@ class _ChartifyExampleAppState extends State<ChartifyExampleApp> {
         ),
         useMaterial3: true,
         fontFamily: 'SF Pro Display',
-        extensions: [ChartThemeData.fromSeed(const Color(0xFF6366F1))],
+        extensions: [ChartThemeData.modern()],
       ),
       darkTheme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -55,7 +55,7 @@ class _ChartifyExampleAppState extends State<ChartifyExampleApp> {
         fontFamily: 'SF Pro Display',
         scaffoldBackgroundColor: const Color(0xFF0F0F1A),
         extensions: [
-          ChartThemeData.fromSeed(const Color(0xFF6366F1), brightness: Brightness.dark),
+          ChartThemeData.modernDark(),
         ],
       ),
       themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,

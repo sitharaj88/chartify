@@ -334,21 +334,25 @@ class _SankeyChartPainter extends ChartPainter {
           controller.hoveredPoint?.pointIndex == originalLinkIndex;
 
       final sourceNode = nodeMap[link.sourceId];
+      final targetNode = nodeMap[link.targetId];
       final sourcePos = positionMap[link.sourceId];
       final targetPos = positionMap[link.targetId];
 
       // Skip links with missing nodes
-      if (sourceNode == null || sourcePos == null || targetPos == null) continue;
+      if (sourceNode == null || targetNode == null || sourcePos == null || targetPos == null) continue;
 
-      final color = link.color ?? sourceNode.color ?? theme.getSeriesColor(
+      final sourceColor = link.color ?? sourceNode.color ?? theme.getSeriesColor(
           data.nodes.indexOf(sourceNode),);
+      final targetColor = link.color ?? targetNode.color ?? theme.getSeriesColor(
+          data.nodes.indexOf(targetNode),);
 
       _drawLink(
         canvas,
         sourcePos,
         targetPos,
         linkPos,
-        color,
+        sourceColor,
+        targetColor,
         isHovered,
         chartArea,
       );
@@ -579,7 +583,8 @@ class _SankeyChartPainter extends ChartPainter {
 
     final paint = Paint()
       ..color = isHovered ? color : color.withValues(alpha: 0.9)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawRect(rect, paint);
 
@@ -587,7 +592,8 @@ class _SankeyChartPainter extends ChartPainter {
       final borderPaint = Paint()
         ..color = Colors.white
         ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
       canvas.drawRect(rect, borderPaint);
     }
 
@@ -609,7 +615,8 @@ class _SankeyChartPainter extends ChartPainter {
     SankeyNodePosition sourcePos,
     SankeyNodePosition targetPos,
     SankeyLinkPosition linkPos,
-    Color color,
+    Color sourceColor,
+    Color targetColor,
     bool isHovered,
     Rect chartArea,
   ) {
@@ -641,9 +648,26 @@ class _SankeyChartPainter extends ChartPainter {
     );
     path.close();
 
+    final opacity = isHovered ? 0.8 : data.linkOpacity;
+    final gradient = LinearGradient(
+      colors: [
+        sourceColor.withValues(alpha: opacity),
+        targetColor.withValues(alpha: opacity),
+      ],
+    );
+
+    final gradientRect = Rect.fromLTRB(
+      startX,
+      math.min(linkPos.sourceY, linkPos.targetY) - linkPos.width / 2,
+      endX,
+      math.max(linkPos.sourceY, linkPos.targetY) + linkPos.width / 2,
+    );
+
     final paint = Paint()
-      ..color = color.withValues(alpha: isHovered ? 0.8 : data.linkOpacity)
-      ..style = PaintingStyle.fill;
+      ..shader = gradient.createShader(gradientRect)
+      ..style = PaintingStyle.fill
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
 
     canvas.drawPath(path, paint);
   }

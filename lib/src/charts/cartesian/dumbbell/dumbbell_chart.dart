@@ -335,8 +335,9 @@ class _DumbbellChartPainter extends ChartPainter {
 
       // Draw connector line
       final connectorPaint = Paint()
+        ..isAntiAlias = true
         ..color = connectorColor.withValues(alpha: isHovered ? 1.0 : 0.6)
-        ..strokeWidth = data.connectorWidth
+        ..strokeWidth = data.connectorWidth.clamp(2.0, 3.0)
         ..style = PaintingStyle.stroke
         ..strokeCap = StrokeCap.round;
 
@@ -345,27 +346,49 @@ class _DumbbellChartPainter extends ChartPainter {
       // Draw start marker
       final markerSize = isHovered ? data.markerSize * 1.3 : data.markerSize;
 
+      // Draw shadow for start marker
+      final startShadowPaint = Paint()
+        ..isAntiAlias = true
+        ..color = startColor.withValues(alpha: theme.shadowOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(startPoint.dx, startPoint.dy + 1), markerSize / 2, startShadowPaint);
+
       final startFillPaint = Paint()
+        ..isAntiAlias = true
         ..color = startColor
         ..style = PaintingStyle.fill;
       canvas.drawCircle(startPoint, markerSize / 2, startFillPaint);
 
       final startBorderPaint = Paint()
-        ..color = isHovered ? Colors.white : startColor.withValues(alpha: 0.5)
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..isAntiAlias = true
+        ..color = Colors.white
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
       canvas.drawCircle(startPoint, markerSize / 2, startBorderPaint);
+
+      // Draw shadow for end marker
+      final endShadowPaint = Paint()
+        ..isAntiAlias = true
+        ..color = endColor.withValues(alpha: theme.shadowOpacity)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+        ..style = PaintingStyle.fill;
+      canvas.drawCircle(Offset(endPoint.dx, endPoint.dy + 1), markerSize / 2, endShadowPaint);
 
       // Draw end marker
       final endFillPaint = Paint()
+        ..isAntiAlias = true
         ..color = endColor
         ..style = PaintingStyle.fill;
       canvas.drawCircle(endPoint, markerSize / 2, endFillPaint);
 
       final endBorderPaint = Paint()
-        ..color = isHovered ? Colors.white : endColor.withValues(alpha: 0.5)
-        ..strokeWidth = 2
-        ..style = PaintingStyle.stroke;
+        ..isAntiAlias = true
+        ..color = Colors.white
+        ..strokeWidth = 2.0
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round;
       canvas.drawCircle(endPoint, markerSize / 2, endBorderPaint);
 
       // Draw label
@@ -408,6 +431,7 @@ class _DumbbellChartPainter extends ChartPainter {
   void _drawGrid(Canvas canvas, Rect chartArea, double minValue,
       double maxValue, bool isHorizontal,) {
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = theme.gridLineColor.withValues(alpha: 0.3)
       ..strokeWidth = 1;
 
@@ -434,6 +458,7 @@ class _DumbbellChartPainter extends ChartPainter {
   void _drawAxis(Canvas canvas, Rect chartArea, double minValue,
       double maxValue, bool isHorizontal,) {
     final paint = Paint()
+      ..isAntiAlias = true
       ..color = theme.axisLineColor
       ..strokeWidth = 1;
 

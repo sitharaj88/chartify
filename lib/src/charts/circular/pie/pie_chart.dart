@@ -344,6 +344,15 @@ class _PieChartPainter extends CircularChartPainter {
       final explodeY = explodeOffset * math.sin(midAngle);
       final sectionCenter = Offset(center.dx + explodeX, center.dy + explodeY);
 
+      // Shadow
+      final shadowPaint = Paint()
+        ..color = Colors.black.withAlpha((theme.shadowOpacity * 255 * 0.5).round())
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.5)
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
+      final shadowPath = _buildSectionPath(sectionCenter, innerRadius, outerRadius, adjustedStart, sweepAngle);
+      canvas.drawPath(shadowPath, shadowPaint);
+
       // Draw section
       final color = section.color ?? theme.getSeriesColor(i);
       _drawSection(
@@ -388,7 +397,8 @@ class _PieChartPainter extends CircularChartPainter {
 
     final shadowPaint = Paint()
       ..color = Colors.black.withValues(alpha: 0.15)
-      ..maskFilter = MaskFilter.blur(BlurStyle.normal, elevation * 1.5);
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, elevation * 1.5)
+      ..isAntiAlias = true;
 
     canvas.save();
     canvas.translate(elevation * 0.3, elevation * 0.5);
@@ -458,7 +468,9 @@ class _PieChartPainter extends CircularChartPainter {
     PieSection section,
     bool isHovered,
   ) {
-    final paint = Paint()..style = PaintingStyle.fill;
+    final paint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     // Apply gradient if available, otherwise use solid color
     if (section.gradient != null) {
@@ -477,7 +489,9 @@ class _PieChartPainter extends CircularChartPainter {
       final borderPaint = Paint()
         ..color = section.borderColor!
         ..strokeWidth = section.borderWidth
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..isAntiAlias = true;
       canvas.drawPath(path, borderPaint);
     }
   }
@@ -525,7 +539,9 @@ class _PieChartPainter extends CircularChartPainter {
     final strokePaint = Paint()
       ..color = data.strokeColor ?? Colors.white
       ..strokeWidth = data.strokeWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
 
     var currentAngle = degreesToRadians(startAngle);
 
@@ -748,7 +764,8 @@ class _PieChartPainter extends CircularChartPainter {
     final linePaint = Paint()
       ..color = style.color ?? Colors.grey
       ..strokeWidth = 1
-      ..strokeCap = StrokeCap.round;
+      ..strokeCap = StrokeCap.round
+      ..isAntiAlias = true;
     canvas.drawLine(startPoint, elbowPoint, linePaint);
     canvas.drawLine(elbowPoint, labelPoint, linePaint);
 

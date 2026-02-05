@@ -45,6 +45,9 @@ class LineSeriesConfig extends SeriesConfig {
     this.areaColor,
     this.areaGradient,
     this.tension = 0.5,
+    this.shadowBlurRadius = 0,
+    this.shadowColor,
+    this.shadowOffset = const Offset(0, 2),
   });
 
   /// Line color.
@@ -77,6 +80,15 @@ class LineSeriesConfig extends SeriesConfig {
   /// Tension for spline curves (0.0 to 1.0).
   final double tension;
 
+  /// Blur radius for the line shadow (0 means no shadow).
+  final double shadowBlurRadius;
+
+  /// Color of the line shadow (defaults to line color with reduced opacity).
+  final Color? shadowColor;
+
+  /// Offset of the line shadow.
+  final Offset shadowOffset;
+
   /// Creates a copy with updated values.
   LineSeriesConfig copyWith({
     bool? visible,
@@ -91,6 +103,9 @@ class LineSeriesConfig extends SeriesConfig {
     Color? areaColor,
     List<Color>? areaGradient,
     double? tension,
+    double? shadowBlurRadius,
+    Color? shadowColor,
+    Offset? shadowOffset,
   }) => LineSeriesConfig(
       visible: visible ?? this.visible,
       animationProgress: animationProgress ?? this.animationProgress,
@@ -104,6 +119,9 @@ class LineSeriesConfig extends SeriesConfig {
       areaColor: areaColor ?? this.areaColor,
       areaGradient: areaGradient ?? this.areaGradient,
       tension: tension ?? this.tension,
+      shadowBlurRadius: shadowBlurRadius ?? this.shadowBlurRadius,
+      shadowColor: shadowColor ?? this.shadowColor,
+      shadowOffset: shadowOffset ?? this.shadowOffset,
     );
 }
 
@@ -115,7 +133,7 @@ class LineSeriesConfig extends SeriesConfig {
 /// For large datasets (50+ points), viewport culling is automatically
 /// applied to only render visible data points.
 class LinePainter extends SeriesPainter<LineSeriesConfig>
-    with CurvedSeriesMixin, AreaFillMixin, GradientMixin, AnimatedSeriesMixin, ViewportCullingMixin {
+    with CurvedSeriesMixin, AreaFillMixin, GradientMixin, AnimatedSeriesMixin, ViewportCullingMixin, ShadowMixin {
   LinePainter({
     required super.config,
     required super.seriesIndex,
@@ -314,20 +332,37 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
         config.areaGradient!,
       );
     } else {
-      final baseColor = config.areaColor ?? config.color;
-      areaPaint.color = baseColor.withAlpha(((baseColor.a * 255.0).round() * 0.3).round().clamp(0, 255));
+      areaPaint.shader = createVerticalGradient(
+        chartArea,
+        [
+          (config.areaColor ?? config.color).withValues(alpha: 0.20),
+          (config.areaColor ?? config.color).withValues(alpha: 0.0),
+        ],
+      );
     }
 
     canvas.drawPath(areaPath, areaPaint);
   }
 
   void _drawLine(Canvas canvas, Path linePath) {
+    if (config.shadowBlurRadius > 0) {
+      final shadowPaint = Paint()
+        ..color = (config.shadowColor ?? config.color).withValues(alpha: 0.2)
+        ..strokeWidth = config.strokeWidth + 2
+        ..style = PaintingStyle.stroke
+        ..strokeCap = StrokeCap.round
+        ..strokeJoin = StrokeJoin.round
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.shadowBlurRadius);
+      canvas.drawPath(linePath, shadowPaint);
+    }
+
     final linePaint = Paint()
       ..color = config.color
       ..strokeWidth = config.strokeWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
 
     if (config.dashPattern != null && config.dashPattern!.isNotEmpty) {
       _drawDashedPath(canvas, linePath, linePaint);
@@ -363,9 +398,10 @@ class LinePainter extends SeriesPainter<LineSeriesConfig>
   void _drawMarkers(Canvas canvas, List<Offset> positions) {
     final markerConfig = config.markerConfig ??
         MarkerConfig(
-          size: config.strokeWidth * 3,
+          size: config.strokeWidth * 2.5,
           fillColor: config.color,
           strokeColor: const Color(0xFFFFFFFF),
+          strokeWidth: 2.0,
         );
 
     _markerRenderer.update(markerConfig);

@@ -241,15 +241,38 @@ class _RadialBarChartPainter extends CircularChartPainter {
     final paint = Paint()
       ..strokeWidth = thickness
       ..style = PaintingStyle.stroke
-      ..strokeCap = data.strokeCap;
+      ..strokeCap = data.strokeCap
+      ..isAntiAlias = true;
 
     if (bar.gradient != null) {
       // Create gradient shader
       final gradientRect = Rect.fromCircle(center: center, radius: radius + thickness / 2);
       paint.shader = bar.gradient!.createShader(gradientRect);
     } else {
-      paint.color = color;
+      // Apply a default gradient fill per bar
+      final gradientRect = Rect.fromCircle(center: center, radius: radius + thickness / 2);
+      paint.shader = SweepGradient(
+        startAngle: degreesToRadians(data.startAngle),
+        endAngle: degreesToRadians(data.startAngle + data.maxAngle * bar.normalizedValue),
+        colors: [color, color.withValues(alpha: 0.7)],
+      ).createShader(gradientRect);
     }
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..strokeWidth = thickness
+      ..style = PaintingStyle.stroke
+      ..strokeCap = data.strokeCap
+      ..color = color.withValues(alpha: theme.shadowOpacity)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..isAntiAlias = true;
+    canvas.drawArc(
+      rect.shift(const Offset(0, 2)),
+      degreesToRadians(data.startAngle),
+      degreesToRadians(sweepAngle),
+      false,
+      shadowPaint,
+    );
 
     canvas.drawArc(
       rect,

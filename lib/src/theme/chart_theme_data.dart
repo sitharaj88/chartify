@@ -27,6 +27,9 @@ import '../accessibility/contrast_validator.dart';
 ///
 /// // Dynamic color from seed
 /// ChartThemeData.fromSeed(Colors.blue)
+///
+/// // Modern design (recommended)
+/// ChartThemeData.modern()
 /// ```
 @immutable
 class ChartThemeData extends ThemeExtension<ChartThemeData> {
@@ -51,82 +54,205 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
     required this.selectionColor,
     required this.crosshairColor,
     Brightness? brightness,
+    this.gridDashPattern,
+    this.barCornerRadius = 6.0,
+    this.defaultStrokeWidth = 2.5,
+    this.defaultMarkerSize = 8.0,
+    this.shadowBlurRadius = 8.0,
+    this.shadowOpacity = 0.15,
+    this.areaFillOpacity = 0.15,
   }) : _brightness = brightness;
+
+  /// Creates a modern light theme with contemporary design standards.
+  ///
+  /// Features dashed grids, subtle shadows, refined typography,
+  /// and a vibrant color palette optimized for max differentiation.
+  factory ChartThemeData.modern() => const ChartThemeData(
+        colorPalette: ColorPalette([
+          Color(0xFF6366F1), // Indigo (hero)
+          Color(0xFF10B981), // Emerald (strong contrast)
+          Color(0xFFF59E0B), // Amber (warm complement)
+          Color(0xFFEC4899), // Pink (accent)
+          Color(0xFF3B82F6), // Blue
+          Color(0xFF8B5CF6), // Violet
+          Color(0xFFEF4444), // Red
+          Color(0xFF14B8A6), // Teal
+          Color(0xFFF97316), // Orange
+          Color(0xFF06B6D4), // Cyan
+        ]),
+        backgroundColor: Color(0xFFFAFAFC),
+        gridLineColor: Color(0xFFE5E7EB),
+        gridLineWidth: 0.5,
+        gridDashPattern: [6, 4],
+        axisLineColor: Color(0xFFD1D5DB),
+        axisLineWidth: 0.5,
+        axisLabelColor: Color(0xFF9CA3AF),
+        titleStyle: TextStyle(
+          color: Color(0xFF111827),
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+        subtitleStyle: TextStyle(
+          color: Color(0xFF6B7280),
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
+        labelStyle: TextStyle(
+          color: Color(0xFF9CA3AF),
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        tooltipBackgroundColor: Color(0xEBFFFFFF),
+        tooltipTextColor: Color(0xFF111827),
+        tooltipBorderColor: Color(0xFFE5E7EB),
+        tooltipBorderRadius: 10,
+        tooltipPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        legendTextStyle: TextStyle(
+          color: Color(0xFF6B7280),
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        selectionColor: Color(0x1F6366F1),
+        crosshairColor: Color(0xFFD1D5DB),
+      );
+
+  /// Creates a modern dark theme with contemporary design standards.
+  ///
+  /// Dark variant optimized for OLED displays with vibrant colors
+  /// that pop against the dark background.
+  factory ChartThemeData.modernDark() => const ChartThemeData(
+        colorPalette: ColorPalette([
+          Color(0xFF818CF8), // Indigo 400 (hero)
+          Color(0xFF34D399), // Emerald 400
+          Color(0xFFFBBF24), // Amber 400
+          Color(0xFFF472B6), // Pink 400
+          Color(0xFF60A5FA), // Blue 400
+          Color(0xFFA78BFA), // Violet 400
+          Color(0xFFF87171), // Red 400
+          Color(0xFF2DD4BF), // Teal 400
+          Color(0xFFFB923C), // Orange 400
+          Color(0xFF22D3EE), // Cyan 400
+        ]),
+        backgroundColor: Color(0xFF0F0F1A),
+        gridLineColor: Color(0xFF374151),
+        gridLineWidth: 0.5,
+        gridDashPattern: [6, 4],
+        axisLineColor: Color(0xFF4B5563),
+        axisLineWidth: 0.5,
+        axisLabelColor: Color(0xFF6B7280),
+        titleStyle: TextStyle(
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
+        ),
+        subtitleStyle: TextStyle(
+          color: Color(0xFF9CA3AF),
+          fontSize: 13,
+          fontWeight: FontWeight.w400,
+        ),
+        labelStyle: TextStyle(
+          color: Color(0xFF6B7280),
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
+        ),
+        tooltipBackgroundColor: Color(0xF21F2937),
+        tooltipTextColor: Colors.white,
+        tooltipBorderColor: Color(0x14FFFFFF),
+        tooltipBorderRadius: 10,
+        tooltipPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        legendTextStyle: TextStyle(
+          color: Color(0xFF9CA3AF),
+          fontSize: 12,
+          fontWeight: FontWeight.w500,
+        ),
+        selectionColor: Color(0x26818CF8),
+        crosshairColor: Color(0xFF4B5563),
+      );
 
   /// Creates a light theme.
   factory ChartThemeData.light() => ChartThemeData(
-        colorPalette: ColorPalette.material(),
-        backgroundColor: Colors.white,
-        gridLineColor: const Color(0xFFE0E0E0),
-        gridLineWidth: 1,
-        axisLineColor: const Color(0xFF757575),
-        axisLineWidth: 1,
-        axisLabelColor: const Color(0xFF616161),
+        colorPalette: ColorPalette.modern(),
+        backgroundColor: const Color(0xFFFAFAFC),
+        gridLineColor: const Color(0xFFE5E7EB),
+        gridLineWidth: 0.5,
+        gridDashPattern: const [6, 4],
+        axisLineColor: const Color(0xFFD1D5DB),
+        axisLineWidth: 0.5,
+        axisLabelColor: const Color(0xFF9CA3AF),
         titleStyle: const TextStyle(
-          color: Color(0xFF212121),
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+          color: Color(0xFF111827),
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
         ),
         subtitleStyle: const TextStyle(
-          color: Color(0xFF757575),
-          fontSize: 14,
+          color: Color(0xFF6B7280),
+          fontSize: 13,
           fontWeight: FontWeight.w400,
         ),
         labelStyle: const TextStyle(
-          color: Color(0xFF616161),
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
+          color: Color(0xFF9CA3AF),
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
         ),
-        tooltipBackgroundColor: const Color(0xFF424242),
-        tooltipTextColor: Colors.white,
-        tooltipBorderColor: const Color(0xFF616161),
-        tooltipBorderRadius: 8,
-        tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        tooltipBackgroundColor: const Color(0xEBFFFFFF),
+        tooltipTextColor: const Color(0xFF111827),
+        tooltipBorderColor: const Color(0xFFE5E7EB),
+        tooltipBorderRadius: 10,
+        tooltipPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         legendTextStyle: const TextStyle(
-          color: Color(0xFF616161),
+          color: Color(0xFF6B7280),
           fontSize: 12,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
-        selectionColor: const Color(0x33448AFF),
-        crosshairColor: const Color(0xFF9E9E9E),
+        selectionColor: const Color(0x1F6366F1),
+        crosshairColor: const Color(0xFFD1D5DB),
       );
 
   /// Creates a dark theme.
   factory ChartThemeData.dark() => ChartThemeData(
-        colorPalette: ColorPalette.materialDark(),
-        backgroundColor: const Color(0xFF121212),
-        gridLineColor: const Color(0xFF424242),
-        gridLineWidth: 1,
-        axisLineColor: const Color(0xFF757575),
-        axisLineWidth: 1,
-        axisLabelColor: const Color(0xFFBDBDBD),
+        colorPalette: ColorPalette.modernDark(),
+        backgroundColor: const Color(0xFF0F0F1A),
+        gridLineColor: const Color(0xFF374151),
+        gridLineWidth: 0.5,
+        gridDashPattern: const [6, 4],
+        axisLineColor: const Color(0xFF4B5563),
+        axisLineWidth: 0.5,
+        axisLabelColor: const Color(0xFF6B7280),
         titleStyle: const TextStyle(
-          color: Color(0xFFFFFFFF),
-          fontSize: 18,
-          fontWeight: FontWeight.w600,
+          color: Colors.white,
+          fontSize: 16,
+          fontWeight: FontWeight.w700,
+          letterSpacing: -0.3,
         ),
         subtitleStyle: const TextStyle(
-          color: Color(0xFFBDBDBD),
-          fontSize: 14,
+          color: Color(0xFF9CA3AF),
+          fontSize: 13,
           fontWeight: FontWeight.w400,
         ),
         labelStyle: const TextStyle(
-          color: Color(0xFFBDBDBD),
-          fontSize: 12,
-          fontWeight: FontWeight.w400,
+          color: Color(0xFF6B7280),
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          letterSpacing: 0.1,
         ),
-        tooltipBackgroundColor: const Color(0xFF37474F),
+        tooltipBackgroundColor: const Color(0xF21F2937),
         tooltipTextColor: Colors.white,
-        tooltipBorderColor: const Color(0xFF546E7A),
-        tooltipBorderRadius: 8,
-        tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        tooltipBorderColor: const Color(0x14FFFFFF),
+        tooltipBorderRadius: 10,
+        tooltipPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         legendTextStyle: const TextStyle(
-          color: Color(0xFFBDBDBD),
+          color: Color(0xFF9CA3AF),
           fontSize: 12,
-          fontWeight: FontWeight.w400,
+          fontWeight: FontWeight.w500,
         ),
-        selectionColor: const Color(0x4482B1FF),
-        crosshairColor: const Color(0xFF757575),
+        selectionColor: const Color(0x26818CF8),
+        crosshairColor: const Color(0xFF4B5563),
       );
 
   /// Creates a theme from a seed color using Material 3 color scheme.
@@ -143,36 +269,39 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
       colorPalette: ColorPalette.fromColorScheme(colorScheme),
       backgroundColor: colorScheme.surface,
       gridLineColor: colorScheme.outlineVariant,
-      gridLineWidth: 1,
+      gridLineWidth: 0.5,
+      gridDashPattern: const [6, 4],
       axisLineColor: colorScheme.outline,
-      axisLineWidth: 1,
+      axisLineWidth: 0.5,
       axisLabelColor: colorScheme.onSurfaceVariant,
       titleStyle: TextStyle(
         color: colorScheme.onSurface,
-        fontSize: 18,
-        fontWeight: FontWeight.w600,
+        fontSize: 16,
+        fontWeight: FontWeight.w700,
+        letterSpacing: -0.3,
       ),
       subtitleStyle: TextStyle(
         color: colorScheme.onSurfaceVariant,
-        fontSize: 14,
+        fontSize: 13,
         fontWeight: FontWeight.w400,
       ),
       labelStyle: TextStyle(
         color: colorScheme.onSurfaceVariant,
-        fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontSize: 11,
+        fontWeight: FontWeight.w500,
+        letterSpacing: 0.1,
       ),
       tooltipBackgroundColor: colorScheme.inverseSurface,
       tooltipTextColor: colorScheme.onInverseSurface,
       tooltipBorderColor: colorScheme.outline,
-      tooltipBorderRadius: 8,
-      tooltipPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      tooltipBorderRadius: 10,
+      tooltipPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
       legendTextStyle: TextStyle(
         color: colorScheme.onSurfaceVariant,
         fontSize: 12,
-        fontWeight: FontWeight.w400,
+        fontWeight: FontWeight.w500,
       ),
-      selectionColor: colorScheme.primary.withValues(alpha: 0.2),
+      selectionColor: colorScheme.primary.withValues(alpha: 0.12),
       crosshairColor: colorScheme.outline,
       brightness: brightness,
     );
@@ -238,6 +367,27 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
   /// The color for crosshair lines.
   final Color crosshairColor;
 
+  /// Dash pattern for grid lines. Null for solid lines.
+  final List<double>? gridDashPattern;
+
+  /// Default corner radius for bar charts.
+  final double barCornerRadius;
+
+  /// Default stroke width for line series.
+  final double defaultStrokeWidth;
+
+  /// Default marker size for data points.
+  final double defaultMarkerSize;
+
+  /// Default shadow blur radius for chart elements.
+  final double shadowBlurRadius;
+
+  /// Default shadow opacity (0.0 to 1.0).
+  final double shadowOpacity;
+
+  /// Default opacity for area fills under lines.
+  final double areaFillOpacity;
+
   /// Gets a color from the palette for a series.
   Color getSeriesColor(int index) => colorPalette[index];
 
@@ -298,6 +448,13 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
     Color? selectionColor,
     Color? crosshairColor,
     Brightness? brightness,
+    List<double>? gridDashPattern,
+    double? barCornerRadius,
+    double? defaultStrokeWidth,
+    double? defaultMarkerSize,
+    double? shadowBlurRadius,
+    double? shadowOpacity,
+    double? areaFillOpacity,
   }) =>
       ChartThemeData(
         colorPalette: colorPalette ?? this.colorPalette,
@@ -320,6 +477,13 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
         selectionColor: selectionColor ?? this.selectionColor,
         crosshairColor: crosshairColor ?? this.crosshairColor,
         brightness: brightness ?? _brightness,
+        gridDashPattern: gridDashPattern ?? this.gridDashPattern,
+        barCornerRadius: barCornerRadius ?? this.barCornerRadius,
+        defaultStrokeWidth: defaultStrokeWidth ?? this.defaultStrokeWidth,
+        defaultMarkerSize: defaultMarkerSize ?? this.defaultMarkerSize,
+        shadowBlurRadius: shadowBlurRadius ?? this.shadowBlurRadius,
+        shadowOpacity: shadowOpacity ?? this.shadowOpacity,
+        areaFillOpacity: areaFillOpacity ?? this.areaFillOpacity,
       );
 
   @override
@@ -351,6 +515,13 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
       selectionColor: Color.lerp(selectionColor, other.selectionColor, t)!,
       crosshairColor: Color.lerp(crosshairColor, other.crosshairColor, t)!,
       brightness: t < 0.5 ? _brightness : other._brightness,
+      gridDashPattern: t < 0.5 ? gridDashPattern : other.gridDashPattern,
+      barCornerRadius: lerpDouble(barCornerRadius, other.barCornerRadius, t)!,
+      defaultStrokeWidth: lerpDouble(defaultStrokeWidth, other.defaultStrokeWidth, t)!,
+      defaultMarkerSize: lerpDouble(defaultMarkerSize, other.defaultMarkerSize, t)!,
+      shadowBlurRadius: lerpDouble(shadowBlurRadius, other.shadowBlurRadius, t)!,
+      shadowOpacity: lerpDouble(shadowOpacity, other.shadowOpacity, t)!,
+      areaFillOpacity: lerpDouble(areaFillOpacity, other.areaFillOpacity, t)!,
     );
   }
 
@@ -376,7 +547,13 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
           tooltipPadding == other.tooltipPadding &&
           legendTextStyle == other.legendTextStyle &&
           selectionColor == other.selectionColor &&
-          crosshairColor == other.crosshairColor;
+          crosshairColor == other.crosshairColor &&
+          barCornerRadius == other.barCornerRadius &&
+          defaultStrokeWidth == other.defaultStrokeWidth &&
+          defaultMarkerSize == other.defaultMarkerSize &&
+          shadowBlurRadius == other.shadowBlurRadius &&
+          shadowOpacity == other.shadowOpacity &&
+          areaFillOpacity == other.areaFillOpacity;
 
   @override
   int get hashCode => Object.hash(
@@ -397,7 +574,15 @@ class ChartThemeData extends ThemeExtension<ChartThemeData> {
         tooltipPadding,
         legendTextStyle,
         selectionColor,
-        crosshairColor,
+        Object.hash(
+          crosshairColor,
+          barCornerRadius,
+          defaultStrokeWidth,
+          defaultMarkerSize,
+          shadowBlurRadius,
+          shadowOpacity,
+          areaFillOpacity,
+        ),
       );
 }
 
@@ -424,17 +609,19 @@ class ColorPalette {
       ]);
 
   /// Creates a modern color palette with vibrant contemporary colors.
+  ///
+  /// Ordered for maximum visual differentiation when using 2-4 series.
   factory ColorPalette.modern() => const ColorPalette([
-        Color(0xFF6366F1), // Indigo
-        Color(0xFF8B5CF6), // Purple
-        Color(0xFFEC4899), // Pink
-        Color(0xFFF59E0B), // Amber
-        Color(0xFF10B981), // Emerald
+        Color(0xFF6366F1), // Indigo (hero)
+        Color(0xFF10B981), // Emerald (strong contrast)
+        Color(0xFFF59E0B), // Amber (warm complement)
+        Color(0xFFEC4899), // Pink (accent)
         Color(0xFF3B82F6), // Blue
+        Color(0xFF8B5CF6), // Violet
         Color(0xFFEF4444), // Red
         Color(0xFF14B8A6), // Teal
         Color(0xFFF97316), // Orange
-        Color(0xFF84CC16), // Lime
+        Color(0xFF06B6D4), // Cyan
       ]);
 
   /// Creates a Material Design dark color palette.
@@ -452,17 +639,19 @@ class ColorPalette {
       ]);
 
   /// Creates a modern dark color palette with vibrant colors optimized for dark backgrounds.
+  ///
+  /// Ordered for maximum visual differentiation when using 2-4 series.
   factory ColorPalette.modernDark() => const ColorPalette([
-        Color(0xFF818CF8), // Indigo 400
-        Color(0xFFA78BFA), // Purple 400
-        Color(0xFFF472B6), // Pink 400
-        Color(0xFFFBBF24), // Amber 400
+        Color(0xFF818CF8), // Indigo 400 (hero)
         Color(0xFF34D399), // Emerald 400
+        Color(0xFFFBBF24), // Amber 400
+        Color(0xFFF472B6), // Pink 400
         Color(0xFF60A5FA), // Blue 400
+        Color(0xFFA78BFA), // Violet 400
         Color(0xFFF87171), // Red 400
         Color(0xFF2DD4BF), // Teal 400
         Color(0xFFFB923C), // Orange 400
-        Color(0xFFA3E635), // Lime 400
+        Color(0xFF22D3EE), // Cyan 400
       ]);
 
   /// Creates a color palette from a Material 3 color scheme.

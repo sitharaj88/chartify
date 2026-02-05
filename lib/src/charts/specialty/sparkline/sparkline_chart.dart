@@ -198,17 +198,28 @@ class _SparklinePainter extends CustomPainter {
     if (points.length < 2) return;
 
     final color = data.color ?? theme.getSeriesColor(0);
+    final path = _createPath(points, data.curved);
+    final animatedPath = _getAnimatedPath(path, animationValue);
+
+    // Draw subtle shadow beneath the line
+    final shadowPaint = Paint()
+      ..color = color.withValues(alpha: theme.shadowOpacity * 1.3)
+      ..strokeWidth = data.lineWidth + 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..isAntiAlias = true;
+    canvas.drawPath(animatedPath, shadowPaint);
+
+    // Draw the main line
     final paint = Paint()
       ..color = color
       ..strokeWidth = data.lineWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-
-    final path = _createPath(points, data.curved);
-
-    // Animate by drawing partial path
-    final animatedPath = _getAnimatedPath(path, animationValue);
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
     canvas.drawPath(animatedPath, paint);
   }
 
@@ -234,14 +245,37 @@ class _SparklinePainter extends CustomPainter {
       ..lineTo(points.first.dx, baseline)
       ..close();
 
-    // Draw area fill with animation
+    // Draw area fill with gradient (top with alpha -> bottom transparent)
     final animatedAreaPath = _getAnimatedAreaPath(areaPath, points, chartArea, animationValue);
 
+    final areaGradient = LinearGradient(
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+      colors: [
+        color.withValues(alpha: data.areaOpacity * animationValue),
+        color.withValues(alpha: 0.0),
+      ],
+    );
+
     final areaPaint = Paint()
-      ..color = color.withValues(alpha: data.areaOpacity * animationValue)
-      ..style = PaintingStyle.fill;
+      ..shader = areaGradient.createShader(chartArea)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawPath(animatedAreaPath, areaPaint);
+
+    // Draw subtle shadow beneath the line
+    final animatedLinePath = _getAnimatedPath(linePath, animationValue);
+
+    final shadowPaint2 = Paint()
+      ..color = color.withValues(alpha: theme.shadowOpacity * 1.3)
+      ..strokeWidth = data.lineWidth + 2
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..isAntiAlias = true;
+    canvas.drawPath(animatedLinePath, shadowPaint2);
 
     // Draw line on top
     final linePaint = Paint()
@@ -249,9 +283,9 @@ class _SparklinePainter extends CustomPainter {
       ..strokeWidth = data.lineWidth
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
+      ..strokeJoin = StrokeJoin.round
+      ..isAntiAlias = true;
 
-    final animatedLinePath = _getAnimatedPath(linePath, animationValue);
     canvas.drawPath(animatedLinePath, linePaint);
   }
 
@@ -295,7 +329,8 @@ class _SparklinePainter extends CustomPainter {
 
       final paint = Paint()
         ..color = value >= 0 ? color : negColor
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       canvas.drawRect(barRect, paint);
     }
@@ -331,7 +366,8 @@ class _SparklinePainter extends CustomPainter {
 
       final paint = Paint()
         ..color = value >= 0 ? color : negColor
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
 
       canvas.drawRRect(
         RRect.fromRectAndRadius(barRect, const Radius.circular(1)),
@@ -351,7 +387,8 @@ class _SparklinePainter extends CustomPainter {
     final paint = Paint()
       ..color = color.withValues(alpha: color.a * animationValue)
       ..strokeWidth = data.referenceLineWidth
-      ..style = PaintingStyle.stroke;
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
 
     // Draw dashed line
     _drawDashedLine(
@@ -402,7 +439,8 @@ class _SparklinePainter extends CustomPainter {
     final fillColor = marker.color ?? defaultColor;
     final fillPaint = Paint()
       ..color = fillColor.withValues(alpha: fillColor.a * animationValue)
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     canvas.drawCircle(center, marker.radius, fillPaint);
 
@@ -411,7 +449,8 @@ class _SparklinePainter extends CustomPainter {
       final borderPaint = Paint()
         ..color = borderColor.withValues(alpha: borderColor.a * animationValue)
         ..strokeWidth = marker.borderWidth
-        ..style = PaintingStyle.stroke;
+        ..style = PaintingStyle.stroke
+        ..isAntiAlias = true;
 
       canvas.drawCircle(center, marker.radius, borderPaint);
     }

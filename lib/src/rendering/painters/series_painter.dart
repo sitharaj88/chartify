@@ -161,6 +161,25 @@ mixin AreaFillMixin<T extends SeriesConfig> on SeriesPainter<T> {
   }
 }
 
+/// Mixin for series that support shadow rendering.
+mixin ShadowMixin {
+  /// Draws a shadow behind a path.
+  void drawShadow(
+    Canvas canvas,
+    Path path,
+    Color color,
+    double elevation, {
+    Offset offset = Offset.zero,
+  }) {
+    if (elevation <= 0) return;
+    final shadowPaint = Paint()
+      ..color = color.withValues(alpha: 0.12)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, elevation)
+      ..style = PaintingStyle.fill;
+    canvas.drawPath(path.shift(offset + Offset(0, elevation * 0.4)), shadowPaint);
+  }
+}
+
 /// Mixin for series that support gradient fills.
 mixin GradientMixin {
   /// Creates a vertical gradient shader.

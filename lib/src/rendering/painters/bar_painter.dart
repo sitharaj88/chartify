@@ -24,7 +24,7 @@ class BarSeriesConfig extends SeriesConfig {
     this.colors,
     this.borderColor,
     this.borderWidth = 0.0,
-    this.cornerRadius = 0.0,
+    this.cornerRadius = 6.0,
     this.orientation = BarOrientation.vertical,
     this.barWidth,
     this.barWidthFraction = 0.8,
@@ -32,6 +32,8 @@ class BarSeriesConfig extends SeriesConfig {
     this.showValues = false,
     this.valueStyle,
     this.valueFormatter,
+    this.shadowElevation = 0,
+    this.shadowColor,
   });
 
   /// Default bar color.
@@ -70,6 +72,12 @@ class BarSeriesConfig extends SeriesConfig {
   /// Custom value formatter.
   final String Function(double value)? valueFormatter;
 
+  /// Shadow elevation for bars (0 means no shadow).
+  final double shadowElevation;
+
+  /// Shadow color (defaults to black if null).
+  final Color? shadowColor;
+
   /// Creates a copy with updated values.
   BarSeriesConfig copyWith({
     bool? visible,
@@ -86,6 +94,8 @@ class BarSeriesConfig extends SeriesConfig {
     bool? showValues,
     TextStyle? valueStyle,
     String Function(double value)? valueFormatter,
+    double? shadowElevation,
+    Color? shadowColor,
   }) => BarSeriesConfig(
       visible: visible ?? this.visible,
       animationProgress: animationProgress ?? this.animationProgress,
@@ -101,6 +111,8 @@ class BarSeriesConfig extends SeriesConfig {
       showValues: showValues ?? this.showValues,
       valueStyle: valueStyle ?? this.valueStyle,
       valueFormatter: valueFormatter ?? this.valueFormatter,
+      shadowElevation: shadowElevation ?? this.shadowElevation,
+      shadowColor: shadowColor ?? this.shadowColor,
     );
 }
 
@@ -134,7 +146,7 @@ class BarData {
 /// For large datasets (50+ bars), viewport culling is automatically
 /// applied to only render visible bars.
 class BarPainter extends SeriesPainter<BarSeriesConfig>
-    with GradientMixin, AnimatedSeriesMixin, ViewportCullingMixin {
+    with GradientMixin, AnimatedSeriesMixin, ViewportCullingMixin, ShadowMixin {
   BarPainter({
     required super.config,
     required super.seriesIndex,
@@ -330,15 +342,37 @@ class BarPainter extends SeriesPainter<BarSeriesConfig>
     final color = _getBarColor(originalIndex);
     final barY = data[originalIndex].y;
 
+    // Draw shadow if configured
+    if (config.shadowElevation > 0) {
+      final shadowPaint = Paint()
+        ..color = (config.shadowColor ?? const Color(0xFF000000)).withValues(alpha: 0.08)
+        ..maskFilter = MaskFilter.blur(BlurStyle.normal, config.shadowElevation)
+        ..style = PaintingStyle.fill;
+      final shadowOffset = Offset(0, config.shadowElevation * 0.5);
+      if (config.cornerRadius > 0) {
+        final shadowRRect = _createRoundedBar(rect.shift(shadowOffset), barY);
+        canvas.drawRRect(shadowRRect, shadowPaint);
+      } else {
+        canvas.drawRect(rect.shift(shadowOffset), shadowPaint);
+      }
+    }
+
     // Create bar paint
-    final fillPaint = Paint()..style = PaintingStyle.fill;
+    final fillPaint = Paint()
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
     if (config.gradient != null && config.gradient!.isNotEmpty) {
       fillPaint.shader = config.orientation == BarOrientation.vertical
           ? createVerticalGradient(rect, config.gradient!)
           : createHorizontalGradient(rect, config.gradient!);
     } else {
-      fillPaint.color = color;
+      // Subtle brightness gradient for depth
+      final hsl = HSLColor.fromColor(color);
+      final lighterColor = hsl.withLightness((hsl.lightness + 0.05).clamp(0.0, 1.0)).toColor();
+      fillPaint.shader = config.orientation == BarOrientation.vertical
+          ? createVerticalGradient(rect, [lighterColor, color])
+          : createHorizontalGradient(rect, [lighterColor, color]);
     }
 
     // Draw bar with optional corner radius

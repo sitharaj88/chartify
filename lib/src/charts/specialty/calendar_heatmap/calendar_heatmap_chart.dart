@@ -332,7 +332,8 @@ class _CalendarHeatmapPainter extends ChartPainter {
         final rect = Rect.fromLTWH(x, y, data.cellSize, data.cellSize);
         final paint = Paint()
           ..color = animatedColor
-          ..style = PaintingStyle.fill;
+          ..style = PaintingStyle.fill
+          ..isAntiAlias = true;
 
         final rRect = RRect.fromRectAndRadius(
           rect,
@@ -345,7 +346,8 @@ class _CalendarHeatmapPainter extends ChartPainter {
           final borderPaint = Paint()
             ..color = theme.axisLineColor
             ..strokeWidth = 2
-            ..style = PaintingStyle.stroke;
+            ..style = PaintingStyle.stroke
+            ..isAntiAlias = true;
           canvas.drawRRect(rRect, borderPaint);
         }
 

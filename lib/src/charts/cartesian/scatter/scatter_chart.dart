@@ -37,8 +37,8 @@ class ScatterSeries<X, Y extends num> {
     this.visible = true,
     this.pointSize = 8.0,
     this.pointShape = ScatterPointShape.circle,
-    this.borderColor,
-    this.borderWidth = 0,
+    this.borderColor = Colors.white,
+    this.borderWidth = 1.5,
     this.opacity = 1.0,
   });
 
@@ -48,7 +48,7 @@ class ScatterSeries<X, Y extends num> {
   final bool visible;
   final double pointSize;
   final ScatterPointShape pointShape;
-  final Color? borderColor;
+  final Color borderColor;
   final double borderWidth;
   final double opacity;
 
@@ -293,7 +293,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
     required this.hitTester,
     required super.padding,
     this.labelFontSize = 11.0,
-  }) : super(repaint: controller) {
+  }) : super(repaint: controller, gridDashPattern: theme.gridDashPattern) {
     _calculateBounds();
   }
 
@@ -468,28 +468,32 @@ class _ScatterChartPainter extends CartesianChartPainter {
 
     final fillPaint = Paint()
       ..color = fillColor
-      ..style = PaintingStyle.fill;
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
 
-    final borderPaint = series.borderWidth > 0
-        ? (Paint()
-          ..color = series.borderColor ?? Colors.white
-          ..strokeWidth = series.borderWidth
-          ..style = PaintingStyle.stroke)
-        : null;
+    final borderPaint = Paint()
+      ..color = series.borderColor
+      ..strokeWidth = series.borderWidth
+      ..style = PaintingStyle.stroke
+      ..isAntiAlias = true;
+
+    // Draw shadow
+    final shadowPaint = Paint()
+      ..color = fillColor.withValues(alpha: theme.shadowOpacity)
+      ..maskFilter = MaskFilter.blur(BlurStyle.normal, theme.shadowBlurRadius * 0.4)
+      ..style = PaintingStyle.fill
+      ..isAntiAlias = true;
+    canvas.drawCircle(Offset(center.dx, center.dy + 1), size / 2, shadowPaint);
 
     switch (shape) {
       case ScatterPointShape.circle:
         canvas.drawCircle(center, size / 2, fillPaint);
-        if (borderPaint != null) {
-          canvas.drawCircle(center, size / 2, borderPaint);
-        }
+        canvas.drawCircle(center, size / 2, borderPaint);
 
       case ScatterPointShape.square:
         final rect = Rect.fromCenter(center: center, width: size, height: size);
         canvas.drawRect(rect, fillPaint);
-        if (borderPaint != null) {
-          canvas.drawRect(rect, borderPaint);
-        }
+        canvas.drawRect(rect, borderPaint);
 
       case ScatterPointShape.diamond:
         final path = Path()
@@ -499,9 +503,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
           ..lineTo(center.dx - size / 2, center.dy)
           ..close();
         canvas.drawPath(path, fillPaint);
-        if (borderPaint != null) {
-          canvas.drawPath(path, borderPaint);
-        }
+        canvas.drawPath(path, borderPaint);
 
       case ScatterPointShape.triangle:
         final path = Path()
@@ -510,9 +512,7 @@ class _ScatterChartPainter extends CartesianChartPainter {
           ..lineTo(center.dx - size / 2, center.dy + size / 2)
           ..close();
         canvas.drawPath(path, fillPaint);
-        if (borderPaint != null) {
-          canvas.drawPath(path, borderPaint);
-        }
+        canvas.drawPath(path, borderPaint);
 
       case ScatterPointShape.cross:
         final halfSize = size / 2;
@@ -520,7 +520,8 @@ class _ScatterChartPainter extends CartesianChartPainter {
           ..color = fillColor
           ..strokeWidth = size / 4
           ..style = PaintingStyle.stroke
-          ..strokeCap = StrokeCap.round;
+          ..strokeCap = StrokeCap.round
+          ..isAntiAlias = true;
         canvas.drawLine(
           Offset(center.dx - halfSize, center.dy),
           Offset(center.dx + halfSize, center.dy),
@@ -537,7 +538,8 @@ class _ScatterChartPainter extends CartesianChartPainter {
     if (isHovered) {
       final glowPaint = Paint()
         ..color = color.withValues(alpha: 0.3)
-        ..style = PaintingStyle.fill;
+        ..style = PaintingStyle.fill
+        ..isAntiAlias = true;
       canvas.drawCircle(center, size / 2 + 6, glowPaint);
     }
   }
