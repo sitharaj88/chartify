@@ -88,7 +88,7 @@ export function ChartDetail() {
               </div>
               <div className="chart-preview overflow-hidden" style={{ height: '500px' }}>
                 <iframe
-                  src={`/flutter-app/index.html#${chartId}`}
+                  src={`${import.meta.env.BASE_URL}flutter-app/index.html#${chartId}`}
                   title={`${chart.title} Preview`}
                   className="w-full h-full border-0 rounded-lg"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
@@ -110,7 +110,7 @@ export function ChartDetail() {
                   <X size={24} />
                 </button>
                 <iframe
-                  src={`/flutter-app/index.html#${chartId}`}
+                  src={`${import.meta.env.BASE_URL}flutter-app/index.html#${chartId}`}
                   title={`${chart.title} Preview - Fullscreen`}
                   className="w-full h-full max-w-6xl max-h-[90vh] border-0 rounded-xl"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
