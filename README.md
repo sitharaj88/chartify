@@ -13,6 +13,7 @@
   <a href="https://opensource.org/licenses/Apache-2.0"><img src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" alt="License"></a>
   <a href="https://pub.dev/packages/chartify/score"><img src="https://img.shields.io/pub/points/chartify" alt="pub points"></a>
   <a href="https://flutter.dev"><img src="https://img.shields.io/badge/Flutter-3.10+-02569B.svg?logo=flutter" alt="Flutter"></a>
+  <a href="https://sitharaj88.github.io/chartify/"><img src="https://img.shields.io/badge/Docs-Website-blueviolet" alt="Documentation"></a>
 </p>
 
 ---
