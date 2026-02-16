@@ -93,7 +93,7 @@ export function Home() {
             </motion.div>
 
             {/* Headline */}
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-slate-900 dark:text-white mb-6 tracking-tight">
+            <h1 className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold text-slate-800 dark:text-white mb-6 tracking-tight">
               Beautiful Charts for
               <span className="block mt-2 gradient-text">Flutter Apps</span>
             </h1>
@@ -176,7 +176,7 @@ export function Home() {
             className="text-center mb-12"
           >
             <span className="badge mb-4">Interactive Demo</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-4">
               Try It Live
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -210,7 +210,7 @@ export function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="badge mb-4">Features</span>
-            <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+            <h2 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-4">
               Everything You Need
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
@@ -231,7 +231,7 @@ export function Home() {
                 <div className="w-12 h-12 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-primary-800/50 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4 group-hover:scale-110 transition-transform ring-1 ring-primary-200/50 dark:ring-0">
                   {feature.icon}
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+                <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
                   {feature.title}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
@@ -254,7 +254,7 @@ export function Home() {
               viewport={{ once: true }}
             >
               <span className="badge mb-4">Quick Start</span>
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-800 dark:text-white mb-4">
                 Get Started in Minutes
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-400 mb-8">
@@ -272,7 +272,7 @@ export function Home() {
                       {step}
                     </div>
                     <div>
-                      <h4 className="font-semibold text-slate-900 dark:text-white">{title}</h4>
+                      <h4 className="font-semibold text-slate-800 dark:text-white">{title}</h4>
                       {code ? (
                         <code className="text-sm text-primary-600 dark:text-primary-400 font-mono">{code}</code>
                       ) : (

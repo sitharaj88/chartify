@@ -26,11 +26,11 @@ export function Charts() {
   })
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <div className="bg-gradient-to-r from-white to-indigo-50/30 dark:bg-slate-800 border-b border-indigo-100/60 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-4">
             Chart Gallery
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl">
@@ -51,7 +51,7 @@ export function Charts() {
               placeholder="Search charts..."
               value={search}
               onChange={e => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+              className="w-full pl-10 pr-4 py-3 rounded-lg border border-indigo-100 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent shadow-sm shadow-indigo-500/5 dark:shadow-none"
             />
           </div>
 
@@ -62,7 +62,7 @@ export function Charts() {
               className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                 selectedCategory === null
                   ? 'bg-primary-600 text-white'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-indigo-50/50 dark:hover:bg-slate-700 border border-indigo-100/60 dark:border-slate-700 shadow-sm shadow-indigo-500/5 dark:shadow-none'
               }`}
             >
               All Charts
@@ -74,7 +74,7 @@ export function Charts() {
                 className={`inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                   selectedCategory === cat.id
                     ? 'bg-primary-600 text-white'
-                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700'
+                    : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-indigo-50/50 dark:hover:bg-slate-700 border border-indigo-100/60 dark:border-slate-700 shadow-sm shadow-indigo-500/5 dark:shadow-none'
                 }`}
               >
                 {categoryIcons[cat.id]}

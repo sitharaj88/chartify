@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Use class-based dark mode (.dark on <html>) instead of prefers-color-scheme media query */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   --font-mono: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
@@ -49,7 +52,7 @@ html {
 
 body {
   background-color: #ffffff;
-  color: #0f172a;
+  color: #334155;
 }
 
 .dark body {
@@ -280,7 +283,7 @@ code {
 
 .sidebar-link:hover {
   background-color: #f1f5f9;
-  color: #0f172a;
+  color: #1e293b;
 }
 
 .dark .sidebar-link:hover {
@@ -371,7 +374,7 @@ code {
 .prose h2,
 .prose h3,
 .prose h4 {
-  color: #0f172a;
+  color: #1e293b;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-top: 2em;
@@ -478,7 +481,7 @@ code {
 
 .prose strong {
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
 }
 
 .dark .prose strong {
@@ -528,7 +531,7 @@ code {
 
 .prose th {
   font-weight: 600;
-  color: #0f172a;
+  color: #1e293b;
   background-color: #f8fafc;
 }
 

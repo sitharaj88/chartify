@@ -74,7 +74,7 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
               className="fixed inset-y-0 left-0 w-80 max-w-[calc(100vw-3rem)] bg-white dark:bg-slate-950 z-50 lg:hidden overflow-y-auto"
             >
               <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-800">
-                <span className="text-lg font-semibold text-slate-900 dark:text-white">Documentation</span>
+                <span className="text-lg font-semibold text-slate-800 dark:text-white">Documentation</span>
                 <button
                   onClick={closeMobileMenu}
                   className="p-2 rounded-lg text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
@@ -124,7 +124,7 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
               {currentPage && (
                 <>
                   <ChevronRight size={14} className="flex-shrink-0 hidden sm:inline" />
-                  <span className="text-slate-900 dark:text-white font-medium whitespace-nowrap">
+                  <span className="text-slate-800 dark:text-white font-medium whitespace-nowrap">
                     {currentPage.label}
                   </span>
                 </>
@@ -133,9 +133,9 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
 
             {/* Mobile TOC */}
             {toc.length > 0 && (
-              <div className="xl:hidden mb-6 p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800">
+              <div className="xl:hidden mb-6 p-4 rounded-xl bg-indigo-50/30 dark:bg-slate-900/50 border border-indigo-100/60 dark:border-slate-800">
                 <details className="group">
-                  <summary className="flex items-center justify-between cursor-pointer text-sm font-semibold text-slate-900 dark:text-white">
+                  <summary className="flex items-center justify-between cursor-pointer text-sm font-semibold text-slate-800 dark:text-white">
                     <span>On this page</span>
                     <ChevronRight size={16} className="transform transition-transform group-open:rotate-90" />
                   </summary>
@@ -166,7 +166,7 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
               transition={{ duration: 0.3 }}
               className="mb-8 lg:mb-10"
             >
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 dark:text-white tracking-tight mb-3 lg:mb-4">
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-800 dark:text-white tracking-tight mb-3 lg:mb-4">
                 {meta.title}
               </h1>
               {meta.description && (
@@ -209,13 +209,13 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
                 {prevPage ? (
                   <Link
                     to={prevPage.path}
-                    className="group flex flex-col items-start p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all"
+                    className="group flex flex-col items-start p-3 sm:p-4 rounded-xl border border-indigo-100/60 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-700 hover:bg-indigo-50/30 dark:hover:bg-slate-900/50 shadow-sm shadow-indigo-500/5 dark:shadow-none transition-all"
                   >
                     <span className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 mb-1">
                       <ArrowLeft size={14} />
                       Previous
                     </span>
-                    <span className="font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <span className="font-medium text-slate-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {prevPage.label}
                     </span>
                   </Link>
@@ -225,13 +225,13 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
                 {nextPage ? (
                   <Link
                     to={nextPage.path}
-                    className="group flex flex-col items-start sm:items-end p-3 sm:p-4 rounded-xl border border-slate-200 dark:border-slate-800 hover:border-primary-300 dark:hover:border-primary-700 hover:bg-slate-50 dark:hover:bg-slate-900/50 transition-all"
+                    className="group flex flex-col items-start sm:items-end p-3 sm:p-4 rounded-xl border border-indigo-100/60 dark:border-slate-800 hover:border-primary-200 dark:hover:border-primary-700 hover:bg-indigo-50/30 dark:hover:bg-slate-900/50 shadow-sm shadow-indigo-500/5 dark:shadow-none transition-all"
                   >
                     <span className="flex items-center gap-1 text-sm text-slate-500 dark:text-slate-400 mb-1">
                       Next
                       <ArrowRight size={14} />
                     </span>
-                    <span className="font-medium text-slate-900 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
+                    <span className="font-medium text-slate-800 dark:text-white group-hover:text-primary-600 dark:group-hover:text-primary-400 transition-colors">
                       {nextPage.label}
                     </span>
                   </Link>
@@ -257,7 +257,7 @@ export function DocLayout({ children, meta, toc = [], sidebarSections }: DocLayo
           {toc.length > 0 && (
             <aside className="hidden xl:block w-56 flex-shrink-0">
               <div className="sticky top-24">
-                <h4 className="text-sm font-semibold text-slate-900 dark:text-white mb-4">
+                <h4 className="text-sm font-semibold text-slate-800 dark:text-white mb-4">
                   On this page
                 </h4>
                 <nav className="text-sm">

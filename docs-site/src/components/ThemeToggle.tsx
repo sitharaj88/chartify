@@ -33,7 +33,7 @@ export function ThemeToggle() {
         whileHover={{ scale: 1.05 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
+        className="relative p-2.5 rounded-xl bg-indigo-50/60 dark:bg-slate-800 text-primary-600 dark:text-slate-300 hover:bg-indigo-100/60 dark:hover:bg-slate-700 border border-indigo-100/50 dark:border-transparent transition-colors"
         aria-label="Toggle theme"
       >
         <AnimatePresence mode="wait">
@@ -56,7 +56,7 @@ export function ThemeToggle() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-40 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 z-50"
+            className="absolute right-0 mt-2 w-40 py-2 bg-white dark:bg-slate-800 rounded-xl shadow-xl shadow-indigo-500/10 dark:shadow-black/20 border border-indigo-100/60 dark:border-slate-700 z-50"
           >
             {themes.map(({ value, label, icon: Icon }) => (
               <button
@@ -68,7 +68,7 @@ export function ThemeToggle() {
                 className={`w-full flex items-center gap-3 px-4 py-2.5 text-sm transition-colors ${
                   theme === value
                     ? 'text-primary-600 dark:text-primary-400 bg-primary-50 dark:bg-primary-900/20'
-                    : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-indigo-50/50 dark:hover:bg-slate-700'
                 }`}
               >
                 <Icon size={16} />

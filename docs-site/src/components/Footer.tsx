@@ -26,7 +26,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear()
 
   return (
-    <footer className="bg-slate-50 dark:bg-slate-900/50 border-t border-slate-200 dark:border-slate-800">
+    <footer className="bg-gradient-to-b from-slate-50/80 to-white dark:from-slate-900/50 dark:to-slate-950 border-t border-indigo-100/60 dark:border-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Main footer content */}
         <div className="py-12 grid grid-cols-2 md:grid-cols-4 gap-8">
@@ -38,7 +38,7 @@ export function Footer() {
                   <path d="M3 13h2v8H3v-8zm4-6h2v14H7V7zm4-4h2v18h-2V3zm4 8h2v10h-2V11zm4-4h2v14h-2V7z" />
                 </svg>
               </div>
-              <span className="text-lg font-bold text-slate-900 dark:text-white">Chartify</span>
+              <span className="text-lg font-bold text-slate-800 dark:text-white">Chartify</span>
             </Link>
             <p className="mt-4 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
               A powerful, customizable charting library for Flutter. Build beautiful, interactive charts with ease.
@@ -67,7 +67,7 @@ export function Footer() {
 
           {/* Product links */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white uppercase tracking-wider mb-4">
               Product
             </h3>
             <ul className="space-y-3">
@@ -98,7 +98,7 @@ export function Footer() {
 
           {/* Resources links */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white uppercase tracking-wider mb-4">
               Resources
             </h3>
             <ul className="space-y-3">
@@ -117,7 +117,7 @@ export function Footer() {
 
           {/* Community links */}
           <div>
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white uppercase tracking-wider mb-4">
+            <h3 className="text-sm font-semibold text-slate-800 dark:text-white uppercase tracking-wider mb-4">
               Community
             </h3>
             <ul className="space-y-3">

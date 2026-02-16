@@ -20,14 +20,14 @@ export function ChartCard({ title, description, icon, path, category }: ChartCar
         className="block card p-6 h-full hover:border-primary-300 dark:hover:border-primary-700 transition-colors"
       >
         <div className="flex items-start space-x-4">
-          <div className="flex-shrink-0 w-12 h-12 bg-primary-100 dark:bg-primary-900/30 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400">
+          <div className="flex-shrink-0 w-12 h-12 bg-gradient-to-br from-primary-50 to-primary-100 dark:bg-primary-900/30 ring-1 ring-primary-200/40 dark:ring-0 rounded-lg flex items-center justify-center text-primary-600 dark:text-primary-400">
             {icon}
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-primary-600 dark:text-primary-400 uppercase tracking-wide mb-1">
               {category}
             </p>
-            <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
+            <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-2">
               {title}
             </h3>
             <p className="text-sm text-slate-600 dark:text-slate-400 line-clamp-2">

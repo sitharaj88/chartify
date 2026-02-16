@@ -1058,11 +1058,11 @@ export function Examples() {
   const [selectedExample, setSelectedExample] = useState(examples[0])
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <div className="bg-gradient-to-r from-white to-indigo-50/30 dark:bg-slate-800 border-b border-indigo-100/60 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+          <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-4">
             Real-World Examples
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl">
@@ -1083,13 +1083,13 @@ export function Examples() {
                 className={`w-full text-left p-4 rounded-lg transition-colors ${
                   selectedExample.id === example.id
                     ? 'bg-primary-50 dark:bg-primary-900/20 border-2 border-primary-500'
-                    : 'bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-700'
+                    : 'bg-white dark:bg-slate-800 border border-indigo-100/60 dark:border-slate-700 hover:border-primary-300 dark:hover:border-primary-700 shadow-sm shadow-indigo-500/5 dark:shadow-none'
                 }`}
               >
                 <h3 className={`font-medium mb-1 ${
                   selectedExample.id === example.id
                     ? 'text-primary-700 dark:text-primary-300'
-                    : 'text-slate-900 dark:text-white'
+                    : 'text-slate-800 dark:text-white'
                 }`}>
                   {example.title}
                 </h3>
@@ -1109,7 +1109,7 @@ export function Examples() {
               transition={{ duration: 0.3 }}
             >
               <div className="mb-6">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-2">
                   {selectedExample.title}
                 </h2>
                 <p className="text-slate-600 dark:text-slate-400">

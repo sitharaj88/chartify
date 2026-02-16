@@ -49,7 +49,7 @@ const sidebarSections = [
 
 const installCode = `# Add to your pubspec.yaml
 dependencies:
-  chartify: ^0.1.0
+  chartify: ^1.0.0
 
 # Then run
 flutter pub get`
@@ -400,7 +400,7 @@ function IntroductionContent() {
       <h2 id="chart-types">Available Chart Types</h2>
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4 not-prose my-6">
         {['Line', 'Bar', 'Pie', 'Scatter', 'Area', 'Candlestick', 'Radar', 'Gauge', 'Treemap', 'Sankey', 'Funnel', 'Heatmap'].map(type => (
-          <div key={type} className="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 text-center">
+          <div key={type} className="p-4 rounded-xl bg-indigo-50/40 dark:bg-slate-800/50 border border-indigo-100/60 dark:border-slate-700 text-center">
             <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{type} Chart</span>
           </div>
         ))}

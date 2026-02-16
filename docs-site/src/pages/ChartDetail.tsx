@@ -12,9 +12,9 @@ export function ChartDetail() {
 
   if (!chart) {
     return (
-      <div className="min-h-screen bg-slate-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Chart not found</h1>
+          <h1 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Chart not found</h1>
           <Link to="/charts" className="text-primary-600 dark:text-primary-400 hover:underline">
             Back to Charts
           </Link>
@@ -26,9 +26,9 @@ export function ChartDetail() {
   const category = chartCategories.find(c => c.id === chart.category)
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-white to-slate-50/80 dark:from-slate-900 dark:to-slate-900">
       {/* Header */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+      <div className="bg-gradient-to-r from-white to-indigo-50/30 dark:bg-slate-800 border-b border-indigo-100/60 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Link
             to="/charts"
@@ -43,7 +43,7 @@ export function ChartDetail() {
               <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-primary-100 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300 mb-3">
                 {category?.label}
               </span>
-              <h1 className="text-4xl font-bold text-slate-900 dark:text-white mb-4">
+              <h1 className="text-4xl font-bold text-slate-800 dark:text-white mb-4">
                 {chart.title}
               </h1>
               <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl">
@@ -77,10 +77,10 @@ export function ChartDetail() {
               transition={{ duration: 0.5 }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Live Preview</h2>
+                <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Live Preview</h2>
                 <button
                   onClick={() => setIsFullscreen(true)}
-                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-slate-100 dark:bg-slate-800 rounded-lg transition-colors"
+                  className="inline-flex items-center gap-2 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white bg-indigo-50/60 dark:bg-slate-800 rounded-lg border border-indigo-100/50 dark:border-transparent transition-colors"
                 >
                   <Maximize2 size={16} />
                   Fullscreen
@@ -124,7 +124,7 @@ export function ChartDetail() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
             >
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Code Example</h2>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Code Example</h2>
               <p className="text-slate-600 dark:text-slate-400 mb-4">
                 Copy and paste this code into your Flutter project to create a {chart.title.toLowerCase()}.
               </p>
@@ -141,7 +141,7 @@ export function ChartDetail() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">Usage Guide</h2>
+              <h2 className="text-2xl font-bold text-slate-800 dark:text-white mb-4">Usage Guide</h2>
               <div className="prose prose-slate dark:prose-invert max-w-none">
                 <h3>Installation</h3>
                 <p>
@@ -149,7 +149,7 @@ export function ChartDetail() {
                 </p>
                 <CodeBlock
                   code={`dependencies:
-  chartify: ^0.1.0`}
+  chartify: ^1.0.0`}
                   language="yaml"
                   showLineNumbers={false}
                 />
@@ -194,7 +194,7 @@ export function ChartDetail() {
               transition={{ duration: 0.5, delay: 0.3 }}
               className="card p-6"
             >
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Features</h3>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Features</h3>
               <ul className="space-y-3">
                 {chart.features.map((feature, idx) => (
                   <li key={idx} className="flex items-start gap-3">
@@ -214,7 +214,7 @@ export function ChartDetail() {
               transition={{ duration: 0.5, delay: 0.4 }}
               className="card p-6"
             >
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Related Charts</h3>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Related Charts</h3>
               <div className="space-y-2">
                 <Link
                   to="/charts"
@@ -232,7 +232,7 @@ export function ChartDetail() {
               transition={{ duration: 0.5, delay: 0.5 }}
               className="card p-6"
             >
-              <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">Resources</h3>
+              <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">Resources</h3>
               <ul className="space-y-3 text-sm">
                 <li>
                   <a
