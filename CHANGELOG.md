@@ -1,3 +1,7 @@
+## 1.0.2
+
+- Use full Apache License 2.0 text for proper OSI-approved license recognition
+
 ## 1.0.1
 
 - Fix package description length for pub.dev compliance
