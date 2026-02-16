@@ -1,8 +1,6 @@
 <p align="center">
-  <img src="https://raw.githubusercontent.com/sitharaj88/chartify/master/assets/chartify.png" width="600" alt="Chartify">
+  <img src="https://raw.githubusercontent.com/sitharaj88/chartify/master/assets/github_banner.svg" width="800" alt="Chartify - A Comprehensive Flutter Chart Library">
 </p>
-
-<h1 align="center">Chartify</h1>
 
 <p align="center">
   A comprehensive, high-performance Flutter chart library with 32+ chart types.

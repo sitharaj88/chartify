@@ -78,9 +78,6 @@ class ChartController extends ChangeNotifier {
   // Animation state
   _ViewportAnimation? _currentAnimation;
 
-  // Data bounds for constraining pan operations
-  Rect? _dataBounds;
-
   // ============== Viewport Control ==============
 
   /// The current viewport.
@@ -209,11 +206,6 @@ class ChartController extends ChangeNotifier {
   }) {
     final scale = scrollDelta < 0 ? zoomFactor : 1 / zoomFactor;
     zoom(scale, focalPoint);
-  }
-
-  /// Sets the data bounds for constraining pan operations.
-  void setDataBounds(Rect bounds) {
-    _dataBounds = bounds;
   }
 
   /// Internal animation helper.

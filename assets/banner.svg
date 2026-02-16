@@ -140,7 +140,7 @@
     <!-- Feature Pills -->
     <g transform="translate(0, 90)">
       <rect x="0" y="0" width="100" height="28" rx="14" fill="rgba(255,255,255,0.15)"/>
-      <text x="50" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">25+ Charts</text>
+      <text x="50" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">32+ Charts</text>
 
       <rect x="110" y="0" width="110" height="28" rx="14" fill="rgba(255,255,255,0.15)"/>
       <text x="165" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">100K+ Points</text>
@@ -149,11 +149,10 @@
       <text x="290" y="19" font-family="system-ui, -apple-system, sans-serif" font-size="12" font-weight="500" fill="white" text-anchor="middle">Cross-Platform</text>
     </g>
 
-    <!-- Coming Soon Badge -->
+    <!-- Version Badge -->
     <g transform="translate(0, 140)">
-      <rect x="0" y="0" width="160" height="40" rx="20" fill="white"/>
-      <text x="25" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#6366F1">Coming Soon</text>
-      <text x="135" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="16">🚀</text>
+      <rect x="0" y="0" width="130" height="40" rx="20" fill="white"/>
+      <text x="65" y="26" font-family="system-ui, -apple-system, sans-serif" font-size="14" font-weight="600" fill="#6366F1" text-anchor="middle">v1.0.0</text>
     </g>
   </g>
 

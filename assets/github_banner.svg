@@ -44,13 +44,13 @@
 
     <!-- Title -->
     <text x="80" y="28" font-family="system-ui, -apple-system, sans-serif" font-size="40" font-weight="800" fill="white">Chartify</text>
-    <text x="80" y="55" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="rgba(255,255,255,0.6)">A Modern Flutter Chart Library</text>
+    <text x="80" y="55" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="rgba(255,255,255,0.6)">A Comprehensive Flutter Chart Library</text>
   </g>
 
   <!-- Feature Tags -->
   <g transform="translate(60, 190)">
     <rect x="0" y="0" width="90" height="32" rx="16" fill="rgba(99,102,241,0.2)" stroke="rgba(99,102,241,0.4)" stroke-width="1"/>
-    <text x="45" y="21" font-family="system-ui" font-size="12" font-weight="500" fill="#A5B4FC" text-anchor="middle">25+ Charts</text>
+    <text x="45" y="21" font-family="system-ui" font-size="12" font-weight="500" fill="#A5B4FC" text-anchor="middle">32+ Charts</text>
 
     <rect x="100" y="0" width="100" height="32" rx="16" fill="rgba(139,92,246,0.2)" stroke="rgba(139,92,246,0.4)" stroke-width="1"/>
     <text x="150" y="21" font-family="system-ui" font-size="12" font-weight="500" fill="#C4B5FD" text-anchor="middle">High Perf</text>
@@ -62,10 +62,10 @@
     <text x="385" y="21" font-family="system-ui" font-size="12" font-weight="500" fill="#6EE7B7" text-anchor="middle">Cross-Platform</text>
   </g>
 
-  <!-- Coming Soon -->
+  <!-- Version Badge -->
   <g transform="translate(60, 250)">
-    <rect x="0" y="0" width="140" height="36" rx="18" fill="url(#accent)"/>
-    <text x="70" y="24" font-family="system-ui" font-size="14" font-weight="600" fill="white" text-anchor="middle">🚀 Coming Soon</text>
+    <rect x="0" y="0" width="120" height="36" rx="18" fill="url(#accent)"/>
+    <text x="60" y="24" font-family="system-ui" font-size="14" font-weight="600" fill="white" text-anchor="middle">v1.0.0</text>
   </g>
 
   <!-- Mini Charts Preview -->
