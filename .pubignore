@@ -1,0 +1,26 @@
+# Documentation website (React/Vite app)
+docs/
+
+# Example app build artifacts
+example/build/
+example/.dart_tool/
+example/android/
+example/ios/
+example/linux/
+example/macos/
+example/windows/
+
+# Golden test failure images
+test/golden/failures/
+
+# Build artifacts
+build/
+.dart_tool/
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# OS
+.DS_Store

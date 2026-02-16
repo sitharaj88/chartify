@@ -156,7 +156,6 @@ class _HeatmapChartState extends State<HeatmapChart>
       builder: (context, constraints) {
         final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
         final labelFontSize = getScaledFontSize(context, 11.0);
-        final hitRadius = getHitTestRadius(context, constraints);
 
         _chartArea = Rect.fromLTRB(
           responsivePadding.left,

@@ -142,7 +142,6 @@ class _CalendarHeatmapChartState extends State<CalendarHeatmapChart>
       builder: (context, constraints) {
         final responsivePadding = getResponsivePadding(context, constraints, override: widget.padding);
         final labelFontSize = getScaledFontSize(context, 11.0);
-        final hitRadius = getHitTestRadius(context, constraints);
 
         final chartArea = Rect.fromLTRB(
           responsivePadding.left,
