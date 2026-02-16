@@ -75,7 +75,7 @@ export function Navbar() {
             <motion.a
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
-              href="https://github.com/anthropics/claude-code"
+              href="https://github.com/sitharaj88/chartify"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2.5 rounded-xl text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"

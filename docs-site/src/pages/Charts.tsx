@@ -34,7 +34,7 @@ export function Charts() {
             Chart Gallery
           </h1>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-3xl">
-            Explore all 25+ chart types available in Chartify. Each chart includes interactive examples,
+            Explore all 32+ chart types available in Chartify. Each chart includes interactive examples,
             complete code snippets, and API documentation.
           </p>
         </div>

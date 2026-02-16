@@ -379,7 +379,7 @@ function IntroductionContent() {
   return (
     <>
       <p className="lead">
-        Chartify is a comprehensive, high-performance charting library for Flutter that supports 25+ chart types,
+        Chartify is a comprehensive, high-performance charting library for Flutter that supports 32+ chart types,
         large datasets, and cross-platform compatibility.
       </p>
 
@@ -389,7 +389,7 @@ function IntroductionContent() {
 
       <h2 id="features">Features</h2>
       <ul>
-        <li><strong>25+ Chart Types:</strong> Line, bar, pie, scatter, treemap, sankey, gauge, and more</li>
+        <li><strong>32+ Chart Types:</strong> Line, bar, pie, scatter, treemap, sankey, gauge, and more</li>
         <li><strong>High Performance:</strong> Optimized for 10,000+ data points with viewport culling</li>
         <li><strong>Cross-Platform:</strong> Works on iOS, Android, Web, and Desktop</li>
         <li><strong>Fully Customizable:</strong> Themes, animations, interactions, and custom painters</li>

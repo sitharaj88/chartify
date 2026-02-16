@@ -247,7 +247,7 @@ export function ChartDetail() {
                 </li>
                 <li>
                   <a
-                    href="https://github.com/chartify/chartify"
+                    href="https://github.com/sitharaj88/chartify"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-primary-600 dark:text-primary-400 hover:underline inline-flex items-center gap-1"

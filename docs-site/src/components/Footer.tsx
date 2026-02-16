@@ -6,7 +6,7 @@ const footerLinks = {
     { label: 'Documentation', href: '/docs' },
     { label: 'Charts Gallery', href: '/charts' },
     { label: 'Examples', href: '/examples' },
-    { label: 'Changelog', href: 'https://github.com/anthropics/chartify/releases', external: true },
+    { label: 'Changelog', href: 'https://github.com/sitharaj88/chartify/releases', external: true },
   ],
   resources: [
     { label: 'Getting Started', href: '/docs/quick-start' },
@@ -15,7 +15,7 @@ const footerLinks = {
     { label: 'Best Practices', href: '/docs/performance' },
   ],
   community: [
-    { label: 'GitHub', href: 'https://github.com/anthropics/chartify', external: true },
+    { label: 'GitHub', href: 'https://github.com/sitharaj88/chartify', external: true },
     { label: 'pub.dev', href: 'https://pub.dev/packages/chartify', external: true },
     { label: 'Flutter Dev', href: 'https://flutter.dev', external: true },
     { label: 'Dart Lang', href: 'https://dart.dev', external: true },
@@ -45,7 +45,7 @@ export function Footer() {
             </p>
             <div className="mt-6 flex items-center gap-3">
               <a
-                href="https://github.com/anthropics/chartify"
+                href="https://github.com/sitharaj88/chartify"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="p-2 rounded-lg text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors"

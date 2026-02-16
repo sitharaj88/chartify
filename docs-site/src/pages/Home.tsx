@@ -6,7 +6,7 @@ import { CodeBlock } from '../components/CodeBlock'
 const features = [
   {
     icon: <BarChart3 size={24} />,
-    title: '25+ Chart Types',
+    title: '32+ Chart Types',
     description: 'Line, bar, pie, scatter, treemap, sankey, gauge, candlestick, and many more chart types ready to use.',
   },
   {
@@ -88,7 +88,7 @@ export function Home() {
             >
               <span className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium bg-white/80 dark:bg-slate-800/80 backdrop-blur-sm text-primary-700 dark:text-primary-300 border border-primary-200 dark:border-primary-800 shadow-sm mb-8">
                 <Sparkles size={16} className="text-amber-500" />
-                v0.1.0 - Now Available on pub.dev
+                v1.0.0 - Now Available on pub.dev
               </span>
             </motion.div>
 
@@ -100,7 +100,7 @@ export function Home() {
 
             {/* Subheadline */}
             <p className="text-lg sm:text-xl text-slate-600 dark:text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
-              A comprehensive, high-performance chart library supporting 25+ chart types,
+              A comprehensive, high-performance chart library supporting 32+ chart types,
               large datasets, and cross-platform compatibility. Built for production.
             </p>
 
@@ -143,7 +143,7 @@ export function Home() {
             className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-6 lg:gap-8"
           >
             {[
-              { value: '25+', label: 'Chart Types', color: 'from-blue-500 to-cyan-500' },
+              { value: '32+', label: 'Chart Types', color: 'from-blue-500 to-cyan-500' },
               { value: '10K+', label: 'Data Points', color: 'from-purple-500 to-pink-500' },
               { value: '60fps', label: 'Performance', color: 'from-amber-500 to-orange-500' },
               { value: '6', label: 'Platforms', color: 'from-emerald-500 to-teal-500' },
@@ -153,7 +153,7 @@ export function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.4, delay: 0.4 + idx * 0.1 }}
-                className="relative p-6 rounded-2xl bg-white/60 dark:bg-slate-800/60 backdrop-blur-sm border border-slate-200/50 dark:border-slate-700/50 text-center"
+                className="relative p-6 rounded-2xl bg-white dark:bg-slate-800/60 backdrop-blur-sm border border-indigo-100 dark:border-slate-700/50 shadow-sm shadow-indigo-500/5 dark:shadow-none text-center"
               >
                 <div className={`text-4xl lg:text-5xl font-bold bg-gradient-to-r ${stat.color} bg-clip-text text-transparent`}>
                   {stat.value}
@@ -166,7 +166,7 @@ export function Home() {
       </section>
 
       {/* Live Demo Section */}
-      <section className="py-20 bg-white dark:bg-slate-950">
+      <section className="py-20 bg-slate-50/50 dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -189,11 +189,11 @@ export function Home() {
             whileInView={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 }}
             viewport={{ once: true }}
-            className="card overflow-hidden shadow-2xl shadow-slate-200 dark:shadow-none"
+            className="card overflow-hidden shadow-2xl shadow-indigo-500/10 dark:shadow-none"
             style={{ height: '600px' }}
           >
             <iframe
-              src="/flutter-app/index.html"
+              src={`${import.meta.env.BASE_URL}flutter-app/index.html`}
               title="Chartify Live Demo"
               className="w-full h-full border-0"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope"
@@ -206,7 +206,7 @@ export function Home() {
       </section>
 
       {/* Features Section */}
-      <section className="py-24 bg-slate-50 dark:bg-slate-900/50">
+      <section className="py-24 bg-gradient-to-b from-white to-slate-50 dark:from-slate-950 dark:to-slate-900/50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="badge mb-4">Features</span>
@@ -226,9 +226,9 @@ export function Home() {
                 whileInView={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.5, delay: idx * 0.1 }}
                 viewport={{ once: true }}
-                className="group card p-6 hover:border-primary-300 dark:hover:border-primary-700"
+                className="group card p-6 hover:border-primary-200 dark:hover:border-primary-700"
               >
-                <div className="w-12 h-12 bg-gradient-to-br from-primary-100 to-primary-200 dark:from-primary-900/50 dark:to-primary-800/50 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4 group-hover:scale-110 transition-transform">
+                <div className="w-12 h-12 bg-gradient-to-br from-primary-50 to-primary-100 dark:from-primary-900/50 dark:to-primary-800/50 rounded-xl flex items-center justify-center text-primary-600 dark:text-primary-400 mb-4 group-hover:scale-110 transition-transform ring-1 ring-primary-200/50 dark:ring-0">
                   {feature.icon}
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
@@ -244,7 +244,7 @@ export function Home() {
       </section>
 
       {/* Quick Start Section */}
-      <section className="py-24 bg-white dark:bg-slate-950">
+      <section className="py-24 bg-slate-50 dark:bg-slate-950">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div
@@ -265,7 +265,7 @@ export function Home() {
                 {[
                   { step: 1, title: 'Add dependency', code: 'flutter pub add chartify' },
                   { step: 2, title: 'Import the library', code: "import 'package:chartify/chartify.dart';" },
-                  { step: 3, title: 'Create your first chart', desc: 'Use any of the 25+ chart widgets' },
+                  { step: 3, title: 'Create your first chart', desc: 'Use any of the 32+ chart widgets' },
                 ].map(({ step, title, code, desc }) => (
                   <div key={step} className="flex items-start gap-4">
                     <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-600 text-white rounded-xl flex items-center justify-center text-sm font-bold shadow-lg shadow-primary-500/25">
@@ -338,7 +338,7 @@ export function Home() {
               </motion.div>
               <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                 <a
-                  href="https://github.com/anthropics/chartify"
+                  href="https://github.com/sitharaj88/chartify"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-xl border-2 border-white/30 text-white font-semibold hover:bg-white/10 transition-colors"
