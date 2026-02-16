@@ -1,3 +1,9 @@
+## 1.0.1
+
+- Fix package description length for pub.dev compliance
+- Fix LICENSE format for OSI-approved license recognition
+- Remove unnecessary `dart:ui` imports flagged by static analysis
+
 ## 1.0.0
 
 Initial stable release of Chartify.

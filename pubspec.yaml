@@ -2,7 +2,7 @@ name: chartify
 description: >-
   A high-performance Flutter chart library with 32+ chart types including line, bar, pie,
   radar, gauge, sankey, treemap, and more. Modern theming, animations, and accessibility.
-version: 1.0.0
+version: 1.0.1
 homepage: https://github.com/sitharaj88/chartify
 repository: https://github.com/sitharaj88/chartify
 issue_tracker: https://github.com/sitharaj88/chartify/issues
