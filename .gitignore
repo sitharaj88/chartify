@@ -65,3 +65,7 @@ coverage/
 # Local environment
 .env
 .env.*
+
+# Documentation website source (build artifacts)
+docs-site/node_modules/
+docs-site/dist/
